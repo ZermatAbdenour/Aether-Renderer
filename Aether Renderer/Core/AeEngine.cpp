@@ -6,12 +6,13 @@ AeEngine::AeEngine()
 	m_renderer = new Renderer();
 }
 
-void AeEngine::Render()
+void AeEngine::Load(Scene* scene)
 {
 	while (!m_window->ShouldClose())
 	{
 		m_renderer->Clear();
-		
+		m_renderer->Render(scene);
+
 		m_window->SwapBuffers();
 		glfwPollEvents();
 	}

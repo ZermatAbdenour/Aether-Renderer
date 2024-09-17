@@ -17,3 +17,8 @@ void Renderer::Clear()
 	glClearColor(1, 0.2, 0.4, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
+
+void Renderer::Render(Scene* scene)
+{
+	
+}
