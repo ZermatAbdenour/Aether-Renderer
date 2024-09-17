@@ -11,8 +11,14 @@ void AeEngine::Render()
 	while (!m_window->ShouldClose())
 	{
 		m_renderer->Clear();
-
+		
 		m_window->SwapBuffers();
 		glfwPollEvents();
 	}
+}
+
+AeEngine::~AeEngine()
+{
+	delete m_window;
+	delete m_renderer;
 }

@@ -150,12 +150,16 @@
     <ClCompile Include="..\Dependencies\src\glad\glad.c" />
     <ClCompile Include="Aether Renderer.cpp" />
     <ClCompile Include="Core\AeEngine.cpp" />
+    <ClCompile Include="Core\Entity.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
+    <ClCompile Include="Core\Scene.cpp" />
     <ClCompile Include="Core\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\AeEngine.h" />
+    <ClInclude Include="Core\Entity.h" />
     <ClInclude Include="Core\Renderer.h" />
+    <ClInclude Include="Core\Scene.h" />
     <ClInclude Include="Core\Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
