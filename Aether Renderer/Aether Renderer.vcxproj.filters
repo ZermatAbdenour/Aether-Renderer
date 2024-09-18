@@ -45,6 +45,15 @@
     <ClCompile Include="Utilities\FileUtil.hpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Effector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Effectors\Move.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Effectors\Chop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Window.h">
@@ -68,5 +77,21 @@
     <ClInclude Include="Core\Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Effector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Effectors\Move.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Effectors\Chop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Core\Shaders\FragmentShader.frag" />
+    <None Include="Core\Shaders\VertexShader.vert" />
+    <None Include="Core\Scene.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

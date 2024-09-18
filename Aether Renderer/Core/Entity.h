@@ -11,6 +11,7 @@ public:
 
 	//Scene Heirarchy
 	std::vector<std::shared_ptr<Entity>> Childs;
+
 public:
 	Entity();
 	virtual ~Entity();

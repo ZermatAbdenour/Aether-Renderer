@@ -154,6 +154,9 @@
     <ClCompile Include="..\Dependencies\src\glad\glad.c" />
     <ClCompile Include="AetherRenderer.cpp" />
     <ClCompile Include="Core\AeEngine.cpp" />
+    <ClCompile Include="Core\Effector.cpp" />
+    <ClCompile Include="Core\Effectors\Chop.cpp" />
+    <ClCompile Include="Core\Effectors\Move.cpp" />
     <ClCompile Include="Core\Entity.cpp" />
     <ClCompile Include="Core\Mesh.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
@@ -164,6 +167,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\AeEngine.h" />
+    <ClInclude Include="Core\Effector.h" />
+    <ClInclude Include="Core\Effectors\Chop.h" />
+    <ClInclude Include="Core\Effectors\Move.h" />
     <ClInclude Include="Core\Entity.h" />
     <ClInclude Include="Core\Mesh.h" />
     <ClInclude Include="Core\Renderer.h" />
@@ -172,6 +178,7 @@
     <ClInclude Include="Core\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Core\Scene.inl" />
     <None Include="Core\Shaders\FragmentShader.frag" />
     <None Include="Core\Shaders\VertexShader.vert" />
   </ItemGroup>

@@ -4,13 +4,16 @@
 #include "Core/AeEngine.h"
 #include "Core/Scene.h"
 #include "Utilities/FileUtil.hpp"
+#include "Core/Effectors/Move.h"
+
 int main()
 {
     AeEngine aetherRenderer = AeEngine();
     
     Scene* scene = new Scene();
     auto ent = scene->AddEntity("var");
-    aetherRenderer.Load(scene);
+    scene->AddEffector<Move>(ent);
 
+    aetherRenderer.Load(scene);
     return 0;
 }

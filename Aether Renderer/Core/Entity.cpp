@@ -7,21 +7,23 @@ Entity::~Entity() {
     std::cout << "Entity " << Name << " destroyed" << std::endl;
 }
 
-void Entity::AddChild(std::shared_ptr<Entity> child)
-{
-	Childs.push_back(child);
-}
 
 void Entity::RemoveChild(std::shared_ptr<Entity> child)
 {
     Childs.erase(std::remove(Childs.begin(), Childs.end(), child), Childs.end());
 }
 
+void Entity::AddChild(std::shared_ptr<Entity> child)
+{
+	Childs.push_back(child);
+}
+
 std::shared_ptr<Entity> Entity::AddChild(const char* name)
 {
 	std::shared_ptr<Entity> child = std::make_shared<Entity>();
+    child->Name = name;
+
 	Childs.push_back(child);
-	child->Name = name;
 	return child;
 }
 

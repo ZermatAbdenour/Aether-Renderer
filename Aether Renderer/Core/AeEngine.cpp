@@ -8,10 +8,13 @@ AeEngine::AeEngine()
 
 void AeEngine::Load(Scene* scene)
 {
+	scene->StartEffectors();
 	while (!m_window->ShouldClose())
 	{
 		m_renderer->Clear();
 		m_renderer->Render(scene);
+
+		scene->UpdateEffectors();
 
 		m_window->SwapBuffers();
 		glfwPollEvents();
