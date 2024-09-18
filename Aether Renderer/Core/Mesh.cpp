@@ -22,3 +22,13 @@ Mesh::Mesh(float vertices[], float indices[])
 	//unbind the vertex array
 	glBindVertexArray(0);
 }
+
+void Mesh::Bind()
+{
+	glBindVertexArray(VAO);
+}
+
+void Mesh::Unbind()
+{
+	glBindVertexArray(0);
+}

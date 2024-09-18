@@ -1,28 +1,31 @@
 #include "AeEngine.h"
 
-AeEngine::AeEngine()
+AeEngine::AeEngine(Renderer* renderer)
 {
-	m_window = new Window();
-	m_renderer = new Renderer();
+	m_renderer = renderer;
+	m_window = m_renderer->Init();
+
 }
 
 void AeEngine::Load(Scene* scene)
 {
+	m_renderer->Setup();
 	scene->StartEffectors();
-	while (!m_window->ShouldClose())
+	while (!glfwWindowShouldClose(m_window))
 	{
-		m_renderer->Clear();
+		m_renderer->FrameSetup();
 		m_renderer->Render(scene);
 
 		scene->UpdateEffectors();
 
-		m_window->SwapBuffers();
+		glfwSwapBuffers(m_window);
 		glfwPollEvents();
 	}
 }
 
 AeEngine::~AeEngine()
 {
+	m_renderer->Clear();
 	delete m_window;
 	delete m_renderer;
 }

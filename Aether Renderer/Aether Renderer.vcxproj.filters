@@ -21,9 +21,6 @@
     <ClCompile Include="..\Dependencies\src\glad\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Window.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -45,20 +42,14 @@
     <ClCompile Include="Utilities\FileUtil.hpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Effector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Effectors\Move.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Effectors\Chop.cpp">
+    <ClCompile Include="OpenglRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Core\Window.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -83,7 +74,7 @@
     <ClInclude Include="Core\Effectors\Move.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Effectors\Chop.h">
+    <ClInclude Include="OpenglRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

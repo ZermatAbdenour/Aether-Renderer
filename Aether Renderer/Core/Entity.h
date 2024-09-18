@@ -2,12 +2,16 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <vector>
+#include "Mesh.h"
 class Entity
 {
 public:
 	const char* Name = "Entity";
 	glm::vec3 Position;
 	glm::vec3 EulerAngles;
+
+	//! I am not sur of this if every Entity Should have a mesh
+	Mesh* mesh;
 
 	//Scene Heirarchy
 	std::vector<std::shared_ptr<Entity>> Childs;

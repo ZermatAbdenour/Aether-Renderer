@@ -1,9 +1,16 @@
 #pragma once
 #include "Scene.h"
-class Renderer {
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+class Renderer{
 public:
-	Renderer();
-	void Clear();
+	Renderer()= default;
+	~Renderer() = default;
 	void Render(Scene* scene);
-private:
+	virtual GLFWwindow* Init() = 0;
+	virtual void Setup() = 0;
+	virtual void FrameSetup() = 0;
+	virtual void RenderEntity(std::shared_ptr<Entity> entity) = 0;
+	virtual void Clear() = 0;
+	int WindowWidth{ 800 }, WindowHeight{ 600 };
 };

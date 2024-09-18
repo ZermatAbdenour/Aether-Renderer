@@ -1,19 +1,18 @@
 #include <iostream>
-#include "Core/Window.h"
 #include "Core/Renderer.h"
 #include "Core/AeEngine.h"
 #include "Core/Scene.h"
 #include "Utilities/FileUtil.hpp"
 #include "Core/Effectors/Move.h"
+#include "OpenglRenderer.h"
 
 int main()
 {
-    AeEngine aetherRenderer = AeEngine();
+    OpenglRenderer* renderer = new OpenglRenderer();
+    AeEngine aetherEngine = AeEngine(renderer);
     
     Scene* scene = new Scene();
     auto ent = scene->AddEntity("var");
-    scene->AddEffector<Move>(ent);
-
-    aetherRenderer.Load(scene);
+    aetherEngine.Load(scene);
     return 0;
 }

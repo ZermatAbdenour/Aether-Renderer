@@ -29,7 +29,7 @@ std::shared_ptr<Entity> Entity::AddChild(const char* name)
 
 void Entity::PrintEntityHierarchy(int depth) {
     // Print the entity's name and position with indentation based on depth
-    std::string indent(depth * 2, ' '); // Indentation with spaces
+    std::string indent(depth * 2, ' ');
     std::cout << indent << "Name: " << Name << ", Position: ("
         << Position.x << ", "
         << Position.y << ", "

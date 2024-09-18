@@ -6,6 +6,10 @@
 
 class Scene {
 public:
+	std::vector<std::shared_ptr<Entity>> RootEntities;
+private:
+	std::vector<std::shared_ptr<Effector>> m_effectors;
+public:
 	void AddEntity(std::shared_ptr<Entity> entity);
 	std::shared_ptr<Entity> AddEntity(const char* name);
 	void RemoveEntity(std::shared_ptr<Entity> entity);
@@ -20,9 +24,6 @@ public:
 	/// Debug: Print the scene heirarchy
 	/// </summary>
 	void PrintSceneHeirarchy();
-private:
-	std::vector<std::shared_ptr<Entity>> m_rootEntities;
-	std::vector<std::shared_ptr<Effector>> m_effectors;
 };
 
 #include "Scene.inl"

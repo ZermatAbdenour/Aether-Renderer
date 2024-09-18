@@ -154,28 +154,25 @@
     <ClCompile Include="..\Dependencies\src\glad\glad.c" />
     <ClCompile Include="AetherRenderer.cpp" />
     <ClCompile Include="Core\AeEngine.cpp" />
-    <ClCompile Include="Core\Effector.cpp" />
-    <ClCompile Include="Core\Effectors\Chop.cpp" />
     <ClCompile Include="Core\Effectors\Move.cpp" />
     <ClCompile Include="Core\Entity.cpp" />
     <ClCompile Include="Core\Mesh.cpp" />
     <ClCompile Include="Core\Renderer.cpp" />
     <ClCompile Include="Core\Scene.cpp" />
     <ClCompile Include="Core\Shader.cpp" />
-    <ClCompile Include="Core\Window.cpp" />
+    <ClCompile Include="OpenglRenderer.cpp" />
     <ClCompile Include="Utilities\FileUtil.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\AeEngine.h" />
     <ClInclude Include="Core\Effector.h" />
-    <ClInclude Include="Core\Effectors\Chop.h" />
     <ClInclude Include="Core\Effectors\Move.h" />
     <ClInclude Include="Core\Entity.h" />
     <ClInclude Include="Core\Mesh.h" />
     <ClInclude Include="Core\Renderer.h" />
     <ClInclude Include="Core\Scene.h" />
     <ClInclude Include="Core\Shader.h" />
-    <ClInclude Include="Core\Window.h" />
+    <ClInclude Include="OpenglRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Core\Scene.inl" />
