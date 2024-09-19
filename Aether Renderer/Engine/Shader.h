@@ -9,10 +9,10 @@
 /// </summary>
 class Shader {
 public:
-	const char* vertexShaderSource;
-	const char* fragmentShaderSource;
+	std::string vertexShaderSource;
+	std::string fragmentShaderSource;
 public: 
 	Shader() = delete;
 	~Shader() = default;
-	Shader(const char * vertexShader,const char*fragmentShader);
+	Shader(std::string vertexShader,std::string fragmentShader);
 };

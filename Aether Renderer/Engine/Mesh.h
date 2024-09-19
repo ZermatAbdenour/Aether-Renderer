@@ -6,8 +6,8 @@
 class Mesh {
 public:
     std::vector<float> Vertices;
-    std::vector<float> Indices;
+    std::vector<unsigned int> Indices;
 public:
     Mesh() = default;
-    Mesh(std::vector<float> vertices, std::vector<float> indices);
+    Mesh(std::vector<float> vertices, std::vector<unsigned int> indices);
 };

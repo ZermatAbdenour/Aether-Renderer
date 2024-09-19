@@ -157,8 +157,8 @@
     <ClCompile Include="Engine\Effectors\Move.cpp" />
     <ClCompile Include="Engine\Entity.cpp" />
     <ClCompile Include="Engine\Mesh.cpp" />
-    <ClCompile Include="Engine\MeshRenderer.cpp" />
     <ClCompile Include="Engine\Renderer.cpp" />
+    <ClCompile Include="Engine\Ressources.cpp" />
     <ClCompile Include="Engine\Scene.cpp" />
     <ClCompile Include="Engine\Shader.cpp" />
     <ClCompile Include="Renderers\OpenglRenderer.cpp" />
@@ -172,6 +172,7 @@
     <ClInclude Include="Engine\Mesh.h" />
     <ClInclude Include="Engine\MeshRenderer.h" />
     <ClInclude Include="Engine\Renderer.h" />
+    <ClInclude Include="Engine\Ressources.h" />
     <ClInclude Include="Engine\Scene.h" />
     <ClInclude Include="Engine\Shader.h" />
     <ClInclude Include="Renderers\OpenglRenderer.h" />

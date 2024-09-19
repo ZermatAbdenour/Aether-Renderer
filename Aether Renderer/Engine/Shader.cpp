@@ -2,14 +2,12 @@
 #include <iostream>
 #include <glm/gtc/type_ptr.hpp>
 
-Shader::Shader(const char* vertexShader, const char* fragmentShader)
+Shader::Shader(std::string vertexShader, std::string fragmentShader)
 {
+	//fragment shader source
+	std::string fragmentShaderContent = ReadShaderFromFile(GetShaderPath(fragmentShader));
+	fragmentShaderSource = fragmentShaderContent;
 	//vertex shader source
 	std::string vertexShaderContent = ReadShaderFromFile(GetShaderPath(vertexShader));
-	vertexShaderSource = vertexShaderContent.c_str();
-
-	//fragment shader source
-	unsigned int fragmentID = glCreateShader(GL_FRAGMENT_SHADER);
-	std::string fragmentShaderContent = ReadShaderFromFile(GetShaderPath(fragmentShader));
-	fragmentShaderSource = fragmentShaderContent.c_str();
+	vertexShaderSource = vertexShaderContent;
 }

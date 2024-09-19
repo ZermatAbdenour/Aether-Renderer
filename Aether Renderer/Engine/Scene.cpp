@@ -31,6 +31,22 @@ void Scene::UpdateEffectors()
 	}
 }
 
+void Scene::ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& func)
+{
+	// Lambda to recursively apply the function to each entity
+	std::function<void(std::shared_ptr<Entity>)> applyFunc = [&](std::shared_ptr<Entity> entity) {
+		func(entity); 
+		for (const auto& child : entity->Childs) { 
+			applyFunc(child);
+		}
+	};
+
+	// Start with the root entities
+	for (const auto& rootEntity : RootEntities) {
+		applyFunc(rootEntity);
+	}
+}
+
 void Scene::PrintSceneHeirarchy()
 {
 	for (const auto& rootEntity : RootEntities) {

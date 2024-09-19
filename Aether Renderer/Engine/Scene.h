@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
 #include <vector>
+#include <functional>
+
 #include "Entity.h"
 #include "Effector.h"
 
@@ -20,6 +22,7 @@ public:
 	void StartEffectors();
 	void UpdateEffectors();
 
+	void ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& func);
 	/// <summary>
 	/// Debug: Print the scene heirarchy
 	/// </summary>

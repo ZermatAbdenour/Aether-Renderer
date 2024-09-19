@@ -3,18 +3,18 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-//? This two function are not tested and i feel there is something wrong
-void Renderer::RenderScene(Scene* scene)
+
+//? Like this aproach but it not tested at the moment
+void Renderer::SetupScene(Scene* scene)
 {
-	for (auto rootEntity : scene->RootEntities) {
-		RenderEntity(rootEntity);
-		RenderChildEntities(rootEntity);
-	}
+	scene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
+		SetupEntity(entity);
+	});
 }
 
-void Renderer::RenderChildEntities(std::shared_ptr<Entity> entity) {
-	for (auto childEntity : entity->Childs) {
-		RenderEntity(childEntity);
-		RenderChildEntities(childEntity);
-	}
+void Renderer::RenderScene(Scene* scene)
+{
+	scene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
+		RenderEntity(entity);
+	});
 }

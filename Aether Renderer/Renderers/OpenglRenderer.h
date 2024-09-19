@@ -15,12 +15,13 @@ public:
 		GLuint VAO;
 	};
 public:
-	std::map<Mesh*,std::shared_ptr<GLMesh>> Meshs;
-	std::map<Shader*,std::shared_ptr<GLShader>> Shaders;
+	std::unordered_map<Mesh*,std::shared_ptr<GLMesh>> Meshs;
+	std::unordered_map<Shader*,std::shared_ptr<GLShader>> Shaders;
 public:
 	GLFWwindow* Init() override;
-	void Setup(Scene* scene) override;
-	void FrameSetup() override;
+	void Setup() override;
+	void SetupEntity(std::shared_ptr<Entity> entity) override;
+	void SetupFrame() override;
 	void RenderEntity(std::shared_ptr<Entity> entity) override;
 	void Clear() override;
 	

@@ -8,12 +8,11 @@
 
 int main()
 {
-    OpenglRenderer* renderer = new OpenglRenderer();
-    AeEngine aetherEngine = AeEngine(renderer);
-    
+   OpenglRenderer* renderer = new OpenglRenderer();
+   AeEngine aetherEngine = AeEngine(renderer);
+
     Scene* scene = new Scene();
     auto ent = scene->AddEntity("var");
     aetherEngine.Load(scene);
-        
     return 0;
 }

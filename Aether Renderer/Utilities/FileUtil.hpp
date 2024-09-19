@@ -6,26 +6,26 @@
 
 namespace fs = std::filesystem;
 
-static std::string ReadShaderFromFile(std::string Path) {
-     std::string fileContent;
+static std::string ReadShaderFromFile(const std::string& Path) {
+    static std::string fileContent; // Use static to keep it alive after the function returns
+    fileContent.clear(); // Clear previous content
 
-     std::ifstream file;
-     file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-     try
-     {
-         // open files
-         file.open(Path);
-         std::stringstream stream;
-         stream << file.rdbuf();
-         file.close();
-         // convert stream into string
-         fileContent = stream.str();
-     }
-     catch (std::ifstream::failure e)
-     {
-         std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
-     }
-     return fileContent;
+    std::ifstream file;
+    file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    try {
+        // Open files
+        file.open(Path);
+        std::stringstream stream;
+        stream << file.rdbuf();
+        file.close();
+        // Convert stream into string
+        fileContent = stream.str();
+    }
+    catch (const std::ifstream::failure& e) {
+        std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ: " << e.what() << std::endl;
+        return NULL;
+    }
+    return fileContent;
 }
 
 static std::string GetImagePath(std::string name) {
@@ -33,5 +33,5 @@ static std::string GetImagePath(std::string name) {
 }
 
 static std::string GetShaderPath(std::string shaderName) {
-    return (fs::current_path() / fs::path("Core/Shaders/" + shaderName)).string();
+    return (fs::current_path() / fs::path("Engine/Shaders/" + shaderName)).string();
 }
