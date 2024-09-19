@@ -2,7 +2,8 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <vector>
-#include "Mesh.h"
+#include "MeshRenderer.h"
+
 class Entity
 {
 public:
@@ -10,8 +11,7 @@ public:
 	glm::vec3 Position;
 	glm::vec3 EulerAngles;
 
-	//! I am not sur of this if every Entity Should have a mesh
-	Mesh* mesh;
+	MeshRenderer EntityRenderer;
 
 	//Scene Heirarchy
 	std::vector<std::shared_ptr<Entity>> Childs;

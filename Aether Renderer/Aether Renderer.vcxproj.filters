@@ -21,67 +21,73 @@
     <ClCompile Include="..\Dependencies\src\glad\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Renderer.cpp">
+    <ClCompile Include="Engine\Renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\AeEngine.cpp">
+    <ClCompile Include="Engine\AeEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Entity.cpp">
+    <ClCompile Include="Engine\Entity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Scene.cpp">
+    <ClCompile Include="Engine\Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Mesh.cpp">
+    <ClCompile Include="Engine\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Shader.cpp">
+    <ClCompile Include="Engine\Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Utilities\FileUtil.hpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Effectors\Move.cpp">
+    <ClCompile Include="Engine\Effectors\Move.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenglRenderer.cpp">
+    <ClCompile Include="Renderers\OpenglRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\MeshRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Core\Renderer.h">
+    <ClInclude Include="Engine\Renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\AeEngine.h">
+    <ClInclude Include="Engine\AeEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Entity.h">
+    <ClInclude Include="Engine\Entity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Scene.h">
+    <ClInclude Include="Engine\Scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Mesh.h">
+    <ClInclude Include="Engine\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Shader.h">
+    <ClInclude Include="Engine\Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Effector.h">
+    <ClInclude Include="Engine\Effector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Effectors\Move.h">
+    <ClInclude Include="Engine\Effectors\Move.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OpenglRenderer.h">
+    <ClInclude Include="Renderers\OpenglRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\MeshRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Core\Shaders\FragmentShader.frag" />
-    <None Include="Core\Shaders\VertexShader.vert" />
-    <None Include="Core\Scene.inl">
+    <None Include="Engine\Shaders\FragmentShader.frag" />
+    <None Include="Engine\Shaders\VertexShader.vert" />
+    <None Include="Engine\Scene.inl">
       <Filter>Header Files</Filter>
     </None>
   </ItemGroup>

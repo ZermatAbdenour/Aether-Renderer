@@ -13,11 +13,11 @@ public:
 	/// <summary>
 	/// Called once before the first frame
 	/// </summary>
-	virtual void Start() {}
+	virtual void Start() = 0;
 	/// <summary>
 	/// Called once every frame after the scene is rendered
 	/// </summary>
-	virtual void Update(){}
+	virtual void Update() = 0;
 
 	std::shared_ptr<Entity> EffectedEntity;
 };

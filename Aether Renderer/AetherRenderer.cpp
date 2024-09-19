@@ -1,10 +1,10 @@
 #include <iostream>
-#include "Core/Renderer.h"
-#include "Core/AeEngine.h"
-#include "Core/Scene.h"
+#include "Engine/Renderer.h"
+#include "Engine/AeEngine.h"
+#include "Engine/Scene.h"
 #include "Utilities/FileUtil.hpp"
-#include "Core/Effectors/Move.h"
-#include "OpenglRenderer.h"
+#include "Engine/Effectors/Move.h"
+#include "Renderers/OpenglRenderer.h"
 
 int main()
 {
@@ -14,5 +14,6 @@ int main()
     Scene* scene = new Scene();
     auto ent = scene->AddEntity("var");
     aetherEngine.Load(scene);
+        
     return 0;
 }

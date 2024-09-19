@@ -6,9 +6,10 @@ class Renderer{
 public:
 	Renderer()= default;
 	~Renderer() = default;
-	void Render(Scene* scene);
+	void RenderScene(Scene* scene);
+	void RenderChildEntities(std::shared_ptr<Entity> entity);
 	virtual GLFWwindow* Init() = 0;
-	virtual void Setup() = 0;
+	virtual void Setup(Scene* scene) = 0;
 	virtual void FrameSetup() = 0;
 	virtual void RenderEntity(std::shared_ptr<Entity> entity) = 0;
 	virtual void Clear() = 0;

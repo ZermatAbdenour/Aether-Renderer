@@ -153,31 +153,33 @@
   <ItemGroup>
     <ClCompile Include="..\Dependencies\src\glad\glad.c" />
     <ClCompile Include="AetherRenderer.cpp" />
-    <ClCompile Include="Core\AeEngine.cpp" />
-    <ClCompile Include="Core\Effectors\Move.cpp" />
-    <ClCompile Include="Core\Entity.cpp" />
-    <ClCompile Include="Core\Mesh.cpp" />
-    <ClCompile Include="Core\Renderer.cpp" />
-    <ClCompile Include="Core\Scene.cpp" />
-    <ClCompile Include="Core\Shader.cpp" />
-    <ClCompile Include="OpenglRenderer.cpp" />
+    <ClCompile Include="Engine\AeEngine.cpp" />
+    <ClCompile Include="Engine\Effectors\Move.cpp" />
+    <ClCompile Include="Engine\Entity.cpp" />
+    <ClCompile Include="Engine\Mesh.cpp" />
+    <ClCompile Include="Engine\MeshRenderer.cpp" />
+    <ClCompile Include="Engine\Renderer.cpp" />
+    <ClCompile Include="Engine\Scene.cpp" />
+    <ClCompile Include="Engine\Shader.cpp" />
+    <ClCompile Include="Renderers\OpenglRenderer.cpp" />
     <ClCompile Include="Utilities\FileUtil.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Core\AeEngine.h" />
-    <ClInclude Include="Core\Effector.h" />
-    <ClInclude Include="Core\Effectors\Move.h" />
-    <ClInclude Include="Core\Entity.h" />
-    <ClInclude Include="Core\Mesh.h" />
-    <ClInclude Include="Core\Renderer.h" />
-    <ClInclude Include="Core\Scene.h" />
-    <ClInclude Include="Core\Shader.h" />
-    <ClInclude Include="OpenglRenderer.h" />
+    <ClInclude Include="Engine\AeEngine.h" />
+    <ClInclude Include="Engine\Effector.h" />
+    <ClInclude Include="Engine\Effectors\Move.h" />
+    <ClInclude Include="Engine\Entity.h" />
+    <ClInclude Include="Engine\Mesh.h" />
+    <ClInclude Include="Engine\MeshRenderer.h" />
+    <ClInclude Include="Engine\Renderer.h" />
+    <ClInclude Include="Engine\Scene.h" />
+    <ClInclude Include="Engine\Shader.h" />
+    <ClInclude Include="Renderers\OpenglRenderer.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Core\Scene.inl" />
-    <None Include="Core\Shaders\FragmentShader.frag" />
-    <None Include="Core\Shaders\VertexShader.vert" />
+    <None Include="Engine\Scene.inl" />
+    <None Include="Engine\Shaders\FragmentShader.frag" />
+    <None Include="Engine\Shaders\VertexShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
