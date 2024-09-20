@@ -1,5 +1,10 @@
 #include "Scene.h"
 
+Scene::Scene()
+{
+	camera = Camera();
+}
+
 void Scene::AddEntity(std::shared_ptr<Entity> entity)
 {
 	RootEntities.push_back(entity);

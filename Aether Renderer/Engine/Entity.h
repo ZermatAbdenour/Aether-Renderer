@@ -8,9 +8,12 @@ class Entity
 {
 public:
 	const char* Name = "Entity";
-	glm::vec3 Position;
-	glm::vec3 EulerAngles;
+	Entity* Parent;
 
+	glm::vec3 LocalPosition = glm::vec3(0);
+	glm::vec3 EulerAngles = glm::vec3(0);
+	glm::vec3 Scale = glm::vec3(1);
+	glm::mat4 Model;
 	MeshRenderer EntityRenderer;
 
 	//Scene Heirarchy
@@ -34,8 +37,11 @@ public:
 	/// </summary>
 	/// <returns></returns>
 	std::shared_ptr<Entity> AddChild(const char* name = "Entity");
+
+	void CalculateModel();
 	/// <summary>
 	/// debug: print the Entity hierarchy
 	/// </summary>
 	void PrintEntityHierarchy(int depth);
+	
 };

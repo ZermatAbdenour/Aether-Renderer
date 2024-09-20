@@ -1,5 +1,6 @@
 #include "OpenglRenderer.h"
 #include "../Utilities/FileUtil.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 GLFWwindow* OpenglRenderer::Init()
 {
@@ -49,13 +50,20 @@ void OpenglRenderer::SetupFrame()
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void OpenglRenderer::RenderEntity(std::shared_ptr<Entity> entity)
+void OpenglRenderer::RenderEntity(std::shared_ptr<Entity> entity,Scene::Camera camera)
 {
     //? This Does not feel Right I want it to access the data directly
+    //Get the shaderId and the GLMesh from the unorderedmaps
 	MeshRenderer entityRenderer = entity->EntityRenderer;
-	glUseProgram(Shaders[entityRenderer.Shader]->id);
+    GLuint shaderId = Shaders[entityRenderer.Shader];
+    std::shared_ptr<GLMesh> mesh = Meshs[entityRenderer.Mesh];
 
-	glBindVertexArray(Meshs[entityRenderer.Mesh]->VAO);
+	glUseProgram(shaderId);
+    glUniformMatrix4fv(glGetUniformLocation(shaderId, "u_model"), 1, GL_FALSE, glm::value_ptr(entity->Model));
+    glUniformMatrix4fv(glGetUniformLocation(shaderId, "u_view"), 1, GL_FALSE, glm::value_ptr(camera.view()));
+    glUniformMatrix4fv(glGetUniformLocation(shaderId, "u_projection"), 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix));
+
+	glBindVertexArray(mesh->vao);
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
@@ -66,6 +74,9 @@ void OpenglRenderer::Clear()
 }
 void OpenglRenderer::CreateShader(Shader* shader)
 {
+    //Shader Already created 
+    if (Shaders.contains(shader))
+        return;
     // Create and compile the vertex shader
     unsigned int vertexID = glCreateShader(GL_VERTEX_SHADER);
     const char* vertexShaderCode = shader->vertexShaderSource.c_str(); 
@@ -98,18 +109,17 @@ void OpenglRenderer::CreateShader(Shader* shader)
     }
 
     // Create Shader Program
-    auto glShader = std::make_shared<GLShader>();
-    glShader->id = glCreateProgram();
+    GLuint glShader = glCreateProgram();
 
     // Attach shaders to the program
-    glAttachShader(glShader->id, vertexID); 
-    glAttachShader(glShader->id, fragmentID); 
-    glLinkProgram(glShader->id);
+    glAttachShader(glShader, vertexID); 
+    glAttachShader(glShader, fragmentID); 
+    glLinkProgram(glShader);
 
     // Check for linking errors
-    glGetProgramiv(glShader->id, GL_LINK_STATUS, &success);
+    glGetProgramiv(glShader, GL_LINK_STATUS, &success);
     if (!success) {
-        glGetProgramInfoLog(glShader->id, 512, NULL, infoLog);
+        glGetProgramInfoLog(glShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
     }
 
@@ -124,20 +134,23 @@ void OpenglRenderer::CreateShader(Shader* shader)
 
 void OpenglRenderer::CreateMesh(Mesh* mesh)
 {
+    //Mesh Already created 
+    if (Meshs.contains(mesh))
+        return;
 	auto glMesh = std::make_shared<GLMesh>();
 	//Generate the Vertex Buffer Object and The Index Buffer Object
-	glGenBuffers(1, &glMesh->VBO);
-	glGenBuffers(1, &glMesh->EBO);
+	glGenBuffers(1, &glMesh->vbo);
+	glGenBuffers(1, &glMesh->ebo);
 
 	//Generate the Vertex array object
-	glGenVertexArrays(1, &glMesh->VAO);
+	glGenVertexArrays(1, &glMesh->vao);
 
-	glBindVertexArray(glMesh->VAO);
+	glBindVertexArray(glMesh->vao);
 
-	glBindBuffer(GL_ARRAY_BUFFER, glMesh->VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, glMesh->vbo);
 	glBufferData(GL_ARRAY_BUFFER, mesh->Vertices.size() * sizeof(float), mesh->Vertices.data(), GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh->EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh->ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->Indices.size() * sizeof(unsigned int), mesh->Indices.data(), GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, 3 * sizeof(float), (void*)0);

@@ -8,7 +8,6 @@ Mesh* Ressources::Primitives::Quad = new Mesh{
 		 0.5f, -0.5f, 0.0f,  // bottom right
 		-0.5f, -0.5f, 0.0f,  // bottom left
 		-0.5f,  0.5f, 0.0f   // top left 
-
 	}
 	,
 	//Indices

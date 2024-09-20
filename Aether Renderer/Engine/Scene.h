@@ -2,16 +2,36 @@
 #include <iostream>
 #include <vector>
 #include <functional>
-
 #include "Entity.h"
 #include "Effector.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 class Scene {
 public:
+	struct Camera {
+		Camera() {
+			projectionMatrix = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+			position = glm::vec3(0);
+			eulerAngles = glm::vec3(0);
+		}
+		glm::mat4 projectionMatrix;
+		glm::vec3 position;
+		glm::vec3 eulerAngles;
+		glm::mat4 view() {
+			glm::mat4 rotation = glm::eulerAngleYXZ(glm::radians(eulerAngles.y), glm::radians(eulerAngles.x), glm::radians(eulerAngles.z));
+			glm::mat4 translation = glm::translate(glm::mat4(1), -position);
+			return translation * rotation;
+		}
+	};
+public:
 	std::vector<std::shared_ptr<Entity>> RootEntities;
+	Camera camera;
 private:
 	std::vector<std::shared_ptr<Effector>> m_effectors;
 public:
+	Scene();
+	~Scene() = default;
 	void AddEntity(std::shared_ptr<Entity> entity);
 	std::shared_ptr<Entity> AddEntity(const char* name);
 	void RemoveEntity(std::shared_ptr<Entity> entity);

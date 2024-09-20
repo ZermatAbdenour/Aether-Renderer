@@ -14,7 +14,8 @@ void Renderer::SetupScene(Scene* scene)
 
 void Renderer::RenderScene(Scene* scene)
 {
-	scene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
-		RenderEntity(entity);
+	scene->ForEachEntity([this,scene](std::shared_ptr<Entity> entity) {
+		entity->CalculateModel();
+		RenderEntity(entity,scene->camera);
 	});
 }

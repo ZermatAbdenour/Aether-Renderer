@@ -6,23 +6,21 @@
 class OpenglRenderer:public Renderer
 {
 public:
-	struct GLShader {
-		GLuint id;
-	};
 	struct GLMesh {
-		GLuint VBO;
-		GLuint EBO;
-		GLuint VAO;
+		GLuint vbo;
+		GLuint ebo;
+		GLuint vao;
 	};
 public:
+	//maps so it does not pass the same data to the GPU if it detects that the data exist
 	std::unordered_map<Mesh*,std::shared_ptr<GLMesh>> Meshs;
-	std::unordered_map<Shader*,std::shared_ptr<GLShader>> Shaders;
+	std::unordered_map<Shader*,GLuint> Shaders;
 public:
 	GLFWwindow* Init() override;
 	void Setup() override;
 	void SetupEntity(std::shared_ptr<Entity> entity) override;
 	void SetupFrame() override;
-	void RenderEntity(std::shared_ptr<Entity> entity) override;
+	void RenderEntity(std::shared_ptr<Entity> entity,Scene::Camera camera) override;
 	void Clear() override;
 	
 	//Shaders
