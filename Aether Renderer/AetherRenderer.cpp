@@ -13,8 +13,8 @@ int main()
 
     Scene* scene = new Scene();
     auto ent = scene->AddEntity("var");
-    scene->camera.position = glm::vec3(0, 0, 10);
-    scene->camera.eulerAngles = glm::vec3(0, 10, 10);
+    ent->eulerAngles = glm::vec3(0, 0, 0);
+    scene->camera.position = glm::vec3(0, 0, 5);
     //scene->camera.eulerAngles = glm::vec3
     aetherEngine.Load(scene);
     return 0;

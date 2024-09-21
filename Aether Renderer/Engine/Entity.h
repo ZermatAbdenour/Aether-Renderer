@@ -8,16 +8,16 @@ class Entity
 {
 public:
 	const char* Name = "Entity";
-	Entity* Parent;
+	Entity* parent;
 
-	glm::vec3 LocalPosition = glm::vec3(0);
-	glm::vec3 EulerAngles = glm::vec3(0);
-	glm::vec3 Scale = glm::vec3(1);
-	glm::mat4 Model;
-	MeshRenderer EntityRenderer;
+	glm::vec3 localPosition = glm::vec3(0);
+	glm::vec3 eulerAngles = glm::vec3(0);
+	glm::vec3 scale = glm::vec3(1);
+	glm::mat4 model;
+	MeshRenderer entityRenderer;
 
 	//Scene Heirarchy
-	std::vector<std::shared_ptr<Entity>> Childs;
+	std::vector<std::shared_ptr<Entity>> childs;
 
 public:
 	Entity();

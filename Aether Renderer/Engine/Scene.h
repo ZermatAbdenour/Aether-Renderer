@@ -25,7 +25,7 @@ public:
 		}
 	};
 public:
-	std::vector<std::shared_ptr<Entity>> RootEntities;
+	std::vector<std::shared_ptr<Entity>> rootEntities;
 	Camera camera;
 private:
 	std::vector<std::shared_ptr<Effector>> m_effectors;

@@ -1,6 +1,7 @@
 #pragma once
 #include "../Engine/Renderer.h"
 #include "../Engine/Shader.h"
+#include "../Engine/Image.h"
 #include <map>
 
 class OpenglRenderer:public Renderer
@@ -11,10 +12,14 @@ public:
 		GLuint ebo;
 		GLuint vao;
 	};
+
 public:
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
 	std::unordered_map<Mesh*,std::shared_ptr<GLMesh>> Meshs;
-	std::unordered_map<Shader*,GLuint> Shaders;
+	std::unordered_map<Image*,GLuint> Textures;
+
+	//Shaders
+	GLuint PBRShader;
 public:
 	GLFWwindow* Init() override;
 	void Setup() override;
@@ -24,8 +29,12 @@ public:
 	void Clear() override;
 	
 	//Shaders
-	void CreateShader(Shader* shader);
+	GLuint CreateShader(Shader* shader);
 
-	//Mesh
+	//Meshs
 	void CreateMesh(Mesh* mesh);
+	std::shared_ptr<OpenglRenderer::GLMesh> GetGLMesh(Mesh* mesh);
+	//Textures
+	void CreateTexture(Image* image);
+	GLuint GetTexture(Image* image);
 };

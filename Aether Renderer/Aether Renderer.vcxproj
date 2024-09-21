@@ -156,6 +156,7 @@
     <ClCompile Include="Engine\AeEngine.cpp" />
     <ClCompile Include="Engine\Effectors\Move.cpp" />
     <ClCompile Include="Engine\Entity.cpp" />
+    <ClCompile Include="Engine\Image.cpp" />
     <ClCompile Include="Engine\Mesh.cpp" />
     <ClCompile Include="Engine\Renderer.cpp" />
     <ClCompile Include="Engine\Ressources.cpp" />
@@ -169,6 +170,7 @@
     <ClInclude Include="Engine\Effector.h" />
     <ClInclude Include="Engine\Effectors\Move.h" />
     <ClInclude Include="Engine\Entity.h" />
+    <ClInclude Include="Engine\Image.h" />
     <ClInclude Include="Engine\Mesh.h" />
     <ClInclude Include="Engine\MeshRenderer.h" />
     <ClInclude Include="Engine\Renderer.h" />

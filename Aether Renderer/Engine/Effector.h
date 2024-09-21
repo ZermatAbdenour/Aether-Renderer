@@ -19,5 +19,5 @@ public:
 	/// </summary>
 	virtual void Update() = 0;
 
-	std::shared_ptr<Entity> EffectedEntity;
+	std::shared_ptr<Entity> effectedEntity;
 };

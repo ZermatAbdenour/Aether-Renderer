@@ -1,14 +1,14 @@
 #pragma once
 #include "Mesh.h"
 #include "Shader.h"
-static class Ressources {
+class Ressources {
 public:
-	static class Primitives {
+	class Primitives {
 	public:
 		static Mesh* Quad;
 	};
 	
-	static class Shaders {
+	class Shaders {
 	public:
 		static Shader* Default;
 	};

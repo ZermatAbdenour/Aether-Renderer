@@ -10,10 +10,17 @@ Mesh* Ressources::Primitives::Quad = new Mesh{
 		-0.5f,  0.5f, 0.0f   // top left 
 	}
 	,
+	std::vector<float>{
+		1.0f,1.0f,
+		1.0f,0.0f,
+		0.0f,0.0f,
+		0.0f,1.0f
+	}
+	,
 	//Indices
 	std::vector<unsigned int>{
-		0, 1, 3,  // first Triangle
-		1, 2, 3   // second Triangle
+		0, 1, 3,  
+		1, 2, 3  
 	}
 };
 

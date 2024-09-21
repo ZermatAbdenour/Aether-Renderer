@@ -27,6 +27,6 @@ void AeEngine::Load(Scene* scene)
 AeEngine::~AeEngine()
 {
 	m_renderer->Clear();
-	delete m_window;
+	glfwDestroyWindow(m_window);
 	delete m_renderer;
 }

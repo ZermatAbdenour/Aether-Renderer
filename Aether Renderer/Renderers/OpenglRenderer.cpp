@@ -1,6 +1,6 @@
 #include "OpenglRenderer.h"
 #include "../Utilities/FileUtil.hpp"
-#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/type_ptr.hpp>s
 
 GLFWwindow* OpenglRenderer::Init()
 {
@@ -9,7 +9,7 @@ GLFWwindow* OpenglRenderer::Init()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(WindowWidth, WindowHeight, "AeEngine", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "AeEngine", NULL, NULL);
 
 	if (window == NULL)
 	{
@@ -35,13 +35,16 @@ void OpenglRenderer::Setup()
 {
 
 }
-
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 {
-	MeshRenderer entityRenderer = entity->EntityRenderer;
+	MeshRenderer entityRenderer = entity->entityRenderer;
 
-	CreateMesh(entityRenderer.Mesh);
-	CreateShader(entityRenderer.Shader);
+	CreateMesh(entityRenderer.mesh);
+	PBRShader = CreateShader(Ressources::Shaders::Default);
+    if (entityRenderer.image)
+        CreateTexture(entityRenderer.image);
+
+
 }
 
 void OpenglRenderer::SetupFrame()
@@ -53,30 +56,37 @@ void OpenglRenderer::SetupFrame()
 void OpenglRenderer::RenderEntity(std::shared_ptr<Entity> entity,Scene::Camera camera)
 {
     //? This Does not feel Right I want it to access the data directly
-    //Get the shaderId and the GLMesh from the unorderedmaps
-	MeshRenderer entityRenderer = entity->EntityRenderer;
-    GLuint shaderId = Shaders[entityRenderer.Shader];
-    std::shared_ptr<GLMesh> mesh = Meshs[entityRenderer.Mesh];
+    //Get necessary data to render entity
+	MeshRenderer entityRenderer = entity->entityRenderer;
+    std::shared_ptr<GLMesh> mesh = GetGLMesh(entityRenderer.mesh);
+    GLuint textureId = GetTexture(entityRenderer.image);
 
-	glUseProgram(shaderId);
-    glUniformMatrix4fv(glGetUniformLocation(shaderId, "u_model"), 1, GL_FALSE, glm::value_ptr(entity->Model));
-    glUniformMatrix4fv(glGetUniformLocation(shaderId, "u_view"), 1, GL_FALSE, glm::value_ptr(camera.view()));
-    glUniformMatrix4fv(glGetUniformLocation(shaderId, "u_projection"), 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix));
+	glUseProgram(PBRShader);
+    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_model"), 1, GL_FALSE, glm::value_ptr(entity->model));
+    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_view"), 1, GL_FALSE, glm::value_ptr(camera.view()));
+    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_projection"), 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix));
+    
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glActiveTexture(GL_TEXTURE0);
+
+    glUniform1i(glGetUniformLocation(PBRShader, "ourTexture"), 0);
 
 	glBindVertexArray(mesh->vao);
 
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, entityRenderer.mesh->Indices.size(), GL_UNSIGNED_INT, 0);
+
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL error: " << error << std::endl;
+    }
 }
 
 void OpenglRenderer::Clear()
 {
 
 }
-void OpenglRenderer::CreateShader(Shader* shader)
+GLuint OpenglRenderer::CreateShader(Shader* shader)
 {
-    //Shader Already created 
-    if (Shaders.contains(shader))
-        return;
     // Create and compile the vertex shader
     unsigned int vertexID = glCreateShader(GL_VERTEX_SHADER);
     const char* vertexShaderCode = shader->vertexShaderSource.c_str(); 
@@ -127,8 +137,7 @@ void OpenglRenderer::CreateShader(Shader* shader)
     glDeleteShader(vertexID);
     glDeleteShader(fragmentID);
 
-    // Insert the shader into the map
-    Shaders.insert({ shader, glShader });
+    return glShader;
 }
 
 
@@ -148,13 +157,18 @@ void OpenglRenderer::CreateMesh(Mesh* mesh)
 	glBindVertexArray(glMesh->vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, glMesh->vbo);
-	glBufferData(GL_ARRAY_BUFFER, mesh->Vertices.size() * sizeof(float), mesh->Vertices.data(), GL_STATIC_DRAW);
+
+    std::vector<float> vertexData = mesh->GetVertexData();
+	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh->ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->Indices.size() * sizeof(unsigned int), mesh->Indices.data(), GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 	//unbind the vertex array
@@ -162,4 +176,48 @@ void OpenglRenderer::CreateMesh(Mesh* mesh)
 
     // Insert the shader into the map
     Meshs.insert({ mesh, glMesh});
+}
+
+std::shared_ptr<OpenglRenderer::GLMesh> OpenglRenderer::GetGLMesh(Mesh* mesh)
+{
+    return Meshs[mesh];
+}
+
+void OpenglRenderer::CreateTexture(Image* image)
+{
+    //Shader Already created 
+    if (Textures.contains(image))
+        return;
+    if (!image) {
+        std::cout << "Failed to load texture" << std::endl;
+        return;
+    }
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    // set the texture wrapping and filtering options
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    GLenum format;
+    switch (image->NRChannels)
+    {
+    case 1: format = GL_RED;
+    case 2: format = GL_RG;
+    case 3: format = GL_RGB;
+    case 4: format = GL_RGBA;
+    default: format = GL_RGB;
+    }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, format, image->Width, image->Height, 0, format, GL_UNSIGNED_BYTE, image->data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+   
+    Textures.insert({ image,texture });
+}
+
+GLuint OpenglRenderer::GetTexture(Image* image)
+{
+    return Textures[image];
 }
