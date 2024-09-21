@@ -14,6 +14,7 @@ void AeEngine::Load(Scene* scene)
 	scene->StartEffectors();
 	while (!glfwWindowShouldClose(m_window))
 	{
+		double frameStart = glfwGetTime();
 		m_renderer->SetupFrame();
 		m_renderer->RenderScene(scene);
 
@@ -21,6 +22,8 @@ void AeEngine::Load(Scene* scene)
 
 		glfwSwapBuffers(m_window);
 		glfwPollEvents();
+		double frameTime =1/ (glfwGetTime() - frameStart);
+		std::cout << frameTime<<std::endl;
 	}
 }
 

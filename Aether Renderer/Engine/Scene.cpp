@@ -5,9 +5,10 @@ Scene::Scene()
 	camera = Camera();
 }
 
-void Scene::AddEntity(std::shared_ptr<Entity> entity)
+std::shared_ptr<Entity> Scene::AddEntity(std::shared_ptr<Entity> entity)
 {
 	rootEntities.push_back(entity);
+	return entity;
 }
 
 std::shared_ptr<Entity> Scene::AddEntity(const char* name)

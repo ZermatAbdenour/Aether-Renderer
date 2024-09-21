@@ -7,5 +7,5 @@ class MeshRenderer {
 public:
 	MeshRenderer() = default;
 	Mesh* mesh = Ressources::Primitives::Quad;
-	Image* image = Image::LoadImageFromFile("Crate.jpg",true);
+	Image* image = Ressources::LoadImageFromFile("Crate.jpg",true);
 };

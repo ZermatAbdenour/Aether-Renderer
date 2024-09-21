@@ -6,7 +6,13 @@ Entity::Entity()
 {
     parent = nullptr;
 }
+Entity::Entity(bool createRenderer) {
+    parent = nullptr;
+    if (createRenderer)
+        CreateMeshRenderer();
+}
 Entity::~Entity() {
+    CreateMeshRenderer();
     std::cout << "Entity " << Name << " destroyed" << std::endl;
 }
 
@@ -42,6 +48,11 @@ void Entity::CalculateModel()
         model = parent->model * translationMat * rotationMat * scaleMat;
     else
         model = translationMat *rotationMat * scaleMat;
+}
+
+void Entity::CreateMeshRenderer()
+{
+    meshRenderer = new MeshRenderer();
 }
 
 void Entity::PrintEntityHierarchy(int depth) {

@@ -33,7 +33,7 @@ private:
 public:
 	Scene();
 	~Scene() = default;
-	void AddEntity(std::shared_ptr<Entity> entity);
+	std::shared_ptr<Entity> AddEntity(std::shared_ptr<Entity> entity);
 	std::shared_ptr<Entity> AddEntity(const char* name);
 	void RemoveEntity(std::shared_ptr<Entity> entity);
 

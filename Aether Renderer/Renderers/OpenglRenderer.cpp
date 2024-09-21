@@ -19,6 +19,7 @@ GLFWwindow* OpenglRenderer::Init()
 		return nullptr;
 	}
 	glfwMakeContextCurrent(window);
+    glfwSwapInterval(0);//Disable VSync
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
         glViewport(0, 0, width, height);
         OpenglRenderer* renderer = static_cast<OpenglRenderer*>(glfwGetWindowUserPointer(window));
@@ -43,12 +44,14 @@ void OpenglRenderer::Setup()
 }
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 {
-	MeshRenderer entityRenderer = entity->entityRenderer;
+	MeshRenderer* meshRenderer = entity->meshRenderer;
+    if (!meshRenderer)
+        return;
 
-	CreateMesh(entityRenderer.mesh);
+	CreateMesh(meshRenderer->mesh);
 	PBRShader = CreateShader(Ressources::Shaders::Default);
-    if (entityRenderer.image)
-        CreateTexture(entityRenderer.image);
+    if (meshRenderer->image)
+        CreateTexture(meshRenderer->image);
 
 
 }
@@ -63,9 +66,11 @@ void OpenglRenderer::RenderEntity(std::shared_ptr<Entity> entity,Scene::Camera c
 {
     //? This Does not feel Right I want it to access the data directly
     //Get necessary data to render entity
-	MeshRenderer entityRenderer = entity->entityRenderer;
-    std::shared_ptr<GLMesh> mesh = GetGLMesh(entityRenderer.mesh);
-    GLuint textureId = GetTexture(entityRenderer.image);
+	MeshRenderer* meshRenderer = entity->meshRenderer;
+    if (!meshRenderer)
+        return;
+    std::shared_ptr<GLMesh> mesh = GetGLMesh(meshRenderer->mesh);
+    GLuint textureId = GetTexture(meshRenderer->image);
 
 	glUseProgram(PBRShader);
     glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_model"), 1, GL_FALSE, glm::value_ptr(entity->model));
@@ -79,7 +84,7 @@ void OpenglRenderer::RenderEntity(std::shared_ptr<Entity> entity,Scene::Camera c
 
 	glBindVertexArray(mesh->vao);
 
-	glDrawElements(GL_TRIANGLES, entityRenderer.mesh->indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, meshRenderer->mesh->indices.size(), GL_UNSIGNED_INT, 0);
 
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
@@ -131,9 +136,9 @@ GLuint OpenglRenderer::CreateShader(Shader* shader)
     glAttachShader(glShader, vertexID); 
     glAttachShader(glShader, fragmentID); 
     glLinkProgram(glShader);
+    glGetProgramiv(glShader, GL_LINK_STATUS, &success);
 
     // Check for linking errors
-    glGetProgramiv(glShader, GL_LINK_STATUS, &success);
     if (!success) {
         glGetProgramInfoLog(glShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
@@ -150,7 +155,7 @@ GLuint OpenglRenderer::CreateShader(Shader* shader)
 void OpenglRenderer::CreateMesh(Mesh* mesh)
 {
     //Mesh Already created 
-    if (Meshs.contains(mesh))
+    if (!mesh || Meshs.contains(mesh))
         return;
 	auto glMesh = std::make_shared<GLMesh>();
 	//Generate the Vertex Buffer Object and The Index Buffer Object
@@ -170,11 +175,14 @@ void OpenglRenderer::CreateMesh(Mesh* mesh)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh->ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), mesh->indices.data(), GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, 5 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)offsetof(Mesh::Vertex,uv));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)offsetof(Mesh::Vertex, normal));
     glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)offsetof(Mesh::Vertex,uv));
+    glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 	//unbind the vertex array
@@ -191,7 +199,7 @@ std::shared_ptr<OpenglRenderer::GLMesh> OpenglRenderer::GetGLMesh(Mesh* mesh)
 
 void OpenglRenderer::CreateTexture(Image* image)
 {
-    //Shader Already created 
+    //Texture Already created 
     if (Textures.contains(image))
         return;
     if (!image) {
