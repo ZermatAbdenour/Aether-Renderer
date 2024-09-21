@@ -5,11 +5,13 @@
 
 class Mesh {
 public:
-    std::vector<float> Vertices;
-    std::vector<float> Uvs;
-    std::vector<unsigned int> Indices;
+    struct Vertex {
+        glm::vec3 position;
+        glm::vec2 uv;
+    };
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
 public:
     Mesh() = default;
-    Mesh(std::vector<float> vertices, std::vector<float> uvs, std::vector<unsigned int> indices);
-    std::vector<float> GetVertexData();
+    Mesh(std::vector<Vertex> vertexData, std::vector<unsigned int> indicesData);
 };

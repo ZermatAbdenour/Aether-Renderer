@@ -79,7 +79,7 @@ void OpenglRenderer::RenderEntity(std::shared_ptr<Entity> entity,Scene::Camera c
 
 	glBindVertexArray(mesh->vao);
 
-	glDrawElements(GL_TRIANGLES, entityRenderer.mesh->Indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, entityRenderer.mesh->indices.size(), GL_UNSIGNED_INT, 0);
 
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
@@ -164,16 +164,16 @@ void OpenglRenderer::CreateMesh(Mesh* mesh)
 
 	glBindBuffer(GL_ARRAY_BUFFER, glMesh->vbo);
 
-    std::vector<float> vertexData = mesh->GetVertexData();
-	glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float), vertexData.data(), GL_STATIC_DRAW);
+
+	glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(Mesh::Vertex), mesh->vertices.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh->ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->Indices.size() * sizeof(unsigned int), mesh->Indices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), mesh->indices.data(), GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3*sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)offsetof(Mesh::Vertex,uv));
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
