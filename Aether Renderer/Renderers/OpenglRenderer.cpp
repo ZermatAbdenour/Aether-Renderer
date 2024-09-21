@@ -10,6 +10,7 @@ GLFWwindow* OpenglRenderer::Init()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "AeEngine", NULL, NULL);
+    glfwSetWindowUserPointer(window, this);
 
 	if (window == NULL)
 	{
@@ -18,9 +19,14 @@ GLFWwindow* OpenglRenderer::Init()
 		return nullptr;
 	}
 	glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window,int width,int height) {
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
         glViewport(0, 0, width, height);
-    });
+        OpenglRenderer* renderer = static_cast<OpenglRenderer*>(glfwGetWindowUserPointer(window));
+        if (renderer) {
+            renderer->windowWidth = width;
+            renderer->windowHeight = height;
+        }
+        });
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
@@ -64,7 +70,7 @@ void OpenglRenderer::RenderEntity(std::shared_ptr<Entity> entity,Scene::Camera c
 	glUseProgram(PBRShader);
     glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_model"), 1, GL_FALSE, glm::value_ptr(entity->model));
     glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_view"), 1, GL_FALSE, glm::value_ptr(camera.view()));
-    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_projection"), 1, GL_FALSE, glm::value_ptr(camera.projectionMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_projection"), 1, GL_FALSE, glm::value_ptr(camera.projection(windowWidth,windowHeight)));
     
     glBindTexture(GL_TEXTURE_2D, textureId);
     glActiveTexture(GL_TEXTURE0);
