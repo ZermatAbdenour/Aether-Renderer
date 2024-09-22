@@ -5,8 +5,16 @@
 class AeEngine {
 public:
 	AeEngine(Renderer* renderer);
-	void Load(Scene* scene);
 	~AeEngine();
+	void Load(Scene* scene);
+	GLFWwindow* GetWindow();
+	void StartFrame();
+	void EndFrame();
+	//Time
+	double time;
+	double deltaTime;
+	int FPS;
+
 private:
 	Renderer* m_renderer;
 	GLFWwindow* m_window;

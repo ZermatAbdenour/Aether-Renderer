@@ -24,7 +24,7 @@ public:
 	/// <summary>
 	/// when creating Entities sometimes we check things before creating a mesh renderer .
 	/// Setting the createRenderer to false will not create a mesh renderer at the start of the entity.
-	/// </summary>
+	/// </summary
 	Entity(bool createRenderer);
 	virtual ~Entity();
 	/// <summary>
@@ -43,6 +43,9 @@ public:
 	/// <returns></returns>
 	std::shared_ptr<Entity> AddChild(const char* name = "Entity");
 	void CalculateModel();
+	glm::vec3 GetForward();
+	glm::vec3 GetUp();
+	glm::vec3 GetRight();
 	/// <summary>
 	/// Create the Renderer
 	/// </summary>
@@ -51,5 +54,6 @@ public:
 	/// debug: print the Entity hierarchy
 	/// </summary>
 	void PrintEntityHierarchy(int depth);
+
 	
 };

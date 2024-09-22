@@ -40,7 +40,7 @@ GLFWwindow* OpenglRenderer::Init()
 
 void OpenglRenderer::Setup()
 {
-
+    glEnable(GL_DEPTH_TEST);
 }
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 {
@@ -59,10 +59,10 @@ void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 void OpenglRenderer::SetupFrame()
 {
 	glClearColor(1, 0.2, 0.1, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 }
 
-void OpenglRenderer::RenderEntity(std::shared_ptr<Entity> entity,Scene::Camera camera)
+void OpenglRenderer::RenderEntity(std::shared_ptr<Entity> entity,Camera camera)
 {
     //? This Does not feel Right I want it to access the data directly
     //Get necessary data to render entity
@@ -74,8 +74,8 @@ void OpenglRenderer::RenderEntity(std::shared_ptr<Entity> entity,Scene::Camera c
 
 	glUseProgram(PBRShader);
     glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_model"), 1, GL_FALSE, glm::value_ptr(entity->model));
-    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_view"), 1, GL_FALSE, glm::value_ptr(camera.view()));
-    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_projection"), 1, GL_FALSE, glm::value_ptr(camera.projection(windowWidth,windowHeight)));
+    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_view"), 1, GL_FALSE, glm::value_ptr(camera.View()));
+    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_projection"), 1, GL_FALSE, glm::value_ptr(camera.Projection(windowWidth,windowHeight)));
     
     glBindTexture(GL_TEXTURE_2D, textureId);
     glActiveTexture(GL_TEXTURE0);

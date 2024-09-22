@@ -49,7 +49,6 @@ std::shared_ptr<Entity> Ressources::LoadModelFromFile(std::string file)
 {
 	Assimp::Importer importer;
 	std::string modelDirectory = GetModelPath(file);
-	auto begin = clock();
 	const aiScene* scene = importer.ReadFile(modelDirectory, aiProcess_Triangulate | aiProcess_FlipUVs);
 	ModelLoadingData* loadingData = new ModelLoadingData();
 	loadingData->directory = modelDirectory.substr(0, modelDirectory.find_last_of('/'));;
@@ -79,9 +78,6 @@ std::shared_ptr<Entity> Ressources::LoadModelFromFile(std::string file)
 	}
 	auto end = clock();
 
-	double seconds = (end - begin) ;
-
-	std::cout << "loading took " << seconds << " seconds" << std::endl;
 	delete loadingData;
 	return rootEntity;
 

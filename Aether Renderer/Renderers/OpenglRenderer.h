@@ -2,6 +2,7 @@
 #include "../Engine/Renderer.h"
 #include "../Engine/Shader.h"
 #include "../Engine/Image.h"
+
 #include <map>
 
 class OpenglRenderer:public Renderer
@@ -25,7 +26,7 @@ public:
 	void Setup() override;
 	void SetupEntity(std::shared_ptr<Entity> entity) override;
 	void SetupFrame() override;
-	void RenderEntity(std::shared_ptr<Entity> entity,Scene::Camera camera) override;
+	void RenderEntity(std::shared_ptr<Entity> entity,Camera camera) override;
 	void Clear() override;
 	
 	//Shaders

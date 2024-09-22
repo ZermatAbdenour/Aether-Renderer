@@ -154,6 +154,7 @@
     <ClCompile Include="..\Dependencies\src\glad\glad.c" />
     <ClCompile Include="AetherRenderer.cpp" />
     <ClCompile Include="Engine\AeEngine.cpp" />
+    <ClCompile Include="Engine\Camera.cpp" />
     <ClCompile Include="Engine\Effectors\Move.cpp" />
     <ClCompile Include="Engine\Entity.cpp" />
     <ClCompile Include="Engine\Image.cpp" />
@@ -167,6 +168,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\AeEngine.h" />
+    <ClInclude Include="Engine\Camera.h" />
     <ClInclude Include="Engine\Effector.h" />
     <ClInclude Include="Engine\Effectors\Move.h" />
     <ClInclude Include="Engine\Entity.h" />

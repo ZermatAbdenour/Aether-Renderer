@@ -68,3 +68,18 @@ void Entity::PrintEntityHierarchy(int depth) {
         child->PrintEntityHierarchy(depth + 1);
     }
 }
+
+glm::vec3 Entity::GetForward()
+{
+    return -glm::vec3(model[2]);
+}
+
+glm::vec3 Entity::GetRight()
+{
+    return glm::vec3(model[0]);
+}
+
+glm::vec3 Entity::GetUp()
+{
+    return glm::vec3(model[1]);
+}

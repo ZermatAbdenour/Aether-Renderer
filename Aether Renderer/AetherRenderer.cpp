@@ -13,9 +13,8 @@ int main()
 
     Scene* scene = new Scene();
     auto ent = scene->AddEntity(Ressources::LoadModelFromFile("backpack/backpack.obj"));
-    ent->localPosition = glm::vec3(0, 0, -10);
+    ent->localPosition = glm::vec3(5, 0, 0);
     ent->scale = glm::vec3(1, 1, 1);
-    scene->camera.position = glm::vec3(0, 0, 0);
     //scene->camera.eulerAngles = glm::vec3
     aetherEngine.Load(scene);
     return 0;

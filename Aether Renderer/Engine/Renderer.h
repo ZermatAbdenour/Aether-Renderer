@@ -1,7 +1,9 @@
 #pragma once
-#include "Scene.h"
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include "Scene.h"
+
 class Renderer{
 public:
 	Renderer()= default;
@@ -12,7 +14,7 @@ public:
 	virtual void Setup() = 0;
 	virtual void SetupEntity(std::shared_ptr<Entity> entity) = 0;
 	virtual void SetupFrame() = 0;
-	virtual void RenderEntity(std::shared_ptr<Entity> entity,Scene::Camera camera) = 0;
+	virtual void RenderEntity(std::shared_ptr<Entity> entity,Camera camera) = 0;
 	virtual void Clear() = 0;
 	int windowWidth{ 800 }, windowHeight{ 600 };
 };

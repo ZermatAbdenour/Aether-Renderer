@@ -14,17 +14,31 @@ void AeEngine::Load(Scene* scene)
 	scene->StartEffectors();
 	while (!glfwWindowShouldClose(m_window))
 	{
-		double frameStart = glfwGetTime();
+		StartFrame();
+
+		scene->camera.ProcessInputs(m_window,deltaTime);
 		m_renderer->SetupFrame();
 		m_renderer->RenderScene(scene);
-
+	
 		scene->UpdateEffectors();
-
-		glfwSwapBuffers(m_window);
-		glfwPollEvents();
-		double frameTime =1/ (glfwGetTime() - frameStart);
-		std::cout << frameTime<<std::endl;
+		EndFrame();
 	}
+}
+
+GLFWwindow* AeEngine::GetWindow()
+{
+	return m_window;
+}
+void AeEngine::StartFrame() {
+	double currentTime = glfwGetTime();
+	deltaTime = currentTime - time;
+	time = currentTime;
+	FPS = (int)(1.0 / deltaTime);
+}
+void AeEngine::EndFrame()
+{
+	glfwSwapBuffers(m_window);
+	glfwPollEvents();
 }
 
 AeEngine::~AeEngine()
