@@ -14,7 +14,7 @@ glm::mat4 Camera::View() {
 	return glm::lookAt(position, position + getForward(), glm::vec3(0.0f, 1.0f, 0.0f));
 }
 glm::mat4 Camera::Projection(int width, int height) {
-	return glm::perspective(glm::radians(45.0f), (float)width / height, 0.1f, 100.0f);
+	return glm::perspective(glm::radians(FOV), (float)width / height, nearPlane, farPlane);
 }
 
 glm::vec3 Camera::getForward() {

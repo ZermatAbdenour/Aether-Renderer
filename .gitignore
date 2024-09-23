@@ -165,3 +165,5 @@ pip-log.txt
 #vs
 .vs/
 .vscode/
+
+Resources/Models/

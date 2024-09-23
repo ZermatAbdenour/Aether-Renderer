@@ -184,6 +184,8 @@
   <ItemGroup>
     <None Include="Engine\Scene.inl" />
     <None Include="Engine\Shaders\FragmentShader.frag" />
+    <None Include="Engine\Shaders\ScreenFragmentShader.frag" />
+    <None Include="Engine\Shaders\ScreenVertexShader.vert" />
     <None Include="Engine\Shaders\VertexShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

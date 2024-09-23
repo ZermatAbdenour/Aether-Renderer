@@ -29,11 +29,11 @@ static std::string ReadShaderFromFile(const std::string& Path) {
 }
 
 static std::string GetImagePath(std::string name) {
-    return (fs::current_path() / fs::path("Resources/Images/" + name)).string();
+    return (fs::relative((fs::current_path() / fs::path("Resources/Images"), fs::path(name)))).string();
 }
 
 static std::string GetModelPath(std::string name) {
-    return (fs::current_path() / fs::path("Resources/Models/" + name)).string();
+    return (fs::current_path() / fs::path("Resources/Models/")/fs::path(name)).string();
 }
 
 static std::string GetShaderPath(std::string shaderName) {

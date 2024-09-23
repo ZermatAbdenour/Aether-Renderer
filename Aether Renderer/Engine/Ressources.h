@@ -20,6 +20,7 @@ public:
 	class Shaders {
 	public:
 		static Shader* Default;
+		static Shader* ScreenShader;
 	};
 	/// <summary>
 	/// Load Immage from a file in the Resources/Images folder

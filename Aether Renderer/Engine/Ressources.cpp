@@ -19,6 +19,7 @@ std::vector<unsigned int>{
 );
 
 Shader* Ressources::Shaders::Default = new Shader("VertexShader.vert", "FragmentShader.frag");
+Shader* Ressources::Shaders::ScreenShader = new Shader("ScreenVertexShader.vert", "ScreenFragmentShader.frag");
 
 //Image Loading
 
@@ -29,8 +30,10 @@ Image* Ressources::LoadImageFromFile(std::string file, bool flip)
 
 	image->data = stbi_load(GetImagePath(file).c_str(), &image->Width, &image->Height, &image->NRChannels, 0);
 
-	if (!image->data)
+	if (!image->data) {
+		std::cout << file << std::endl;
 		std::cout << "Failed to load Image" << std::endl;
+	}
 	return image;
 }
 
@@ -40,7 +43,7 @@ Image* Ressources::LoadImageFromPath(std::string path, bool flip)
 	stbi_set_flip_vertically_on_load(flip);
 	image->data = stbi_load(path.c_str(), &image->Width, &image->Height, &image->NRChannels, 0);
 	if (!image->data)
-		std::cout << "Failed to load Image" << std::endl;
+		std::cout << "Failed to load Image :" << path<< std::endl;
 	return image;
 }
 

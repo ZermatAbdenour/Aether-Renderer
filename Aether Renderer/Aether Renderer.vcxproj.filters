@@ -105,5 +105,7 @@
     <None Include="Engine\Scene.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="Engine\Shaders\ScreenVertexShader.vert" />
+    <None Include="Engine\Shaders\ScreenFragmentShader.frag" />
   </ItemGroup>
 </Project>

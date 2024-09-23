@@ -21,6 +21,8 @@ void AeEngine::Load(Scene* scene)
 		m_renderer->RenderScene(scene);
 	
 		scene->UpdateEffectors();
+		m_renderer->EndFrame();
+
 		EndFrame();
 	}
 }
