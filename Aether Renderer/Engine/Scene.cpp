@@ -30,10 +30,10 @@ void Scene::StartEffectors()
 		effector->Start();
 	}
 }
-void Scene::UpdateEffectors()
+void Scene::UpdateEffectors(float deltaTime)
 {
 	for (auto effector : m_effectors) {
-		effector->Update();
+		effector->Update(deltaTime);
 	}
 }
 

@@ -24,7 +24,7 @@ public:
 	std::shared_ptr<T> AddEffector(std::shared_ptr<Entity> entity, Args&&... args);
 	//Effectors Loop
 	void StartEffectors();
-	void UpdateEffectors();
+	void UpdateEffectors(float deltaTime);
 
 	void ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& func);
 	/// <summary>

@@ -4,5 +4,5 @@ class Move:public Effector
 {
 public:
 	void Start() override;
-	void Update() override;
+	void Update(float deltaTime) override;
 };

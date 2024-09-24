@@ -17,7 +17,7 @@ public:
 	/// <summary>
 	/// Called once every frame after the scene is rendered
 	/// </summary>
-	virtual void Update() = 0;
+	virtual void Update(float deltaTime) = 0;
 
 	std::shared_ptr<Entity> effectedEntity;
 };

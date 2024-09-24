@@ -33,7 +33,7 @@ public:
 	void Setup() override;
 	void SetupEntity(std::shared_ptr<Entity> entity) override;
 	void SetupFrame() override;
-	void RenderEntity(std::shared_ptr<Entity> entity,Camera camera) override;
+	void RenderEntity(MeshRenderer* meshRenderer,glm::mat4 model,Camera camera) override;
 	void EndFrame() override;
 	void Clear() override;
 	

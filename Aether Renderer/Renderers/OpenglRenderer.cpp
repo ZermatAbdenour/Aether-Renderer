@@ -81,18 +81,14 @@ void OpenglRenderer::SetupFrame()
   
 }
 
-void OpenglRenderer::RenderEntity(std::shared_ptr<Entity> entity,Camera camera)
+void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model, Camera camera)
 {
-    //? This Does not feel Right I want it to access the data directly
-    //Get necessary data to render entity
-	MeshRenderer* meshRenderer = entity->meshRenderer;
-    if (!meshRenderer)
-        return;
+    //Get necessary data to render 
     std::shared_ptr<GLMesh> mesh = GetGLMesh(meshRenderer->mesh);
     GLuint textureId = GetTexture(meshRenderer->image);
 
 	glUseProgram(PBRShader);
-    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_model"), 1, GL_FALSE, glm::value_ptr(entity->model));
+    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_model"), 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_view"), 1, GL_FALSE, glm::value_ptr(camera.View()));
     glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_projection"), 1, GL_FALSE, glm::value_ptr(camera.Projection(windowWidth,windowHeight)));
     glUniform1f(glGetUniformLocation(PBRShader, "far"), camera.farPlane);

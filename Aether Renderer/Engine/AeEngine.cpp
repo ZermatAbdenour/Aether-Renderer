@@ -20,7 +20,7 @@ void AeEngine::Load(Scene* scene)
 		m_renderer->SetupFrame();
 		m_renderer->RenderScene(scene);
 	
-		scene->UpdateEffectors();
+		scene->UpdateEffectors(deltaTime);
 		m_renderer->EndFrame();
 
 		EndFrame();
