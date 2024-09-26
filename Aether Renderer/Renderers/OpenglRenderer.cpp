@@ -43,12 +43,32 @@ void OpenglRenderer::Setup()
 
 	PBRShader = CreateShader(Ressources::Shaders::Default);
 
-    //setup FBO
+    //Setup FBO and the Full screen quad
     {
         screenShader = CreateShader(Ressources::Shaders::ScreenShader);
         FBO = CreateFramebuffer();
         screenQuad = CreateMesh(Ressources::Primitives::Quad);
     }
+    //Setup UBOs
+    {
+        glGenBuffers(1, &matricesUBO);
+        glBindBuffer(GL_UNIFORM_BUFFER, matricesUBO);
+        glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW); //? Cheeck back the size of the biffer
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        glBindBufferBase(GL_UNIFORM_BUFFER, 0, matricesUBO);
+    }
+}
+void OpenglRenderer::SetupScene(Scene* scene)
+{
+    //Set the "matrices" UBO sub data for the projection matrix
+    {
+        glBindBuffer(GL_UNIFORM_BUFFER,matricesUBO);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),glm::value_ptr(scene->camera.Projection(windowWidth,windowHeight)));
+        glBindBuffer(GL_UNIFORM_BUFFER,0);
+    }
+
+    //Setup each entity
+    Renderer::SetupScene(scene);
 }
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 {
@@ -78,21 +98,26 @@ void OpenglRenderer::SetupFrame()
 	glClearColor(1, 0.2, 0.1, 1);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     glEnable(GL_CULL_FACE);
-  
+
+    //Set the "matrices" UBO sub data for the view matrix
+    {
+        glBindBuffer(GL_UNIFORM_BUFFER, matricesUBO);
+        glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(m_currentScene->camera.View()));
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    }
 }
 
-void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model, Camera camera)
+void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model,Camera camera)
 {
     //Get necessary data to render 
     std::shared_ptr<GLMesh> mesh = GetGLMesh(meshRenderer->mesh);
     GLuint textureId = GetTexture(meshRenderer->image);
 
 	glUseProgram(PBRShader);
-    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_model"), 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_view"), 1, GL_FALSE, glm::value_ptr(camera.View()));
-    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "u_projection"), 1, GL_FALSE, glm::value_ptr(camera.Projection(windowWidth,windowHeight)));
-    glUniform1f(glGetUniformLocation(PBRShader, "far"), camera.farPlane);
-    glUniform1f(glGetUniformLocation(PBRShader, "near"), camera.nearPlane);
+
+    glUniformMatrix4fv(glGetUniformLocation(PBRShader, "model"),1,false, glm::value_ptr(model));
+    glUniform1f(glGetUniformLocation(PBRShader, "far"), m_currentScene->camera.farPlane);
+    glUniform1f(glGetUniformLocation(PBRShader, "near"), m_currentScene->camera.nearPlane);
 
     glBindTexture(GL_TEXTURE_2D, textureId);
     glActiveTexture(GL_TEXTURE0);

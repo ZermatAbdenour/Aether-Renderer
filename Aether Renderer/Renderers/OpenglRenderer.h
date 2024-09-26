@@ -28,9 +28,13 @@ public:
 	//Shaders
 	GLuint screenShader;
 	GLuint PBRShader;
+
+	//Uniform buffer objects
+	GLuint matricesUBO;
 public:
 	GLFWwindow* Init() override;
 	void Setup() override;
+	void SetupScene(Scene* scene) override;
 	void SetupEntity(std::shared_ptr<Entity> entity) override;
 	void SetupFrame() override;
 	void RenderEntity(MeshRenderer* meshRenderer,glm::mat4 model,Camera camera) override;
