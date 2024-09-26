@@ -4,6 +4,7 @@
 
 Entity::Entity()
 {
+    CreateMeshRenderer();
     parent = nullptr;
 }
 Entity::Entity(bool createRenderer) {
@@ -12,7 +13,6 @@ Entity::Entity(bool createRenderer) {
         CreateMeshRenderer();
 }
 Entity::~Entity() {
-    CreateMeshRenderer();
     std::cout << "Entity " << Name << " destroyed" << std::endl;
 }
 

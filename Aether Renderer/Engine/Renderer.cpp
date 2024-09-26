@@ -3,17 +3,18 @@
 
 void Renderer::SetupScene(Scene* scene)
 {
+	m_currentScene = scene;
 	scene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
 		SetupEntity(entity);
 	});
 }
 
-void Renderer::RenderScene(Scene* scene)
+void Renderer::RenderScene()
 {
-	scene->ForEachEntity([this,scene](std::shared_ptr<Entity> entity) {
+	m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
 		entity->CalculateModel();
 		if (!entity->meshRenderer)
 			return;
-		RenderEntity(entity->meshRenderer,entity->model,scene->camera);
+		RenderEntity(entity->meshRenderer,entity->model,m_currentScene->camera);
 	});
 }

@@ -18,7 +18,7 @@ void AeEngine::Load(Scene* scene)
 
 		scene->camera.ProcessInputs(m_window,deltaTime);
 		m_renderer->SetupFrame();
-		m_renderer->RenderScene(scene);
+		m_renderer->RenderScene();
 	
 		scene->UpdateEffectors(deltaTime);
 		m_renderer->EndFrame();
