@@ -7,7 +7,7 @@ public:
 	float nearPlane = 0.1f;
 	float farPlane = 100.0f;
 	float FOV = 45.0f;
-	glm::vec3 position;
+	glm::vec3 position ;
 	glm::vec3 eulerAngles;
 	float speed;
 	float sensitivity;

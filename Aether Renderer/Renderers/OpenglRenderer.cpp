@@ -53,7 +53,7 @@ void OpenglRenderer::Setup()
     {
         glGenBuffers(1, &matricesUBO);
         glBindBuffer(GL_UNIFORM_BUFFER, matricesUBO);
-        glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW); //? Cheeck back the size of the biffer
+        glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4) + sizeof(glm::vec3), NULL, GL_STATIC_DRAW); //? Cheeck back the size of the biffer
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, matricesUBO);
     }
@@ -103,6 +103,7 @@ void OpenglRenderer::SetupFrame()
     {
         glBindBuffer(GL_UNIFORM_BUFFER, matricesUBO);
         glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(m_currentScene->camera.View()));
+        glBufferSubData(GL_UNIFORM_BUFFER,2* sizeof(glm::mat4), sizeof(glm::vec3), glm::value_ptr(m_currentScene->camera.position));
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 }
