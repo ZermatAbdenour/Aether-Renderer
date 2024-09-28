@@ -2,9 +2,8 @@
 #include "../Engine/Renderer.h"
 #include "../Engine/Shader.h"
 #include "../Engine/Image.h"
-
-#include <map>
-
+#include <unordered_map>
+#include <vector>
 class OpenglRenderer:public Renderer
 {
 public:
@@ -23,12 +22,16 @@ public:
 	std::shared_ptr<GLFrameBuffer> FBO;
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
 	std::unordered_map<Mesh*,std::shared_ptr<GLMesh>> Meshs;
+	std::shared_ptr<GLMesh> SkyboxMesh;
 	std::unordered_map<Image*,GLuint> Textures;
 
 	//Shaders
 	GLuint screenShader;
 	GLuint PBRShader;
+	GLuint SkyBoxShader;
 
+	//maps
+	GLuint SkyBoxMap;
 	//Uniform buffer objects
 	GLuint matricesUBO;
 public:
@@ -45,10 +48,13 @@ public:
 	GLuint CreateShader(Shader* shader);
 
 	std::shared_ptr<GLFrameBuffer> CreateFramebuffer();
+	void UpdateFrameBuffer(std::shared_ptr<OpenglRenderer::GLFrameBuffer> frameBuffer,int width,int height);
 	//Meshs
 	std::shared_ptr<GLMesh> CreateMesh(Mesh* mesh);
 	std::shared_ptr<GLMesh> GetGLMesh(Mesh* mesh);
 	//Textures
-	GLuint CreateTexture(Image* image);
+	GLuint CreateTexture(GLenum type);
+	void SetTextureData(GLenum target, Image* image);
 	GLuint GetTexture(Image* image);
+	GLuint CreateCubeMap(std::vector<std::string> faces);
 };

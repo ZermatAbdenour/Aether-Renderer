@@ -1,6 +1,7 @@
 #include "OpenglRenderer.h"
 #include "../Utilities/FileUtil.hpp"
-#include <glm/gtc/type_ptr.hpp>s
+#include <glm/gtc/type_ptr.hpp>
+#include "../Engine/Ressources.h"
 
 GLFWwindow* OpenglRenderer::Init()
 {
@@ -20,20 +21,21 @@ GLFWwindow* OpenglRenderer::Init()
 	}
 	glfwMakeContextCurrent(window);
     glfwSwapInterval(0);//Disable VSync
+
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
-        glViewport(0, 0, width, height);
         OpenglRenderer* renderer = static_cast<OpenglRenderer*>(glfwGetWindowUserPointer(window));
-        if (renderer) {
-            renderer->windowWidth = width;
-            renderer->windowHeight = height;
-        }
+        if (!renderer)
+            return;
+        renderer->UpdateFrameBuffer(renderer->FBO,width,height);
         });
+
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return nullptr;
 	}
 
+    glViewport(0, 0, windowWidth, windowHeight);
 
 	return window;
 }
@@ -53,22 +55,29 @@ void OpenglRenderer::Setup()
     {
         glGenBuffers(1, &matricesUBO);
         glBindBuffer(GL_UNIFORM_BUFFER, matricesUBO);
-        glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4) + sizeof(glm::vec3), NULL, GL_STATIC_DRAW); //? Cheeck back the size of the biffer
+        glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4) + sizeof(glm::vec3), NULL, GL_STATIC_DRAW);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, matricesUBO);
     }
 }
 void OpenglRenderer::SetupScene(Scene* scene)
 {
-    //Set the "matrices" UBO sub data for the projection matrix
-    {
-        glBindBuffer(GL_UNIFORM_BUFFER,matricesUBO);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4),glm::value_ptr(scene->camera.Projection(windowWidth,windowHeight)));
-        glBindBuffer(GL_UNIFORM_BUFFER,0);
-    }
-
     //Setup each entity
     Renderer::SetupScene(scene);
+    //Setup skybox
+    {
+        SkyBoxShader = CreateShader(Ressources::Shaders::Skybox);
+        SkyboxMesh = CreateMesh(Ressources::Primitives::Cube);
+
+        SkyBoxMap = CreateCubeMap(std::vector<std::string>{
+            "skybox/right.jpg",
+                "skybox/left.jpg",
+                "skybox/top.jpg",
+                "skybox/bottom.jpg",
+                "skybox/front.jpg",
+                "skybox/back.jpg"
+        });
+    }
 }
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 {
@@ -84,7 +93,8 @@ void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 
     //Create and add texture
     if (meshRenderer->image && !Textures.contains(meshRenderer->image)) {
-        GLuint texture = CreateTexture(meshRenderer->image);
+        GLuint texture = CreateTexture(GL_TEXTURE_2D);
+        SetTextureData(GL_TEXTURE_2D, meshRenderer->image);
         Textures.insert({ meshRenderer->image,texture });
     }
 
@@ -93,18 +103,31 @@ void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 
 void OpenglRenderer::SetupFrame()
 {
+
     glBindFramebuffer(GL_FRAMEBUFFER,FBO->id);
     glEnable(GL_DEPTH_TEST);
 	glClearColor(1, 0.2, 0.1, 1);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     glEnable(GL_CULL_FACE);
 
-    //Set the "matrices" UBO sub data for the view matrix
+    //Set the "Camera" UBO sub data 
     {
         glBindBuffer(GL_UNIFORM_BUFFER, matricesUBO);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(m_currentScene->camera.Projection(windowWidth, windowHeight)));
         glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(m_currentScene->camera.View()));
         glBufferSubData(GL_UNIFORM_BUFFER,2* sizeof(glm::mat4), sizeof(glm::vec3), glm::value_ptr(m_currentScene->camera.position));
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    }
+    //Render SkyBox
+    {
+        glDisable(GL_CULL_FACE);
+        glDepthMask(GL_FALSE);
+        glUseProgram(SkyBoxShader);
+        glBindVertexArray(SkyboxMesh->vao);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, SkyBoxMap);
+	    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        glDepthMask(GL_TRUE);
+        glEnable(GL_CULL_FACE);
     }
 }
 
@@ -113,22 +136,21 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model,Ca
     //Get necessary data to render 
     std::shared_ptr<GLMesh> mesh = GetGLMesh(meshRenderer->mesh);
     GLuint textureId = GetTexture(meshRenderer->image);
-
+    
 	glUseProgram(PBRShader);
 
     glUniformMatrix4fv(glGetUniformLocation(PBRShader, "model"),1,false, glm::value_ptr(model));
-    glUniform1f(glGetUniformLocation(PBRShader, "far"), m_currentScene->camera.farPlane);
-    glUniform1f(glGetUniformLocation(PBRShader, "near"), m_currentScene->camera.nearPlane);
 
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glActiveTexture(GL_TEXTURE0);
+    if (meshRenderer->image) {
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glActiveTexture(GL_TEXTURE0);
+    }
     
-    glUniform1i(glGetUniformLocation(PBRShader, "ourTexture"), 0);
-
 	glBindVertexArray(mesh->vao);
 
 	glDrawElements(GL_TRIANGLES, meshRenderer->mesh->indices.size(), GL_UNSIGNED_INT, 0);
 
+    glBindTexture(GL_TEXTURE_2D,0);
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
         std::cerr << "OpenGL error: " << error << std::endl;
@@ -219,11 +241,12 @@ std::shared_ptr<OpenglRenderer::GLFrameBuffer> OpenglRenderer::CreateFramebuffer
     //Color attachement
     Image fboImage = Image();
     fboImage.data = NULL;
-    fboImage.Width = windowWidth+1;
+    fboImage.Width = windowWidth;
     fboImage.Height = windowHeight;
     fboImage.NRChannels = 3;
 
-    fbo->colorAttachment = CreateTexture(&fboImage);
+    fbo->colorAttachment = CreateTexture(GL_TEXTURE_2D);
+    SetTextureData(GL_TEXTURE_2D, &fboImage);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fbo->colorAttachment, 0);
 
     //DepthStencil render buffer
@@ -239,6 +262,21 @@ std::shared_ptr<OpenglRenderer::GLFrameBuffer> OpenglRenderer::CreateFramebuffer
     glEnable(GL_DEPTH_TEST);//enable depth testing on the frame buffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     return fbo;
+}
+
+void OpenglRenderer::UpdateFrameBuffer(std::shared_ptr<OpenglRenderer::GLFrameBuffer> frameBuffer, int width, int height)
+{
+    glViewport(0, 0, width, height);
+    glBindTexture(GL_TEXTURE_2D, frameBuffer->colorAttachment);
+    Image fboImage = Image();
+    fboImage.data = NULL;
+    fboImage.Width = width;
+    fboImage.Height = height;
+    fboImage.NRChannels = 3;
+    SetTextureData(GL_TEXTURE_2D, &fboImage);
+    glBindRenderbuffer(GL_RENDERBUFFER, frameBuffer->depthStencilRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
 
@@ -286,16 +324,25 @@ std::shared_ptr<OpenglRenderer::GLMesh> OpenglRenderer::GetGLMesh(Mesh* mesh)
     return Meshs[mesh];
 }
 
-GLuint OpenglRenderer::CreateTexture(Image* image)
+GLuint OpenglRenderer::CreateTexture(GLenum type)
 {
     //Texture Already created 
     GLuint texture;
     glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(type, texture);
     // set the texture wrapping and filtering options
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
 
+    glGenerateMipmap(type);
+
+    return texture;
+}
+
+void OpenglRenderer::SetTextureData(GLenum target,Image* image)
+{
+    //!this function does not bind the texture
     GLenum format;
     switch (image->NRChannels)
     {
@@ -306,13 +353,23 @@ GLuint OpenglRenderer::CreateTexture(Image* image)
     default: format = GL_RGB;
     }
 
-    glTexImage2D(GL_TEXTURE_2D, 0, format, image->Width, image->Height, 0, format, GL_UNSIGNED_BYTE, image->data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-   
-    return texture;
+    glTexImage2D(target, 0, format, image->Width, image->Height, 0, format, GL_UNSIGNED_BYTE, image->data);
+    //glGenerateMipmap(target);
 }
 
 GLuint OpenglRenderer::GetTexture(Image* image)
 {
     return Textures[image];
+}
+
+GLuint OpenglRenderer::CreateCubeMap(std::vector<std::string> faces)
+{
+    GLuint cubeMap = CreateTexture(GL_TEXTURE_CUBE_MAP);
+    for (int i = 0;i < 6;i++) {
+        Image* faceImage = Ressources::LoadImageFromFile(faces[i],false);
+        SetTextureData(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, faceImage);
+
+        delete faceImage;
+    }
+    return cubeMap;
 }

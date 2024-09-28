@@ -12,8 +12,7 @@ int main()
    AeEngine aetherEngine = AeEngine(renderer);
 
     Scene* scene = new Scene();
-    auto ent = scene->AddEntity(Ressources::LoadModelFromFile("backpack/backpack.obj"));
-    ent->localPosition = glm::vec3(5, 0, 0);
+    auto ent = scene->AddEntity(Ressources::LoadModelFromFile("glTF-Sample-Models/2.0/FlightHelmet/glTF/FlightHelmet.gltf"));
     ent->scale = glm::vec3(1, 1, 1);
     //scene->camera.eulerAngles = glm::vec3
     aetherEngine.Load(scene);

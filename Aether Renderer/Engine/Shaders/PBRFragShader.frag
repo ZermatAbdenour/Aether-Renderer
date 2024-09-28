@@ -13,12 +13,11 @@ in VS_OUT{
     vec3 camPos;
 } fs_in;
 
-uniform material{
-    vec3  albedo;
-    float metallic;
-    float roughness;
-    float ao;
-};
+uniform sampler2D albedoMap;
+uniform sampler2D metallicMap;
+uniform sampler2D roughnessMap;
+uniform sampler2D aoMap;
+
 in vec3 worldPos;
 out vec4 fragColor;
 
@@ -77,6 +76,12 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 
 void main()
 {   
+    vec3 albedo = texture(albedoMap, fs_in.uv).rgb;
+    //vec3 normal     = getNormalFromNormalMap();
+    float metallic = texture(metallicMap, fs_in.uv).r;
+    float roughness = texture(roughnessMap, fs_in.uv).r;
+    float ao = texture(aoMap, fs_in.uv).r;
+
     vec3 N = normalize(fs_in.normal);
     vec3 V = normalize(fs_in.camPos - worldPos);
     fragColor = vec4(fs_in.camPos,1);
@@ -87,8 +92,37 @@ void main()
     for(int i = 0;i<lightPositions.length();i++){
         vec3 L = normalize(lightPositions[i] - worldPos);
         vec3 H = normalize(V + L);
-        float distance    = length(lightPositions[i] - worldPos);
+        float distance = length(lightPositions[i] - worldPos);
         float attenuation = 1.0 / (distance * distance);
-        vec3 radiance     = lightColors[i] * attenuation;    
+        vec3 radiance = lightColors[i] * attenuation;
+        //Calculate the Aprocqimation to the fresnel equation
+        vec3 F0 = vec3(0.04); 
+        F0 = mix(F0, albedo, metallic);
+        vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);  
+        //calculate the cook-torrance brdf  
+        float NDF = DistributionGGX(N, H, roughness);       
+        float G = GeometrySmith(N, V, L, roughness);
+ 
+        vec3 numerator = NDF * G * F;
+        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0)  + 0.0001;
+        vec3 specular = numerator / denominator;
+
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - metallic;
+
+        float NdotL = max(dot(N, L), 0.0);
+        //add to the Lo           
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL;  
     }
+
+    vec3 ambient = vec3(0.03) * albedo * ao;
+    vec3 color = ambient + Lo;
+	
+    color = color / (color + vec3(1.0));
+    color = pow(color, vec3(1.0/2.2));  
+
+   
+    //fragColor = vec4(color, 1.0);
+
 }

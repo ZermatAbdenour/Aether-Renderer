@@ -15,12 +15,14 @@ public:
 	class Primitives {
 	public:
 		static Mesh* Quad;
+		static Mesh* Cube;
 	};
 	
 	class Shaders {
 	public:
 		static Shader* Default;
 		static Shader* ScreenShader;
+		static Shader* Skybox;
 	};
 	/// <summary>
 	/// Load Immage from a file in the Resources/Images folder
@@ -47,6 +49,7 @@ private:
 	struct ModelLoadingData {
 		const aiScene* scene;
 		std::string directory;
+		std::string fileExtension;
 		std::unordered_map<std::string,Image*> loadedImages;
 	};
 	static void ProcessNode(aiNode* node, std::shared_ptr<Entity> parent, ModelLoadingData* loadingData);

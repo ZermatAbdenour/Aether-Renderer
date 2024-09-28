@@ -18,8 +18,55 @@ std::vector<unsigned int>{
 }
 );
 
-Shader* Ressources::Shaders::Default = new Shader("VertexShader.vert", "FragmentShader.frag");
-Shader* Ressources::Shaders::ScreenShader = new Shader("ScreenVertexShader.vert", "ScreenFragmentShader.frag");
+Mesh* Ressources::Primitives::Cube = new Mesh(
+	std::vector<Mesh::Vertex> {
+	// Front
+	Mesh::Vertex(glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(0, 1)),
+	Mesh::Vertex(glm::vec3(0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(1, 1)),
+	Mesh::Vertex(glm::vec3(0.5, 0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(1, 0)),
+	Mesh::Vertex(glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(0, 0)),
+	// Back
+	Mesh::Vertex(glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0, 0, 1), glm::vec2(0, 1)),
+	Mesh::Vertex(glm::vec3(0.5, -0.5, 0.5), glm::vec3(0, 0, 1), glm::vec2(1, 1)),
+	Mesh::Vertex(glm::vec3(0.5, 0.5, 0.5), glm::vec3(0, 0, 1), glm::vec2(1, 0)),	
+	Mesh::Vertex(glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0, 0, 1), glm::vec2(0, 0)),
+	// Left
+	Mesh::Vertex(glm::vec3(-0.5, -0.5, -0.5), glm::vec3(-1, 0, 0), glm::vec2(1, 1)),
+	Mesh::Vertex(glm::vec3(-0.5, 0.5, -0.5), glm::vec3(-1, 0, 0), glm::vec2(0, 1)),
+	Mesh::Vertex(glm::vec3(-0.5, 0.5, 0.5), glm::vec3(-1, 0, 0), glm::vec2(0, 0)),
+	Mesh::Vertex(glm::vec3(-0.5, -0.5, 0.5), glm::vec3(-1, 0, 0), glm::vec2(1, 0)),
+	// Right    
+	Mesh::Vertex(glm::vec3(0.5, -0.5, -0.5), glm::vec3(1, 0, 0), glm::vec2(0, 1)),
+	Mesh::Vertex(glm::vec3(0.5, 0.5, -0.5), glm::vec3(1, 0, 0), glm::vec2(1, 1)),
+	Mesh::Vertex(glm::vec3(0.5, 0.5, 0.5), glm::vec3(1, 0, 0), glm::vec2(1, 0)),
+	Mesh::Vertex(glm::vec3(0.5, -0.5, 0.5), glm::vec3(1, 0, 0), glm::vec2(0, 0)),
+
+	// Bottom
+	Mesh::Vertex(glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, -1, 0), glm::vec2(0, 1)),
+	Mesh::Vertex(glm::vec3(0.5, -0.5, -0.5), glm::vec3(0, -1, 0), glm::vec2(1, 1)),
+	Mesh::Vertex(glm::vec3(0.5, -0.5, 0.5), glm::vec3(0, -1, 0), glm::vec2(1, 0)),
+	Mesh::Vertex(glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0, -1, 0), glm::vec2(0, 0)),
+	// Top
+	Mesh::Vertex(glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0, 1, 0), glm::vec2(0, 1)),
+	Mesh::Vertex(glm::vec3(0.5, 0.5, -0.5), glm::vec3(0, 1, 0), glm::vec2(1, 1)),
+	Mesh::Vertex(glm::vec3(0.5, 0.5, 0.5), glm::vec3(0, 1, 0), glm::vec2(1, 0)),
+	Mesh::Vertex(glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0, 1, 0), glm::vec2(0, 0)),
+
+},
+std::vector<unsigned int>{
+	2, 1, 0, 0, 3, 2,   // Front
+	4, 5, 6, 6, 7, 4,   // Back
+	10, 9, 8, 8, 11, 10, // Left
+	12, 13, 14, 14, 15, 12, // Right
+	16, 17, 18, 18, 19, 16, // Bottom
+	22, 21, 20, 20, 23, 22  // Top
+}
+);
+
+
+Shader* Ressources::Shaders::Default = new Shader("Vertex.vert", "Fragment.frag");
+Shader* Ressources::Shaders::ScreenShader = new Shader("Screen.vert", "Screen.frag");
+Shader* Ressources::Shaders::Skybox = new Shader("Skybox.vert", "Skybox.frag");
 
 //Image Loading
 
@@ -27,12 +74,11 @@ Image* Ressources::LoadImageFromFile(std::string file, bool flip)
 {
 	Image* image = new Image();
 	stbi_set_flip_vertically_on_load(flip);
-
-	image->data = stbi_load(GetImagePath(file).c_str(), &image->Width, &image->Height, &image->NRChannels, 0);
+	std::string path = GetImagePath(file);
+	image->data = stbi_load(path.c_str(), &image->Width, &image->Height, &image->NRChannels, 0);
 
 	if (!image->data) {
-		std::cout << file << std::endl;
-		std::cout << "Failed to load Image" << std::endl;
+		std::cout << "Failed to load Image from file :" << GetImagePath(file) << std::endl;
 	}
 	return image;
 }
@@ -43,7 +89,7 @@ Image* Ressources::LoadImageFromPath(std::string path, bool flip)
 	stbi_set_flip_vertically_on_load(flip);
 	image->data = stbi_load(path.c_str(), &image->Width, &image->Height, &image->NRChannels, 0);
 	if (!image->data)
-		std::cout << "Failed to load Image :" << path<< std::endl;
+		std::cout << "Failed to load Image from path :" << path<< std::endl;
 	return image;
 }
 
@@ -51,10 +97,11 @@ Image* Ressources::LoadImageFromPath(std::string path, bool flip)
 std::shared_ptr<Entity> Ressources::LoadModelFromFile(std::string file)
 {
 	Assimp::Importer importer;
-	std::string modelDirectory = GetModelPath(file);
-	const aiScene* scene = importer.ReadFile(modelDirectory, aiProcess_Triangulate | aiProcess_FlipUVs);
+	std::string modelPath = GetModelPath(file);
+	const aiScene* scene = importer.ReadFile(modelPath, aiProcess_Triangulate | aiProcess_FlipUVs);
 	ModelLoadingData* loadingData = new ModelLoadingData();
-	loadingData->directory = modelDirectory.substr(0, modelDirectory.find_last_of('/'));;
+	loadingData->directory = modelPath.substr(0, modelPath.find_last_of('/'));
+	loadingData->fileExtension = GetFileExtension(modelPath);
 	loadingData->scene = scene;
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -119,8 +166,10 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 		glm::vec3 position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
 		vertex.position = position;
 		
-		glm::vec3 normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-		vertex.normal = normal;
+		if (mesh->mNormals) {
+			glm::vec3 normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+			vertex.normal = normal;
+		}
 
 		if (mesh->mTextureCoords[0])
 		{
@@ -147,17 +196,24 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 	if (mesh->mMaterialIndex >= 0)
 	{
 		aiMaterial* material = loadingData->scene->mMaterials[mesh->mMaterialIndex];
-		aiString str;
-		material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
-		std::string fullPath = loadingData->directory + "/" + str.C_Str();
 
-		if (!loadingData->loadedImages.contains(str.C_Str())) {
-			Image* diffuseMap = LoadImageFromPath(fullPath,true);
-			meshRenderer->image = diffuseMap;
-			loadingData->loadedImages.insert({ str.C_Str() ,diffuseMap });
-		}
-		else {
-			meshRenderer->image = loadingData->loadedImages[str.C_Str()];
+		aiString str;
+		if (material->GetTextureCount(aiTextureType_DIFFUSE)) {
+			material->GetTexture(aiTextureType_DIFFUSE, 0, &str);
+			std::string fullPath = loadingData->directory + "/" + str.C_Str();
+
+			if (!loadingData->loadedImages.contains(str.C_Str())) {
+				bool flip = true;
+				if (loadingData->fileExtension == "gltf")
+					flip = false;
+
+				Image* diffuseMap = LoadImageFromPath(fullPath, flip);
+				meshRenderer->image = diffuseMap;
+				loadingData->loadedImages.insert({ str.C_Str() ,diffuseMap });
+			}
+			else {
+				meshRenderer->image = loadingData->loadedImages[str.C_Str()];
+			}
 		}
 	}
 	

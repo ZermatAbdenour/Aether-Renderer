@@ -100,12 +100,15 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Engine\Shaders\FragmentShader.frag" />
-    <None Include="Engine\Shaders\VertexShader.vert" />
     <None Include="Engine\Scene.inl">
       <Filter>Header Files</Filter>
     </None>
-    <None Include="Engine\Shaders\ScreenVertexShader.vert" />
-    <None Include="Engine\Shaders\ScreenFragmentShader.frag" />
+    <None Include="Engine\Shaders\PBRFragShader.frag" />
+    <None Include="Engine\Shaders\Screen.frag" />
+    <None Include="Engine\Shaders\Screen.vert" />
+    <None Include="Engine\Shaders\Skybox.frag" />
+    <None Include="Engine\Shaders\Skybox.vert" />
+    <None Include="Engine\Shaders\Vertex.vert" />
+    <None Include="Engine\Shaders\Fragment.frag" />
   </ItemGroup>
 </Project>
