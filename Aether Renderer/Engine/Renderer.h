@@ -17,7 +17,7 @@ public:
 	virtual void RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model,Camera camera) = 0;
 	virtual void EndFrame() = 0;
 	virtual void Clear() = 0;
-	int windowWidth{ 800 }, windowHeight{ 600 };
+	int windowWidth{ 1000 }, windowHeight{ 800 };
 
 protected:
 	Scene* m_currentScene;
