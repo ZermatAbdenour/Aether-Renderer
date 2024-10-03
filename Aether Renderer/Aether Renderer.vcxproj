@@ -173,6 +173,7 @@
     <ClInclude Include="Engine\Effectors\Move.h" />
     <ClInclude Include="Engine\Entity.h" />
     <ClInclude Include="Engine\Image.h" />
+    <ClInclude Include="Engine\Lights.h" />
     <ClInclude Include="Engine\Mesh.h" />
     <ClInclude Include="Engine\MeshRenderer.h" />
     <ClInclude Include="Engine\Renderer.h" />

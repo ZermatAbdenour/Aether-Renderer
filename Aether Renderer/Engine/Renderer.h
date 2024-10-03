@@ -18,7 +18,7 @@ public:
 	virtual void EndFrame() = 0;
 	virtual void Clear() = 0;
 	int windowWidth{ 1000 }, windowHeight{ 800 };
-
+	
 protected:
 	Scene* m_currentScene;
 };

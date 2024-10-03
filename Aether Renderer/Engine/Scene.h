@@ -5,12 +5,15 @@
 #include "Entity.h"
 #include "Effector.h"
 #include "Camera.h"
+#include "Lights.h"
 
 class Scene {
 public:
 public:
 	std::vector<std::shared_ptr<Entity>> rootEntities;
 	Camera camera;
+	std::vector<DirectionalLight> DirectionalLights;
+	std::vector<PointLight> PointLights;
 private:
 	std::vector<std::shared_ptr<Effector>> m_effectors;
 public:

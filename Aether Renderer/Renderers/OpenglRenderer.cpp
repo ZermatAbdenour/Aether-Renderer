@@ -2,7 +2,6 @@
 #include "../Utilities/FileUtil.hpp"
 #include <glm/gtc/type_ptr.hpp>
 #include "../Engine/Ressources.h"
-
 GLFWwindow* OpenglRenderer::Init()
 {
 	glfwInit();
@@ -57,6 +56,8 @@ void OpenglRenderer::Setup()
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, matricesUBO);
     }
+
+
 }
 void OpenglRenderer::SetupScene(Scene* scene)
 {
@@ -75,6 +76,38 @@ void OpenglRenderer::SetupScene(Scene* scene)
                 "skybox/front.jpg",
                 "skybox/back.jpg"
         });
+    }
+
+    //Set the "Lights" SSBO
+    {
+        //Genereate GLLights
+        int numDirectionalLights = scene->DirectionalLights.size();
+        GLDirectionalLight directionalLights[MAX_DIRECTIONALLIGHTS];
+        for (int i = 0;i < numDirectionalLights;i++) {
+            directionalLights[i] = GLDirectionalLight(scene->DirectionalLights[i]);
+        }
+
+        int numPointLights = scene->PointLights.size();
+        GLPointLight pointLights[MAX_POINTLIGHTS];
+        for (int i = 0;i < numPointLights;i++) {
+            pointLights[i] =  GLPointLight(scene->PointLights[i]);
+        }
+
+        glGenBuffers(1, &lightsSSBO);
+        glBindBuffer(GL_UNIFORM_BUFFER, lightsSSBO);
+        glBufferData(GL_UNIFORM_BUFFER, 16 + sizeof(GLDirectionalLight) * MAX_DIRECTIONALLIGHTS + sizeof(GLPointLight) * MAX_POINTLIGHTS, nullptr, GL_DYNAMIC_DRAW);
+
+        int offset = 0;
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, 4, &numDirectionalLights);
+        glBufferSubData(GL_UNIFORM_BUFFER, 4, 4, &numPointLights);
+        offset += 16;
+        glBufferSubData(GL_UNIFORM_BUFFER, offset,sizeof(GLDirectionalLight) * MAX_DIRECTIONALLIGHTS, &directionalLights[0]);
+        offset += sizeof(GLDirectionalLight) * MAX_DIRECTIONALLIGHTS;
+        glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(GLPointLight) * MAX_POINTLIGHTS, &pointLights[0]);
+
+        glBindBufferBase(GL_UNIFORM_BUFFER, 1, lightsSSBO);
+
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 }
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)

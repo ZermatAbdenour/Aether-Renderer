@@ -20,6 +20,31 @@ public:
 		int samples;
 	};
 public:
+	//Lights
+
+	static const int MAX_DIRECTIONALLIGHTS = 5;
+	static const int MAX_POINTLIGHTS = 10;
+	struct GLPointLight {
+		glm::vec4 position;
+		glm::vec4 direction;
+		glm::vec4 color;
+		GLPointLight(PointLight pointLight) {
+			position = glm::vec4(pointLight.position,0);
+			direction = glm::vec4(pointLight.direction, 0);
+			color = pointLight.color;
+		}
+		GLPointLight() = default;
+	};
+	struct GLDirectionalLight {
+		glm::vec4 direction;
+		glm::vec4 color;
+		GLDirectionalLight(DirectionalLight directionalLight) {
+			direction = glm::vec4(directionalLight.direction,0);
+			color = directionalLight.color;
+		}
+		GLDirectionalLight() = default;
+	};
+
 	std::shared_ptr<GLMesh> screenQuad;
 	std::shared_ptr<GLFrameBuffer> screenFBO;
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
@@ -37,6 +62,10 @@ public:
 	GLuint SkyBoxMap;
 	//Uniform buffer objects
 	GLuint matricesUBO;
+
+	//Shader storage Buffer object
+	GLuint lightsSSBO;
+	
 public:
 	GLFWwindow* Init() override;
 	void Setup() override;
