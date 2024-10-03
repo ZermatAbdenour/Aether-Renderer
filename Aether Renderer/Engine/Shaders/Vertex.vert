@@ -21,11 +21,12 @@ out VS_OUT{
 
 void main(){
 
-    gl_Position =  projection * view * model * vec4(postion,1.0);
     
     worldPos = vec3(model * vec4(postion,1.0f));
+    vec3 outnormal = mat3(transpose(inverse(model))) * normal;  
 
     vs_out.uv = uv;
-    vs_out.normal = normal;
+    vs_out.normal = outnormal;
     vs_out.camPos = camPos;
+    gl_Position = projection * view * model * vec4(postion,1.0);
 }

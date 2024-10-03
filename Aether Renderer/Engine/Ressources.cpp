@@ -76,7 +76,7 @@ Image* Ressources::LoadImageFromFile(std::string file, bool flip)
 	stbi_set_flip_vertically_on_load(flip);
 	std::string path = GetImagePath(file);
 	image->data = stbi_load(path.c_str(), &image->Width, &image->Height, &image->NRChannels, 0);
-
+	image->gammaCorrect = true;
 	if (!image->data) {
 		std::cout << "Failed to load Image from file :" << GetImagePath(file) << std::endl;
 	}
@@ -88,6 +88,7 @@ Image* Ressources::LoadImageFromPath(std::string path, bool flip)
 	Image* image = new Image();
 	stbi_set_flip_vertically_on_load(flip);
 	image->data = stbi_load(path.c_str(), &image->Width, &image->Height, &image->NRChannels, 0);
+	image->gammaCorrect = true;
 	if (!image->data)
 		std::cout << "Failed to load Image from path :" << path<< std::endl;
 	return image;

@@ -404,13 +404,13 @@ void OpenglRenderer::SetTextureData(GLenum target,Image* image)
     GLenum format;
     switch (image->NRChannels)
     {
-    case 1: format = GL_RED;
-    case 2: format = GL_RG;
-    case 3: format = GL_RGB;
-    case 4: format = GL_RGBA;
-    default: format = GL_RGB;
+    case 1: format = GL_RED;break;
+    case 2: format = GL_RG;break;
+    case 3: format = image->gammaCorrect ? GL_SRGB : GL_RGB;break;
+    case 4: format = image->gammaCorrect ? GL_SRGB_ALPHA : GL_RGBA;break;
+    default: format = GL_RGB;break;
     }
-    glTexImage2D(target,0, format, image->Width, image->Height, 0, format, GL_UNSIGNED_BYTE, image->data);
+    glTexImage2D(target,0, format, image->Width, image->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
     //glGenerateMipmap(target);
 }
 
@@ -419,13 +419,13 @@ void OpenglRenderer::SetMultiSampleTextureData(GLenum target, Image* image,int s
     GLenum format;
     switch (image->NRChannels)
     {
-    case 1: format = GL_RED;
-    case 2: format = GL_RG;
-    case 3: format = GL_RGB;
-    case 4: format = GL_RGBA;
-    default: format = GL_RGB;
+    case 1: format = GL_RED;break;
+    case 2: format = GL_RG;break;
+    case 3: format = GL_RGB;break;
+    case 4: format = GL_RGBA;break;
+    default: format = GL_RGB;break;
     }
-    glTexImage2DMultisample(target, samples, format, image->Width, image->Height, GL_TRUE);
+    glTexImage2DMultisample(target, samples, GL_RGB16, image->Width, image->Height, GL_TRUE);
 }
 
 GLuint OpenglRenderer::GetTexture(Image* image)
