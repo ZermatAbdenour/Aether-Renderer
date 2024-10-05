@@ -16,7 +16,7 @@ int main()
     ent->scale = glm::vec3(1, 1, 1);
     DirectionalLight dirlight = DirectionalLight{
         glm::vec3(0,-0.5,-1),
-        glm::vec4(50,50,50,0)
+        glm::vec4(10,10,10,0)
     };
     scene->DirectionalLights.push_back(dirlight);
     PointLight light = PointLight{

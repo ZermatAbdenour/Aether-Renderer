@@ -3,7 +3,11 @@
 AeEngine::AeEngine(Renderer* renderer)
 {
 	m_renderer = renderer;
+	//initialize the renderer
 	m_window = m_renderer->Init();
+	
+	//initialize ImGui
+	m_renderer->ImGuiInit(m_window);
 
 }
 
@@ -23,6 +27,14 @@ void AeEngine::Load(Scene* scene)
 		scene->UpdateEffectors(deltaTime);
 		m_renderer->EndFrame();
 
+		ImGui::Begin("hello");
+		ImGui::SetWindowSize(ImVec2(100, 100));
+		ImGui::Text("this is cool");
+		ImGui::End();
+
+		//std::cout << FPS << std::endl;
+
+
 		EndFrame();
 	}
 }
@@ -32,6 +44,9 @@ GLFWwindow* AeEngine::GetWindow()
 	return m_window;
 }
 void AeEngine::StartFrame() {
+	//ImGui new Frame
+	m_renderer->ImGuiNewFrame();
+
 	double currentTime = glfwGetTime();
 	deltaTime = currentTime - time;
 	time = currentTime;
@@ -39,6 +54,7 @@ void AeEngine::StartFrame() {
 }
 void AeEngine::EndFrame()
 {
+	m_renderer->ImGuiRender();
 	glfwSwapBuffers(m_window);
 	glfwPollEvents();
 }

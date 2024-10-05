@@ -1,4 +1,7 @@
 #pragma once
+#include <Imgui/imgui.h>
+#include <Imgui/imgui_impl_opengl3.h>
+#include <Imgui/imgui_impl_glfw.h>
 #include "../Engine/Renderer.h"
 #include "../Engine/Shader.h"
 #include "../Engine/Image.h"
@@ -21,7 +24,6 @@ public:
 	};
 public:
 	//Lights
-
 	static const int MAX_DIRECTIONALLIGHTS = 5;
 	static const int MAX_POINTLIGHTS = 10;
 	struct GLPointLight {
@@ -44,29 +46,33 @@ public:
 		}
 		GLDirectionalLight() = default;
 	};
-
-	std::shared_ptr<GLMesh> screenQuad;
-	std::shared_ptr<GLFrameBuffer> screenFBO;
+private:
+	float m_sceneExposure = 1;
+	std::shared_ptr<GLMesh> m_screenQuad;
+	std::shared_ptr<GLFrameBuffer> m_screenFBO;
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
-	std::unordered_map<Mesh*,std::shared_ptr<GLMesh>> Meshs;
-	std::shared_ptr<GLMesh> SkyboxMesh;
-	GLuint screenTexture;
-	std::unordered_map<Image*,GLuint> Textures;
+	std::unordered_map<Mesh*,std::shared_ptr<GLMesh>> m_meshs;
+	std::shared_ptr<GLMesh> m_skyboxMesh;
+	GLuint m_screenTexture;
+	std::unordered_map<Image*,GLuint> m_textures;
 
 	//Shaders
-	GLuint screenShader;
-	GLuint PBRShader;
-	GLuint SkyBoxShader;
+	GLuint m_screenShader;
+	GLuint m_PBRShader;
+	GLuint m_skyBoxShader;
 
 	//maps
-	GLuint SkyBoxMap;
+	GLuint m_skyBoxMap;
 
 	//Uniform buffer objects
-	GLuint matricesUBO;
-	GLuint lightsUBO;
+	GLuint m_matricesUBO;
+	GLuint m_lightsUBO;
 	
 public:
 	GLFWwindow* Init() override;
+	void ImGuiInit(GLFWwindow* window) override;
+	void ImGuiNewFrame() override;
+	void ImGuiRender() override;
 	void Setup() override;
 	void SetupScene(Scene* scene) override;
 	void SetupEntity(std::shared_ptr<Entity> entity) override;

@@ -151,6 +151,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Dependencies\Include\Imgui\imgui.cpp" />
+    <ClCompile Include="..\Dependencies\Include\Imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\Dependencies\Include\Imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\Dependencies\Include\Imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\Dependencies\Include\Imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\Dependencies\Include\Imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\Dependencies\Include\Imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\Dependencies\src\glad\glad.c" />
     <ClCompile Include="AetherRenderer.cpp" />
     <ClCompile Include="Engine\AeEngine.cpp" />
@@ -167,6 +174,7 @@
     <ClCompile Include="Utilities\FileUtil.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Dependencies\Include\Imgui\imconfig.h" />
     <ClInclude Include="Engine\AeEngine.h" />
     <ClInclude Include="Engine\Camera.h" />
     <ClInclude Include="Engine\Effector.h" />

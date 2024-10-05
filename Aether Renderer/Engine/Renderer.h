@@ -10,6 +10,8 @@ public:
 	~Renderer() = default;
 	virtual void SetupScene(Scene* scene);
 	void RenderScene();
+	
+	//renderer loop
 	virtual GLFWwindow* Init() = 0;
 	virtual void Setup() = 0;
 	virtual void SetupEntity(std::shared_ptr<Entity> entity) = 0;
@@ -17,6 +19,11 @@ public:
 	virtual void RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model,Camera camera) = 0;
 	virtual void EndFrame() = 0;
 	virtual void Clear() = 0;
+	
+	//ImGui loop
+	virtual void ImGuiInit(GLFWwindow* window) = 0;
+	virtual void ImGuiNewFrame() = 0;
+	virtual void ImGuiRender() =0;
 	int windowWidth{ 1000 }, windowHeight{ 800 };
 	
 protected:
