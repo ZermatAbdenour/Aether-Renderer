@@ -31,6 +31,7 @@ in VS_OUT{
 vec3 ambiant = vec3(0.1);
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
+uniform sampler2D specularMap;
 
 in vec3 worldPos;
 out vec4 fragColor;
@@ -39,19 +40,19 @@ out vec4 fragColor;
 void main()
 {   
     vec3 normal = texture(normalMap,fs_in.uv).rgb * 2-1;
+    normal = normalize(fs_in.TBN * normal);
 
     vec3 textureSample = texture(diffuseMap,fs_in.uv).xyz;
     vec3 ambiant = textureSample * ambiant;
     vec3 lightDirection = normalize(directionalLights[0].direction.xyz);
-    normal = normalize(fs_in.TBN * normal);
 
-    float diff =dot(lightDirection,normal);
+    float diff =dot(lightDirection,-normal);
     vec3 diffuse = diff * directionalLights[0].color.xyz * textureSample; 
     vec3 viewDir = normalize(fs_in.camPos - worldPos);
-    vec3 reflectDir = reflect(directionalLights[0].direction.xyz, normal);
+    vec3 reflectDir = reflect(directionalLights[0].direction.xyz, -normal);
     float spec = 0;
     if(diff>0)  
-    spec = pow(max(dot(viewDir, reflectDir), 0.0), 10);
-    vec3 specular =  spec * directionalLights[0].color.xyz *0.1f;  
+    spec = pow(max(dot(viewDir, reflectDir), 0.01), 36);
+    vec3 specular = spec * directionalLights[0].color.xyz *texture(specularMap,fs_in.uv).xyz;  
     fragColor = vec4(ambiant + diffuse +specular,1);
 }

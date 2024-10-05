@@ -9,4 +9,5 @@ public:
 	Mesh* mesh = Ressources::Primitives::Quad;
 	Image* diffuse = nullptr;
 	Image* normalMap = nullptr;
+	Image* specularMap = nullptr;
 };

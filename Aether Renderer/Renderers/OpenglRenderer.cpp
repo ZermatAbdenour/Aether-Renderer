@@ -78,7 +78,7 @@ void OpenglRenderer::SetupScene(Scene* scene)
         });
     }
 
-    //Set the "Lights" SSBO
+    //Set the "Lights" UBO
     {
         //Genereate GLLights
         int numDirectionalLights = scene->DirectionalLights.size();
@@ -93,8 +93,8 @@ void OpenglRenderer::SetupScene(Scene* scene)
             pointLights[i] =  GLPointLight(scene->PointLights[i]);
         }
 
-        glGenBuffers(1, &lightsSSBO);
-        glBindBuffer(GL_UNIFORM_BUFFER, lightsSSBO);
+        glGenBuffers(1, &lightsUBO);
+        glBindBuffer(GL_UNIFORM_BUFFER, lightsUBO);
         glBufferData(GL_UNIFORM_BUFFER, 16 + sizeof(GLDirectionalLight) * MAX_DIRECTIONALLIGHTS + sizeof(GLPointLight) * MAX_POINTLIGHTS, nullptr, GL_DYNAMIC_DRAW);
 
         int offset = 0;
@@ -105,7 +105,7 @@ void OpenglRenderer::SetupScene(Scene* scene)
         offset += sizeof(GLDirectionalLight) * MAX_DIRECTIONALLIGHTS;
         glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(GLPointLight) * MAX_POINTLIGHTS, &pointLights[0]);
 
-        glBindBufferBase(GL_UNIFORM_BUFFER, 1, lightsSSBO);
+        glBindBufferBase(GL_UNIFORM_BUFFER, 1, lightsUBO);
 
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
@@ -186,6 +186,11 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model,Ca
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, normalTexture);
         glUniform1i(glGetUniformLocation(PBRShader, "normalMap"), 1);
+    }
+    if (meshRenderer->specularMap) {
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, normalTexture);
+        glUniform1i(glGetUniformLocation(PBRShader, "specularMap"), 2);
     }
     
 	glBindVertexArray(mesh->vao);

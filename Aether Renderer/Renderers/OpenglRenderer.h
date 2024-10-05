@@ -60,11 +60,10 @@ public:
 
 	//maps
 	GLuint SkyBoxMap;
+
 	//Uniform buffer objects
 	GLuint matricesUBO;
-
-	//Shader storage Buffer object
-	GLuint lightsSSBO;
+	GLuint lightsUBO;
 	
 public:
 	GLFWwindow* Init() override;

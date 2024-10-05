@@ -224,6 +224,7 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 			}
 		}
 
+		//normal map
 		if (material->GetTextureCount(aiTextureType_NORMALS)) {
 			material->GetTexture(aiTextureType_NORMALS, 0, &str);
 			std::string fullPath = loadingData->directory + "/" + str.C_Str();
@@ -240,6 +241,26 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 			}
 			else {
 				meshRenderer->normalMap = loadingData->loadedImages[str.C_Str()];
+			}
+		}
+
+		//specular map
+		if (material->GetTextureCount(aiTextureType_SPECULAR)) {
+			material->GetTexture(aiTextureType_SPECULAR, 0, &str);
+			std::string fullPath = loadingData->directory + "/" + str.C_Str();
+
+			if (!loadingData->loadedImages.contains(str.C_Str())) {
+				bool flip = true;
+				if (loadingData->fileExtension == "gltf")
+					flip = false;
+
+				Image* specularMap = LoadImageFromPath(fullPath, flip);
+				specularMap->gammaCorrect = false;
+				meshRenderer->specularMap = specularMap;
+				loadingData->loadedImages.insert({ str.C_Str() ,specularMap });
+			}
+			else {
+				meshRenderer->specularMap = loadingData->loadedImages[str.C_Str()];
 			}
 		}
 	}
