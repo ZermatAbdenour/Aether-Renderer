@@ -15,7 +15,7 @@ int main()
     auto ent = scene->AddEntity(Ressources::LoadModelFromFile("glTF-Sample-Models/2.0/FlightHelmet/glTF/FlightHelmet.gltf"));
     ent->scale = glm::vec3(1, 1, 1);
     DirectionalLight dirlight = DirectionalLight{
-        glm::vec3(0,-0.5,-1),
+        glm::vec3(0,-0.5,1),
         glm::vec4(1)
     };
     scene->DirectionalLights.push_back(dirlight);

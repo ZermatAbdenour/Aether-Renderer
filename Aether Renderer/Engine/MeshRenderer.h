@@ -7,5 +7,6 @@ class MeshRenderer {
 public:
 	MeshRenderer() = default;
 	Mesh* mesh = Ressources::Primitives::Quad;
-	Image* image = nullptr;
+	Image* diffuse = nullptr;
+	Image* normalMap = nullptr;
 };

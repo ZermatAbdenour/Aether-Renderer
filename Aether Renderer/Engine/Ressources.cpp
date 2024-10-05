@@ -5,12 +5,11 @@
 #include <stb/stb_image.h>
 
 Mesh* Ressources::Primitives::Quad = new Mesh(
-std::vector<Mesh::Vertex> {
-	Mesh::Vertex(glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(0, 0, 1), glm::vec2(0.0f, 0.0f)),
-	Mesh::Vertex(glm::vec3(-0.5f, 0.5f, 0.0f) , glm::vec3(0, 0, 1), glm::vec2(0.0f, 1.0f)),
-	Mesh::Vertex(glm::vec3(0.5f, 0.5f, 0.0f)  , glm::vec3(0, 0, 1), glm::vec2(1.0f, 1.0f)),
-	Mesh::Vertex(glm::vec3(0.5f, -0.5f, 0.0f) , glm::vec3(0, 0, 1), glm::vec2(1.0f, 0.0f))
-
+	std::vector<Mesh::Vertex> {
+	Mesh::Vertex(glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(0, 0, 1), glm::vec2(0.0f, 0.0f), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(-0.5f, 0.5f, 0.0f), glm::vec3(0, 0, 1), glm::vec2(0.0f, 1.0f), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(0.5f, 0.5f, 0.0f), glm::vec3(0, 0, 1), glm::vec2(1.0f, 1.0f), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(0.5f, -0.5f, 0.0f), glm::vec3(0, 0, 1), glm::vec2(1.0f, 0.0f), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0))
 },
 std::vector<unsigned int>{
 	0, 2, 1,
@@ -18,40 +17,44 @@ std::vector<unsigned int>{
 }
 );
 
+
 Mesh* Ressources::Primitives::Cube = new Mesh(
 	std::vector<Mesh::Vertex> {
 	// Front
-	Mesh::Vertex(glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(0, 1)),
-	Mesh::Vertex(glm::vec3(0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(1, 1)),
-	Mesh::Vertex(glm::vec3(0.5, 0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(1, 0)),
-	Mesh::Vertex(glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0, 0, -1), glm::vec2(0, 0)),
+	Mesh::Vertex(glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(0, 0, -1), glm::vec2(0, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0, 0, -1), glm::vec2(1, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0, 0, -1), glm::vec2(1, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(0, 0, -1), glm::vec2(0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0)),
+
 	// Back
-	Mesh::Vertex(glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0, 0, 1), glm::vec2(0, 1)),
-	Mesh::Vertex(glm::vec3(0.5, -0.5, 0.5), glm::vec3(0, 0, 1), glm::vec2(1, 1)),
-	Mesh::Vertex(glm::vec3(0.5, 0.5, 0.5), glm::vec3(0, 0, 1), glm::vec2(1, 0)),	
-	Mesh::Vertex(glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0, 0, 1), glm::vec2(0, 0)),
+	Mesh::Vertex(glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(0, 0, 1), glm::vec2(0, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(0, 0, 1), glm::vec2(1, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0, 0, 1), glm::vec2(1, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0)),	
+	Mesh::Vertex(glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(0, 0, 1), glm::vec2(0, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 1, 0)),
+
 	// Left
-	Mesh::Vertex(glm::vec3(-0.5, -0.5, -0.5), glm::vec3(-1, 0, 0), glm::vec2(1, 1)),
-	Mesh::Vertex(glm::vec3(-0.5, 0.5, -0.5), glm::vec3(-1, 0, 0), glm::vec2(0, 1)),
-	Mesh::Vertex(glm::vec3(-0.5, 0.5, 0.5), glm::vec3(-1, 0, 0), glm::vec2(0, 0)),
-	Mesh::Vertex(glm::vec3(-0.5, -0.5, 0.5), glm::vec3(-1, 0, 0), glm::vec2(1, 0)),
+	Mesh::Vertex(glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(-1, 0, 0), glm::vec2(1, 1), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(-1, 0, 0), glm::vec2(0, 1), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(-1, 0, 0), glm::vec2(0, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(-1, 0, 0), glm::vec2(1, 0), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0)),
+
 	// Right    
-	Mesh::Vertex(glm::vec3(0.5, -0.5, -0.5), glm::vec3(1, 0, 0), glm::vec2(0, 1)),
-	Mesh::Vertex(glm::vec3(0.5, 0.5, -0.5), glm::vec3(1, 0, 0), glm::vec2(1, 1)),
-	Mesh::Vertex(glm::vec3(0.5, 0.5, 0.5), glm::vec3(1, 0, 0), glm::vec2(1, 0)),
-	Mesh::Vertex(glm::vec3(0.5, -0.5, 0.5), glm::vec3(1, 0, 0), glm::vec2(0, 0)),
+	Mesh::Vertex(glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(1, 0, 0), glm::vec2(0, 1), glm::vec3(0, 0, 1), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(1, 0, 0), glm::vec2(1, 1), glm::vec3(0, 0, 1), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1, 0, 0), glm::vec2(1, 0), glm::vec3(0, 0, 1), glm::vec3(0, 1, 0)),
+	Mesh::Vertex(glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(1, 0, 0), glm::vec2(0, 0), glm::vec3(0, 0, 1), glm::vec3(0, 1, 0)),
 
 	// Bottom
-	Mesh::Vertex(glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, -1, 0), glm::vec2(0, 1)),
-	Mesh::Vertex(glm::vec3(0.5, -0.5, -0.5), glm::vec3(0, -1, 0), glm::vec2(1, 1)),
-	Mesh::Vertex(glm::vec3(0.5, -0.5, 0.5), glm::vec3(0, -1, 0), glm::vec2(1, 0)),
-	Mesh::Vertex(glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0, -1, 0), glm::vec2(0, 0)),
-	// Top
-	Mesh::Vertex(glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0, 1, 0), glm::vec2(0, 1)),
-	Mesh::Vertex(glm::vec3(0.5, 0.5, -0.5), glm::vec3(0, 1, 0), glm::vec2(1, 1)),
-	Mesh::Vertex(glm::vec3(0.5, 0.5, 0.5), glm::vec3(0, 1, 0), glm::vec2(1, 0)),
-	Mesh::Vertex(glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0, 1, 0), glm::vec2(0, 0)),
+	Mesh::Vertex(glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(0, -1, 0), glm::vec2(0, 1), glm::vec3(1, 0, 0), glm::vec3(0, 0, 1)),
+	Mesh::Vertex(glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0, -1, 0), glm::vec2(1, 1), glm::vec3(1, 0, 0), glm::vec3(0, 0, 1)),
+	Mesh::Vertex(glm::vec3(0.5f, -0.5f, 0.5f), glm::vec3(0, -1, 0), glm::vec2(1, 0), glm::vec3(1, 0, 0), glm::vec3(0, 0, 1)),
+	Mesh::Vertex(glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(0, -1, 0), glm::vec2(0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 0, 1)),
 
+	// Top
+	Mesh::Vertex(glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec3(0, 1, 0), glm::vec2(0, 1), glm::vec3(1, 0, 0), glm::vec3(0, 0, -1)),
+	Mesh::Vertex(glm::vec3(0.5f, 0.5f, -0.5f), glm::vec3(0, 1, 0), glm::vec2(1, 1), glm::vec3(1, 0, 0), glm::vec3(0, 0, -1)),
+	Mesh::Vertex(glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(0, 1, 0), glm::vec2(1, 0), glm::vec3(1, 0, 0), glm::vec3(0, 0, -1)),
+	Mesh::Vertex(glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec3(0, 1, 0), glm::vec2(0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 0, -1))
 },
 std::vector<unsigned int>{
 	2, 1, 0, 0, 3, 2,   // Front
@@ -99,7 +102,7 @@ std::shared_ptr<Entity> Ressources::LoadModelFromFile(std::string file)
 {
 	Assimp::Importer importer;
 	std::string modelPath = GetModelPath(file);
-	const aiScene* scene = importer.ReadFile(modelPath, aiProcess_Triangulate | aiProcess_FlipUVs);
+	const aiScene* scene = importer.ReadFile(modelPath, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 	ModelLoadingData* loadingData = new ModelLoadingData();
 	loadingData->directory = modelPath.substr(0, modelPath.find_last_of('/'));
 	loadingData->fileExtension = GetFileExtension(modelPath);
@@ -172,7 +175,7 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 			vertex.normal = normal;
 		}
 
-		if (mesh->mTextureCoords[0])
+		if (mesh->mTextureCoords)
 		{
 			glm::vec2 textCoord;
 			textCoord.x = mesh->mTextureCoords[0][i].x;
@@ -181,7 +184,11 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 		}
 		else
 			vertex.uv = glm::vec2(0.0f, 0.0f);
+		if (mesh->mTangents)
+			vertex.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
 
+		if (mesh->mBitangents)
+			vertex.biTangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
 		vertices.push_back(vertex);
 	}
 	// process indices
@@ -209,11 +216,30 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 					flip = false;
 
 				Image* diffuseMap = LoadImageFromPath(fullPath, flip);
-				meshRenderer->image = diffuseMap;
+				meshRenderer->diffuse = diffuseMap;
 				loadingData->loadedImages.insert({ str.C_Str() ,diffuseMap });
 			}
 			else {
-				meshRenderer->image = loadingData->loadedImages[str.C_Str()];
+				meshRenderer->diffuse = loadingData->loadedImages[str.C_Str()];
+			}
+		}
+
+		if (material->GetTextureCount(aiTextureType_NORMALS)) {
+			material->GetTexture(aiTextureType_NORMALS, 0, &str);
+			std::string fullPath = loadingData->directory + "/" + str.C_Str();
+
+			if (!loadingData->loadedImages.contains(str.C_Str())) {
+				bool flip = true;
+				if (loadingData->fileExtension == "gltf")
+					flip = false;
+
+				Image* normalMap = LoadImageFromPath(fullPath, flip);
+				normalMap->gammaCorrect = false;
+				meshRenderer->normalMap = normalMap;
+				loadingData->loadedImages.insert({ str.C_Str() ,normalMap });
+			}
+			else {
+				meshRenderer->normalMap = loadingData->loadedImages[str.C_Str()];
 			}
 		}
 	}

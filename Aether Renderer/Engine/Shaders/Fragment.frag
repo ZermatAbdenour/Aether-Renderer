@@ -24,15 +24,13 @@ uniform sampler2D ourTexture;
 
 in VS_OUT{
     vec2 uv;
-    vec3 normal;
     vec3 camPos;
+    mat3 TBN;
 } fs_in;
 
 vec3 ambiant = vec3(0.1);
 uniform sampler2D diffuseMap;
-float diffuse;
-uniform sampler2D SpecularMap;
-float shininess;
+uniform sampler2D normalMap;
 
 in vec3 worldPos;
 out vec4 fragColor;
@@ -40,10 +38,13 @@ out vec4 fragColor;
 
 void main()
 {   
+    vec3 normal = texture(normalMap,fs_in.uv).rgb * 2-1;
+
     vec3 textureSample = texture(diffuseMap,fs_in.uv).xyz;
     vec3 ambiant = textureSample * ambiant;
     vec3 lightDirection = normalize(directionalLights[0].direction.xyz);
-    vec3 normal = normalize(-fs_in.normal);
+    normal = normalize(fs_in.TBN * normal);
+
     float diff =dot(lightDirection,normal);
     vec3 diffuse = diff * directionalLights[0].color.xyz * textureSample; 
     vec3 viewDir = normalize(fs_in.camPos - worldPos);

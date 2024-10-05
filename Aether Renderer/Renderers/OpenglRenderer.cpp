@@ -122,11 +122,17 @@ void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
         Meshs.insert({ meshRenderer->mesh, glmesh });
     }
 
-    //Create and add texture
-    if (meshRenderer->image && !Textures.contains(meshRenderer->image)) {
-        GLuint texture = CreateTexture(GL_TEXTURE_2D,GL_LINEAR,GL_LINEAR);
-        SetTextureData(GL_TEXTURE_2D, meshRenderer->image);
-        Textures.insert({ meshRenderer->image,texture });
+    //Create and add textures
+    if (meshRenderer->diffuse && !Textures.contains(meshRenderer->diffuse)) {
+        GLuint diffuseTexture = CreateTexture(GL_TEXTURE_2D,GL_LINEAR,GL_LINEAR);
+        SetTextureData(GL_TEXTURE_2D, meshRenderer->diffuse);
+        Textures.insert({ meshRenderer->diffuse,diffuseTexture });
+    }
+
+    if (meshRenderer->normalMap && !Textures.contains(meshRenderer->normalMap)) {
+        GLuint normalTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR);
+        SetTextureData(GL_TEXTURE_2D, meshRenderer->normalMap);
+        Textures.insert({ meshRenderer->normalMap,normalTexture });
     }
 }
 
@@ -164,15 +170,22 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model,Ca
 {
     //Get necessary data to render 
     std::shared_ptr<GLMesh> mesh = GetGLMesh(meshRenderer->mesh);
-    GLuint textureId = GetTexture(meshRenderer->image);
-    
+    GLuint diffuseTexture = GetTexture(meshRenderer->diffuse);
+    GLuint normalTexture = GetTexture(meshRenderer->normalMap);
+
 	glUseProgram(PBRShader);
 
     glUniformMatrix4fv(glGetUniformLocation(PBRShader, "model"),1,false, glm::value_ptr(model));
 
-    if (meshRenderer->image) {
-        glBindTexture(GL_TEXTURE_2D, textureId);
+    if (meshRenderer->diffuse) {
         glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, diffuseTexture);
+        glUniform1i(glGetUniformLocation(PBRShader, "diffuseMap"), 0);
+    }
+    if (meshRenderer->normalMap) {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, normalTexture);
+        glUniform1i(glGetUniformLocation(PBRShader, "normalMap"), 1);
     }
     
 	glBindVertexArray(mesh->vao);
@@ -345,20 +358,31 @@ std::shared_ptr<OpenglRenderer::GLMesh> OpenglRenderer::CreateMesh(Mesh* mesh)
 
 	glBindBuffer(GL_ARRAY_BUFFER, glMesh->vbo);
 
-
 	glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(Mesh::Vertex), mesh->vertices.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh->ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), mesh->indices.data(), GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, 8 * sizeof(float), (void*)0);
+    
+    //position
+	glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, sizeof(Mesh::Vertex), (void*)0);
 	glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)offsetof(Mesh::Vertex, normal));
+    //normal
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Mesh::Vertex), (void*)offsetof(Mesh::Vertex, normal));
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)offsetof(Mesh::Vertex,uv));
+    //uv
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Mesh::Vertex), (void*)offsetof(Mesh::Vertex,uv));
     glEnableVertexAttribArray(2);
+
+    //tangent
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Mesh::Vertex), (void*)offsetof(Mesh::Vertex, tangent));
+    glEnableVertexAttribArray(3);
+
+    //biTangent
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Mesh::Vertex), (void*)offsetof(Mesh::Vertex, biTangent));
+    glEnableVertexAttribArray(4);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 	//unbind the vertex array

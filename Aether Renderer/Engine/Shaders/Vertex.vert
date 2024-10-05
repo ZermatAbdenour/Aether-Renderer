@@ -1,8 +1,10 @@
 #version 460 core
 
-layout(location = 0) in vec3 postion;
+layout (location = 0) in vec3 postion;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 uv;
+layout (location = 3) in vec3 tangent;
+layout (location = 4) in vec3 bitangent; 
 
 layout (std140,binding = 0) uniform Camera{
     mat4 projection;
@@ -15,18 +17,17 @@ uniform mat4 model;
 out vec3 worldPos;
 out VS_OUT{
     vec2 uv;
-    vec3 normal;
     vec3 camPos;
+    mat3 TBN;
 } vs_out;
 
 void main(){
 
-    
     worldPos = vec3(model * vec4(postion,1.0f));
-    vec3 outnormal = mat3(transpose(inverse(model))) * normal;  
-
+    
     vs_out.uv = uv;
-    vs_out.normal = outnormal;
     vs_out.camPos = camPos;
+    vs_out.TBN = mat3(model) *mat3(tangent,bitangent,normal); 
+
     gl_Position = projection * view * model * vec4(postion,1.0);
 }
