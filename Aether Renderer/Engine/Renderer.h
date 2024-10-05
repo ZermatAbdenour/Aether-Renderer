@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "Scene.h"
+#include "RendererSettings.h"
 
 class Renderer{
 public:
@@ -20,12 +21,11 @@ public:
 	virtual void EndFrame() = 0;
 	virtual void Clear() = 0;
 	
-	//ImGui loop
-	virtual void ImGuiInit(GLFWwindow* window) = 0;
-	virtual void ImGuiNewFrame() = 0;
-	virtual void ImGuiRender() =0;
+	//settings
+	virtual void RendererSettingsTab() = 0;
+
 	int windowWidth{ 1000 }, windowHeight{ 800 };
-	
+	RendererSettings settings;
 protected:
 	Scene* m_currentScene;
 };

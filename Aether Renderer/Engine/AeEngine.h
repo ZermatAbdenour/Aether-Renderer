@@ -1,6 +1,7 @@
 #pragma once
 #include "Renderer.h"
 #include "Scene.h"
+#include "Editor.h"
 #include <Imgui/imgui.h>
 class AeEngine {
 public:
@@ -16,6 +17,7 @@ public:
 	int FPS;
 
 private:
-	Renderer* m_renderer;
 	GLFWwindow* m_window;
+	Renderer* m_renderer;
+	Editor m_editor;
 };

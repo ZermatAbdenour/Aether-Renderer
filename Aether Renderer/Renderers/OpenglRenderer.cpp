@@ -34,31 +34,15 @@ GLFWwindow* OpenglRenderer::Init()
 		return nullptr;
 	}
 
-
-	return window;
-}
-
-void OpenglRenderer::ImGuiInit(GLFWwindow* window)
-{
+    //init ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();(void)io;
     ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(window,true);
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460");
-}
 
-void OpenglRenderer::ImGuiNewFrame()
-{
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-}
-
-void OpenglRenderer::ImGuiRender()
-{
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	return window;
 }
 
 
@@ -164,6 +148,13 @@ void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 
 void OpenglRenderer::SetupFrame()
 {
+    //ImGui new frame
+    {
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+    }
+
     glBindFramebuffer(GL_FRAMEBUFFER,m_screenFBO->id);
     glEnable(GL_DEPTH_TEST);
 	glClearColor(1, 0.2, 0.1, 1);
@@ -239,14 +230,26 @@ void OpenglRenderer::EndFrame()
     glUniform1i(glGetUniformLocation(m_screenShader, "samples"),m_screenFBO->samples);
     glUniform1f(glGetUniformLocation(m_screenShader, "sceneExposure"), m_sceneExposure);
 
+    //Settings
+    glUniform1i(glGetUniformLocation(m_screenShader, "gammaCorrection"), settings.gammaCorrection);
+    glUniform1f(glGetUniformLocation(m_screenShader, "gamma"), settings.gamma);
+
+    glUniform1i(glGetUniformLocation(m_screenShader, "toneMapping"), settings.toneMapping && settings.HDR);
+    glUniform1f(glGetUniformLocation(m_screenShader, "exposure"), settings.exposure);
+
     glBindVertexArray(m_screenQuad->vao);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+    //render ImGui
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void OpenglRenderer::Clear()
 {
-
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 }
 
 void OpenglRenderer::FrameBufferResizeCallBack(int width, int height)
@@ -463,8 +466,8 @@ void OpenglRenderer::SetTextureData(GLenum target,Image* image)
     {
     case 1: format = GL_RED;break;
     case 2: format = GL_RG;break;
-    case 3: format = image->gammaCorrect ? GL_SRGB : GL_RGB;break;
-    case 4: format = image->gammaCorrect ? GL_SRGB_ALPHA : GL_RGBA;break;
+    case 3: format = image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB : GL_RGB;break;
+    case 4: format = image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB_ALPHA : GL_RGBA;break;
     default: format = GL_RGB;break;
     }
     glTexImage2D(target,0, format, image->Width, image->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
@@ -482,7 +485,8 @@ void OpenglRenderer::SetMultiSampleTextureData(GLenum target, Image* image,int s
     case 4: format = GL_RGBA;break;
     default: format = GL_RGB;break;
     }
-    glTexImage2DMultisample(target, samples, GL_RGB16F, image->Width, image->Height, GL_TRUE);
+    GLenum internalFormat = settings.HDR ? GL_RGB16F : GL_RGB;
+    glTexImage2DMultisample(target, samples, internalFormat, image->Width, image->Height, GL_TRUE);
 }
 
 GLuint OpenglRenderer::GetTexture(Image* image)
@@ -500,4 +504,37 @@ GLuint OpenglRenderer::CreateCubeMap(std::vector<std::string> faces)
         delete faceImage;
     }
     return cubeMap;
+}
+
+void OpenglRenderer::RendererSettingsTab()
+{
+    if (ImGui::CollapsingHeader("Gamma Correction")) {
+        if (ImGui::Checkbox("Enable", &settings.gammaCorrection)) {
+            EnableGammaCorrection(settings.gammaCorrection);
+        }
+        if (settings.gammaCorrection)
+            ImGui::DragFloat("Gamma", &settings.gamma, 0.1f, 0.0f, 5.0f);
+    }
+    if (ImGui::CollapsingHeader("HDR")) {
+        if (ImGui::Checkbox("enable", &settings.HDR)) {
+            UpdateFrameBuffer(m_screenFBO, windowWidth, windowHeight);
+        }
+        if (settings.HDR)
+        {
+            ImGui::Checkbox("Tonemapping", &settings.toneMapping);
+            if (settings.toneMapping)
+                ImGui::DragFloat("Exposure", &settings.exposure, 0.1f, 0.0f, 5.0f);
+        }
+    }
+}
+
+void OpenglRenderer::EnableGammaCorrection(bool enable)
+{
+    for (const auto& pair : m_textures) {
+        if (pair.first->imageType == Image::ImageType::normal)
+            continue;
+        glBindTexture(GL_TEXTURE_2D, pair.second);
+        pair.first->gammaCorrect = enable;
+        SetTextureData(GL_TEXTURE_2D, pair.first);
+    }
 }

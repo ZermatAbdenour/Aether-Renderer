@@ -70,9 +70,6 @@ private:
 	
 public:
 	GLFWwindow* Init() override;
-	void ImGuiInit(GLFWwindow* window) override;
-	void ImGuiNewFrame() override;
-	void ImGuiRender() override;
 	void Setup() override;
 	void SetupScene(Scene* scene) override;
 	void SetupEntity(std::shared_ptr<Entity> entity) override;
@@ -97,4 +94,8 @@ public:
 	void SetMultiSampleTextureData(GLenum target, Image* image,int samples);
 	GLuint GetTexture(Image* image);
 	GLuint CreateCubeMap(std::vector<std::string> faces);
+
+	//Settings
+	void RendererSettingsTab() override;
+	void EnableGammaCorrection(bool enable);
 };

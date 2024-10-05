@@ -1,7 +1,7 @@
 #include "Entity.h"
 #include "Ressources.h"
 #include "../Utilities/FileUtil.hpp"
-
+#include "RendererSettings.h"
 #include <stb/stb_image.h>
 
 Mesh* Ressources::Primitives::Quad = new Mesh(
@@ -79,7 +79,7 @@ Image* Ressources::LoadImageFromFile(std::string file, bool flip)
 	stbi_set_flip_vertically_on_load(flip);
 	std::string path = GetImagePath(file);
 	image->data = stbi_load(path.c_str(), &image->Width, &image->Height, &image->NRChannels, 0);
-	image->gammaCorrect = true;
+	image->gammaCorrect = DefaultRendererSettings.gammaCorrection;
 	if (!image->data) {
 		std::cout << "Failed to load Image from file :" << GetImagePath(file) << std::endl;
 	}
@@ -91,7 +91,7 @@ Image* Ressources::LoadImageFromPath(std::string path, bool flip)
 	Image* image = new Image();
 	stbi_set_flip_vertically_on_load(flip);
 	image->data = stbi_load(path.c_str(), &image->Width, &image->Height, &image->NRChannels, 0);
-	image->gammaCorrect = true;
+	image->gammaCorrect = DefaultRendererSettings.gammaCorrection;
 	if (!image->data)
 		std::cout << "Failed to load Image from path :" << path<< std::endl;
 	return image;
@@ -236,6 +236,7 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 
 				Image* normalMap = LoadImageFromPath(fullPath, flip);
 				normalMap->gammaCorrect = false;
+				normalMap->imageType = Image::ImageType::normal;
 				meshRenderer->normalMap = normalMap;
 				loadingData->loadedImages.insert({ str.C_Str() ,normalMap });
 			}

@@ -81,6 +81,9 @@
     <ClCompile Include="..\Dependencies\Include\Imgui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Editor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Renderer.h">
@@ -127,6 +130,12 @@
     </ClInclude>
     <ClInclude Include="..\Dependencies\Include\Imgui\imconfig.h">
       <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\RendererSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Editor.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

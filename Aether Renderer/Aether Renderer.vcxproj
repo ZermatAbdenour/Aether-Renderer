@@ -162,6 +162,7 @@
     <ClCompile Include="AetherRenderer.cpp" />
     <ClCompile Include="Engine\AeEngine.cpp" />
     <ClCompile Include="Engine\Camera.cpp" />
+    <ClCompile Include="Engine\Editor.cpp" />
     <ClCompile Include="Engine\Effectors\Move.cpp" />
     <ClCompile Include="Engine\Entity.cpp" />
     <ClCompile Include="Engine\Image.cpp" />
@@ -177,6 +178,7 @@
     <ClInclude Include="..\Dependencies\Include\Imgui\imconfig.h" />
     <ClInclude Include="Engine\AeEngine.h" />
     <ClInclude Include="Engine\Camera.h" />
+    <ClInclude Include="Engine\Editor.h" />
     <ClInclude Include="Engine\Effector.h" />
     <ClInclude Include="Engine\Effectors\Move.h" />
     <ClInclude Include="Engine\Entity.h" />
@@ -185,6 +187,7 @@
     <ClInclude Include="Engine\Mesh.h" />
     <ClInclude Include="Engine\MeshRenderer.h" />
     <ClInclude Include="Engine\Renderer.h" />
+    <ClInclude Include="Engine\RendererSettings.h" />
     <ClInclude Include="Engine\Ressources.h" />
     <ClInclude Include="Engine\Scene.h" />
     <ClInclude Include="Engine\Shader.h" />
