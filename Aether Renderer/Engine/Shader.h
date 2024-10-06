@@ -15,3 +15,11 @@ public:
 	~Shader() = default;
 	Shader(std::string vertexShader,std::string fragmentShader);
 };
+class ComputeShader {
+public:
+	std::string shaderSource;
+public:
+	ComputeShader() = delete;
+	~ComputeShader() = default;
+	ComputeShader(std::string shader);
+};

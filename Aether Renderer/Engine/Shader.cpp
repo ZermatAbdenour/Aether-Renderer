@@ -11,3 +11,10 @@ Shader::Shader(std::string vertexShader, std::string fragmentShader)
 	std::string vertexShaderContent = ReadShaderFromFile(GetShaderPath(vertexShader));
 	vertexShaderSource = vertexShaderContent;
 }
+
+ComputeShader::ComputeShader(std::string shader)
+{
+	//fragment shader source
+	std::string fragmentShaderContent = ReadShaderFromFile(GetShaderPath(shader));
+	shaderSource = fragmentShaderContent;
+}

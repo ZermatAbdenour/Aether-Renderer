@@ -61,13 +61,15 @@ private:
 	GLuint m_PBRShader;
 	GLuint m_skyBoxShader;
 
+	GLuint m_autoExposureCompShader;
+
 	//maps
 	GLuint m_skyBoxMap;
 
 	//Uniform buffer objects
 	GLuint m_matricesUBO;
 	GLuint m_lightsUBO;
-	
+	GLuint m_exposureBuffer;
 public:
 	GLFWwindow* Init() override;
 	void Setup() override;
@@ -81,6 +83,8 @@ public:
 	
 	//Shaders
 	GLuint CreateShader(Shader* shader);
+
+	GLuint CreateComputeShader(ComputeShader* shader);
 
 	std::shared_ptr<GLFrameBuffer> CreateFrameBuffer(bool useDepthStencil,int samples);
 	void UpdateFrameBuffer(std::shared_ptr<OpenglRenderer::GLFrameBuffer> frameBuffer, int width, int height);

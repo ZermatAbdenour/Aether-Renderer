@@ -5,7 +5,7 @@
 GLFWwindow* OpenglRenderer::Init()
 {
 	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -66,9 +66,26 @@ void OpenglRenderer::Setup()
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_matricesUBO);
     }
+    //Setup AutoExposure
+    {
+        m_autoExposureCompShader = CreateComputeShader(Ressources::Shaders::autoExposureCompshader);
+        //Create exposure buffer
+        glGenBuffers(1, &m_exposureBuffer);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_exposureBuffer);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, 1024 * sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_exposureBuffer);
+        printf("OpenGL version: %s\n", glGetString(GL_VERSION));
+        // Run the compute shader
+        glUseProgram(m_exposureBuffer);
+        glDispatchCompute(1, 1, 1);
 
+        // Ensure all writes to the buffer are completed
+        //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    }
 
 }
+
 void OpenglRenderer::SetupScene(Scene* scene)
 {
     //Setup each entity
@@ -227,6 +244,9 @@ void OpenglRenderer::EndFrame()
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachment);
+
+
+
     glUniform1i(glGetUniformLocation(m_screenShader, "samples"),m_screenFBO->samples);
     glUniform1f(glGetUniformLocation(m_screenShader, "sceneExposure"), m_sceneExposure);
 
@@ -312,6 +332,38 @@ GLuint OpenglRenderer::CreateShader(Shader* shader)
     glDeleteShader(fragmentID);
 
     return glShader;
+}
+
+GLuint OpenglRenderer::CreateComputeShader(ComputeShader* shader)
+{
+    GLuint compute = glCreateShader(GL_COMPUTE_SHADER);
+    const char* source = shader->shaderSource.c_str();
+    glShaderSource(compute, 1, &source, NULL);
+    glCompileShader(compute);
+
+    // Check for compilation errors
+    GLint success;
+    glGetShaderiv(compute, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetShaderInfoLog(compute, 512, NULL, infoLog);
+        printf("ERROR::SHADER::COMPUTE::COMPILATION_FAILED\n%s\n", infoLog);
+    }
+
+    GLuint program = glCreateProgram();
+    glAttachShader(program, compute);
+    glLinkProgram(program);
+
+    // Check for linking errors
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        printf("ERROR::SHADER::PROGRAM::LINKING_FAILED\n%s\n", infoLog);
+    }
+
+    glDeleteShader(compute); // We no longer need the shader object after linking
+    return program; 
 }
 
 
@@ -439,7 +491,6 @@ GLuint OpenglRenderer::CreateTexture(GLenum type)
     glGenTextures(1, &texture);
     glBindTexture(type, texture);
 
-    glGenerateMipmap(type);
     return texture;
 }
 
@@ -454,7 +505,6 @@ GLuint OpenglRenderer::CreateTexture(GLenum type, GLenum minFilter, GLenum magFi
     glTexParameteri(type, GL_TEXTURE_MIN_FILTER, minFilter);
     glTexParameteri(type, GL_TEXTURE_MAG_FILTER, magFilter);
 
-    glGenerateMipmap(type);
     return texture;
 }
 
@@ -471,7 +521,7 @@ void OpenglRenderer::SetTextureData(GLenum target,Image* image)
     default: format = GL_RGB;break;
     }
     glTexImage2D(target,0, format, image->Width, image->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
-    //glGenerateMipmap(target);
+    glGenerateMipmap(target);
 }
 
 void OpenglRenderer::SetMultiSampleTextureData(GLenum target, Image* image,int samples)
