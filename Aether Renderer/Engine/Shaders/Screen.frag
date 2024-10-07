@@ -12,6 +12,7 @@ uniform bool gammaCorrection;
 uniform float gamma;
 
 out vec4 fragColor;
+
 void main(){
     ivec2 textureCoord = ivec2(gl_FragCoord);
 

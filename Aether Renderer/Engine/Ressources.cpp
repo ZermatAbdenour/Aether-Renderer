@@ -70,7 +70,6 @@ std::vector<unsigned int>{
 Shader* Ressources::Shaders::Default = new Shader("Vertex.vert", "Fragment.frag");
 Shader* Ressources::Shaders::ScreenShader = new Shader("Screen.vert", "Screen.frag");
 Shader* Ressources::Shaders::Skybox = new Shader("Skybox.vert", "Skybox.frag");
-ComputeShader* Ressources::Shaders::autoExposureCompshader = new ComputeShader("AutoExposure.comp");
 //Image Loading
 
 Image* Ressources::LoadImageFromFile(std::string file, bool flip)

@@ -17,9 +17,9 @@ public:
 	};
 	struct GLFrameBuffer {
 		GLuint id;
-		GLuint colorAttachment;
+		std::vector<GLuint> colorAttachments;
 		GLuint depthStencilRBO;
-		int width, height;
+		Image* image;
 		int samples;
 	};
 public:
@@ -50,10 +50,11 @@ private:
 	float m_sceneExposure = 1;
 	std::shared_ptr<GLMesh> m_screenQuad;
 	std::shared_ptr<GLFrameBuffer> m_screenFBO;
+	std::shared_ptr<GLFrameBuffer> m_pingpongFBOs[2];
+	std::shared_ptr<GLFrameBuffer> m_pingpongBuffers[2];
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
 	std::unordered_map<Mesh*,std::shared_ptr<GLMesh>> m_meshs;
 	std::shared_ptr<GLMesh> m_skyboxMesh;
-	GLuint m_screenTexture;
 	std::unordered_map<Image*,GLuint> m_textures;
 
 	//Shaders
@@ -69,7 +70,6 @@ private:
 	//Uniform buffer objects
 	GLuint m_matricesUBO;
 	GLuint m_lightsUBO;
-	GLuint m_exposureBuffer;
 public:
 	GLFWwindow* Init() override;
 	void Setup() override;
@@ -86,8 +86,10 @@ public:
 
 	GLuint CreateComputeShader(ComputeShader* shader);
 
-	std::shared_ptr<GLFrameBuffer> CreateFrameBuffer(bool useDepthStencil,int samples);
-	void UpdateFrameBuffer(std::shared_ptr<OpenglRenderer::GLFrameBuffer> frameBuffer, int width, int height);
+	std::shared_ptr<GLFrameBuffer> CreateFrameBuffer();
+	void SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,int width,int height,int colorAttachmentsCount, int NRChannels,bool useDepthStencil, int sample);
+	//std::shared_ptr<GLFrameBuffer> CreateScreenFrameBuffer(bool useDepthStencil,int samples);
+	//void UpdateScreenFrameBuffer(std::shared_ptr<OpenglRenderer::GLFrameBuffer> frameBuffer, int width, int height);
 	//Meshs
 	std::shared_ptr<GLMesh> CreateMesh(Mesh* mesh);
 	std::shared_ptr<GLMesh> GetGLMesh(Mesh* mesh);

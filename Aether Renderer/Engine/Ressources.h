@@ -23,7 +23,6 @@ public:
 		static Shader* Default;
 		static Shader* ScreenShader;
 		static Shader* Skybox;
-		static ComputeShader* autoExposureCompshader;
 	};
 	/// <summary>
 	/// Load Immage from a file in the Resources/Images folder

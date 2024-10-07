@@ -20,8 +20,6 @@ layout(std140,binding = 1) uniform Lights{
     DirectionalLight directionalLights[MAX_DIRECTIONALLIGHTS];
     PointLight pointLights[MAX_POINTLIGHTS];
 };
-uniform sampler2D ourTexture;
-
 in VS_OUT{
     vec2 uv;
     vec3 camPos;
@@ -34,8 +32,8 @@ uniform sampler2D normalMap;
 uniform sampler2D specularMap;
 
 in vec3 worldPos;
-out vec4 fragColor;
-
+layout (location = 0) out vec4 fragColor;
+layout (location = 1) out vec4 bloomColor;
 
 void main()
 {   
@@ -55,4 +53,8 @@ void main()
     spec = pow(max(dot(viewDir, reflectDir), 0.01), 36);
     vec3 specular = spec * directionalLights[0].color.xyz *texture(specularMap,fs_in.uv).xyz;  
     fragColor = vec4(ambiant + diffuse +specular,1);
+
+    float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+        bloomColor = vec4(0.82, 0.35, 0.35, 1.0);
+
 }

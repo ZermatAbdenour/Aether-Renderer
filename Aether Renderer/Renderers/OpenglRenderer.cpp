@@ -54,7 +54,10 @@ void OpenglRenderer::Setup()
     { 
         m_screenShader = CreateShader(Ressources::Shaders::ScreenShader);
 
-        m_screenFBO = CreateFrameBuffer(true,4);//add depth stencil attachement with 4 samples
+        //m_screenFBO = CreateScreenFrameBuffer(true,4);//add depth stencil attachement with 4 samples
+        m_screenFBO = CreateFrameBuffer();
+        //add depth stencil attachement with 4 samples
+        SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3, true, 4);
         m_screenQuad = CreateMesh(Ressources::Primitives::Quad);
 
     }
@@ -65,23 +68,6 @@ void OpenglRenderer::Setup()
         glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4) + sizeof(glm::vec3), NULL, GL_STATIC_DRAW);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_matricesUBO);
-    }
-    //Setup AutoExposure
-    {
-        m_autoExposureCompShader = CreateComputeShader(Ressources::Shaders::autoExposureCompshader);
-        //Create exposure buffer
-        glGenBuffers(1, &m_exposureBuffer);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_exposureBuffer);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, 1024 * sizeof(GLuint), NULL, GL_DYNAMIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_exposureBuffer);
-        printf("OpenGL version: %s\n", glGetString(GL_VERSION));
-        // Run the compute shader
-        glUseProgram(m_exposureBuffer);
-        glDispatchCompute(1, 1, 1);
-
-        // Ensure all writes to the buffer are completed
-        //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
     }
 
 }
@@ -136,6 +122,7 @@ void OpenglRenderer::SetupScene(Scene* scene)
 
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
+
 }
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 {
@@ -243,7 +230,7 @@ void OpenglRenderer::EndFrame()
     glUseProgram(m_screenShader);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachment);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->colorAttachments[0]);
 
 
 
@@ -276,7 +263,7 @@ void OpenglRenderer::FrameBufferResizeCallBack(int width, int height)
 {
     windowWidth = width;
     windowHeight = height;
-    UpdateFrameBuffer(m_screenFBO, width, height);
+    SetFrameBufferAttachements(m_screenFBO, width, height, 2, 3, true, 4);
 }
 
 GLuint OpenglRenderer::CreateShader(Shader* shader)
@@ -367,64 +354,73 @@ GLuint OpenglRenderer::CreateComputeShader(ComputeShader* shader)
 }
 
 
-std::shared_ptr<OpenglRenderer::GLFrameBuffer> OpenglRenderer::CreateFrameBuffer(bool useDepthStencil,int samples)
+std::shared_ptr<OpenglRenderer::GLFrameBuffer> OpenglRenderer::CreateFrameBuffer()
 {
     auto fbo = std::make_shared<OpenglRenderer::GLFrameBuffer>();
     glGenFramebuffers(1, &fbo->id);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo->id);
+    return fbo;
+}
 
-    //Color attachement
-    Image fboImage = Image();
-    fboImage.data = NULL;
-    fboImage.Width = windowWidth;
-    fboImage.Height = windowHeight;
-    fboImage.NRChannels = 3;
+void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,int width,int height,int colorAttachementsCount,int NRChannels,bool useDepthStencil, int samples)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->id);
+    if(framebuffer->image == nullptr)
+        framebuffer->image = new Image();
+    framebuffer->image->data = NULL;
+    framebuffer->image->Width = width;
+    framebuffer->image->Height = height;
+    framebuffer->image->NRChannels = NRChannels;
 
-    fbo->colorAttachment = CreateTexture(GL_TEXTURE_2D_MULTISAMPLE);
-    SetMultiSampleTextureData(GL_TEXTURE_2D_MULTISAMPLE, &fboImage,samples);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, fbo->colorAttachment, 0);
-    fbo->width = windowWidth;
-    fbo->height = windowHeight;
-    fbo->samples = samples;
+    std::vector<GLuint> attachements(colorAttachementsCount);
+    for (int i = 0; i < colorAttachementsCount;i++) {
+        if (framebuffer->colorAttachments.size() < colorAttachementsCount) {
+            //Create attachement
+            if (samples > 0) {
+                framebuffer->colorAttachments.push_back(CreateTexture(GL_TEXTURE_2D_MULTISAMPLE));
+            }
+            else
+            {
+                framebuffer->colorAttachments.push_back(CreateTexture(GL_TEXTURE_2D));
+            }
+        }
 
+        if (samples > 0) {
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,framebuffer->colorAttachments[i]);
+            SetMultiSampleTextureData(GL_TEXTURE_2D_MULTISAMPLE, framebuffer->image, samples);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D_MULTISAMPLE, framebuffer->colorAttachments[i], 0);
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D, framebuffer->colorAttachments[i]);
+            SetTextureData(GL_TEXTURE_2D, framebuffer->image);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, framebuffer->colorAttachments[i], 0);
+        }
+
+        attachements.push_back(GL_COLOR_ATTACHMENT0 + i);
+    }
+
+    unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    //glDrawBuffers(2, attachments);
+    glDrawBuffers(2, attachments);
+
+    framebuffer->samples = samples;
 
     //DepthStencil render buffer
     if (useDepthStencil) {
-        glGenRenderbuffers(1, &fbo->depthStencilRBO);
-        glBindRenderbuffer(GL_RENDERBUFFER, fbo->depthStencilRBO);
+        if (m_screenFBO->depthStencilRBO == 0) {
+            glGenRenderbuffers(1, &framebuffer->depthStencilRBO);
+        }
 
-        glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
+        glBindRenderbuffer(GL_RENDERBUFFER, framebuffer->depthStencilRBO);
+
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, width, height);
 
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fbo->depthStencilRBO);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer->depthStencilRBO);
     }
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     glEnable(GL_DEPTH_TEST);//enable depth testing on the frame buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    return fbo;
-}
-
-void OpenglRenderer::UpdateFrameBuffer(std::shared_ptr<OpenglRenderer::GLFrameBuffer> frameBuffer, int width, int height)
-{
-    glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer->id);
-    Image fboImage = Image();
-    fboImage.data = NULL;
-    fboImage.Width = width;
-    fboImage.Height = height;
-    fboImage.NRChannels = 3;
-
-    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, frameBuffer->colorAttachment);
-    SetMultiSampleTextureData(GL_TEXTURE_2D_MULTISAMPLE, &fboImage,frameBuffer->samples);
-    frameBuffer->width = width;
-    frameBuffer->height = height;
-    if (frameBuffer->depthStencilRBO != 0) {
-        glBindRenderbuffer(GL_RENDERBUFFER, frameBuffer->depthStencilRBO);
-
-        glRenderbufferStorageMultisample(GL_RENDERBUFFER, frameBuffer->samples, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
-
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    }
     glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -567,7 +563,7 @@ void OpenglRenderer::RendererSettingsTab()
     }
     if (ImGui::CollapsingHeader("HDR")) {
         if (ImGui::Checkbox("enable", &settings.HDR)) {
-            UpdateFrameBuffer(m_screenFBO, windowWidth, windowHeight);
+            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3,true,m_screenFBO->samples);
         }
         if (settings.HDR)
         {
