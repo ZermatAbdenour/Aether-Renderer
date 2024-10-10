@@ -2,9 +2,10 @@
 
 in vec2 TexCoord;
 
-uniform sampler2DMS screenTexture;
+uniform sampler2DMS MSScreenTexture;
+//uniform sampler2D screenTexture;
+uniform bool multiSampling;
 uniform int samples;
-
 //Settings
 uniform bool toneMapping;
 uniform float exposure;
@@ -18,10 +19,14 @@ void main(){
 
     vec3 color;
     //Antialiasing
-    for(int i=0;i<samples;i++){
-        vec4 sampleColor = texelFetch(screenTexture,textureCoord,i);
-        color += sampleColor.xyz /samples;
+    if(multiSampling){
+        for(int i=0;i<samples;i++){
+            vec4 sampleColor = texelFetch(MSScreenTexture,textureCoord,i);
+            color += sampleColor.xyz /samples;
+        }
     }
+    //else
+    //    color = texture(screenTexture,textureCoord).rgb;
 
     //Tonemapping
     if(toneMapping)

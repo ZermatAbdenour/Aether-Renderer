@@ -57,7 +57,9 @@ void OpenglRenderer::Setup()
         //m_screenFBO = CreateScreenFrameBuffer(true,4);//add depth stencil attachement with 4 samples
         m_screenFBO = CreateFrameBuffer();
         //add depth stencil attachement with 4 samples
-        SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3, true, 4);
+        SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3, true, settings.multiSampling ? settings.samples : 0);
+
+        //SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 1, 3, true, settings.multiSampling ?settings.samples:0);
         m_screenQuad = CreateMesh(Ressources::Primitives::Quad);
 
     }
@@ -228,16 +230,18 @@ void OpenglRenderer::EndFrame()
 
     //Render Frame buffer
     glUseProgram(m_screenShader);
+    glUniform1i(glGetUniformLocation(m_screenShader, "multiSampling"), settings.multiSampling);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->colorAttachments[0]);
+    glUniform1i(glGetUniformLocation(m_screenShader, "MSScreenTexture"), 0);
 
 
 
-    glUniform1i(glGetUniformLocation(m_screenShader, "samples"),m_screenFBO->samples);
     glUniform1f(glGetUniformLocation(m_screenShader, "sceneExposure"), m_sceneExposure);
 
     //Settings
+    glUniform1i(glGetUniformLocation(m_screenShader, "samples"),m_screenFBO->samples);
     glUniform1i(glGetUniformLocation(m_screenShader, "gammaCorrection"), settings.gammaCorrection);
     glUniform1f(glGetUniformLocation(m_screenShader, "gamma"), settings.gamma);
 
@@ -263,7 +267,7 @@ void OpenglRenderer::FrameBufferResizeCallBack(int width, int height)
 {
     windowWidth = width;
     windowHeight = height;
-    SetFrameBufferAttachements(m_screenFBO, width, height, 2, 3, true, 4);
+    SetFrameBufferAttachements(m_screenFBO, width, height, 2, 3, true, settings.multiSampling ? settings.samples : 0);
 }
 
 GLuint OpenglRenderer::CreateShader(Shader* shader)
@@ -357,13 +361,31 @@ GLuint OpenglRenderer::CreateComputeShader(ComputeShader* shader)
 std::shared_ptr<OpenglRenderer::GLFrameBuffer> OpenglRenderer::CreateFrameBuffer()
 {
     auto fbo = std::make_shared<OpenglRenderer::GLFrameBuffer>();
+    fbo->samples = settings.samples;
     glGenFramebuffers(1, &fbo->id);
     return fbo;
+}
+
+void OpenglRenderer::DeleteFrameBuffer(std::shared_ptr<GLFrameBuffer> framebuffer)
+{
+    glDeleteFramebuffers(1, &framebuffer->id);
+    for (int i = 0;i < framebuffer->colorAttachments.size();i++)
+        glDeleteTextures(1, &framebuffer->colorAttachments[i]);
+    //Delete render buffers
+    glDeleteTextures(1, &framebuffer->depthStencilRBO);
+
+    framebuffer.reset();
 }
 
 void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,int width,int height,int colorAttachementsCount,int NRChannels,bool useDepthStencil, int samples)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->id);
+    if (samples == 0 && framebuffer->samples > 0 || samples > 0 && framebuffer->samples == 0) {
+        GLuint* textures = framebuffer->colorAttachments.data();
+        glDeleteTextures(framebuffer->colorAttachments.size(), textures);
+        framebuffer->colorAttachments.resize(0);
+    }
+
     if(framebuffer->image == nullptr)
         framebuffer->image = new Image();
     framebuffer->image->data = NULL;
@@ -371,16 +393,22 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
     framebuffer->image->Height = height;
     framebuffer->image->NRChannels = NRChannels;
 
-    std::vector<GLuint> attachements(colorAttachementsCount);
+
     for (int i = 0; i < colorAttachementsCount;i++) {
         if (framebuffer->colorAttachments.size() < colorAttachementsCount) {
             //Create attachement
             if (samples > 0) {
+
                 framebuffer->colorAttachments.push_back(CreateTexture(GL_TEXTURE_2D_MULTISAMPLE));
             }
             else
             {
-                framebuffer->colorAttachments.push_back(CreateTexture(GL_TEXTURE_2D));
+                unsigned int textureColorbuffer;
+                glGenTextures(1, &textureColorbuffer);
+                glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                framebuffer->colorAttachments.push_back(textureColorbuffer);
             }
         }
 
@@ -392,16 +420,20 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
         else
         {
             glBindTexture(GL_TEXTURE_2D, framebuffer->colorAttachments[i]);
-            SetTextureData(GL_TEXTURE_2D, framebuffer->image);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, framebuffer->colorAttachments[i], 0);
         }
-
-        attachements.push_back(GL_COLOR_ATTACHMENT0 + i);
+    }
+    
+    if (colorAttachementsCount == 1) {
+        unsigned int colorAttachments[2] = { GL_COLOR_ATTACHMENT0 };
+        glDrawBuffers(2, colorAttachments);
+    }
+    if (colorAttachementsCount == 2) {
+        unsigned int colorAttachments[2] = { GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1 };
+        glDrawBuffers(2, colorAttachments);
     }
 
-    unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-    //glDrawBuffers(2, attachments);
-    glDrawBuffers(2, attachments);
 
     framebuffer->samples = samples;
 
@@ -412,8 +444,10 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
         }
 
         glBindRenderbuffer(GL_RENDERBUFFER, framebuffer->depthStencilRBO);
-
-        glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, width, height);
+        if(samples>0)
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, width, height);
+        else
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width,height);
 
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer->depthStencilRBO);
@@ -554,16 +588,27 @@ GLuint OpenglRenderer::CreateCubeMap(std::vector<std::string> faces)
 
 void OpenglRenderer::RendererSettingsTab()
 {
+    if (ImGui::CollapsingHeader("Anti-Aliasing")) {
+        if (ImGui::Checkbox("Enable multisampling", &settings.multiSampling)) {
+            std::cout << "update" << std::endl;
+            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3, true, settings.multiSampling ? settings.samples : 0);
+        }
+        if (settings.multiSampling && ImGui::DragInt("Samples", &settings.samples, 1, 1, 8)) {
+            std::cout << "update" << std::endl;
+            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3, true, settings.multiSampling ? settings.samples : 0);
+        }
+    }
+
     if (ImGui::CollapsingHeader("Gamma Correction")) {
-        if (ImGui::Checkbox("Enable", &settings.gammaCorrection)) {
-            EnableGammaCorrection(settings.gammaCorrection);
+        if (ImGui::Checkbox("enable gamma correction", &settings.gammaCorrection)) {
+            ReloadTextures(settings.gammaCorrection);
         }
         if (settings.gammaCorrection)
             ImGui::DragFloat("Gamma", &settings.gamma, 0.1f, 0.0f, 5.0f);
     }
     if (ImGui::CollapsingHeader("HDR")) {
-        if (ImGui::Checkbox("enable", &settings.HDR)) {
-            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3,true,m_screenFBO->samples);
+        if (ImGui::Checkbox("enable HDR", &settings.HDR)) {
+            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels,true, settings.multiSampling ? settings.samples : 0);
         }
         if (settings.HDR)
         {
@@ -574,13 +619,13 @@ void OpenglRenderer::RendererSettingsTab()
     }
 }
 
-void OpenglRenderer::EnableGammaCorrection(bool enable)
+void OpenglRenderer::ReloadTextures(bool gammaCorrection)
 {
     for (const auto& pair : m_textures) {
         if (pair.first->imageType == Image::ImageType::normal)
             continue;
         glBindTexture(GL_TEXTURE_2D, pair.second);
-        pair.first->gammaCorrect = enable;
+        pair.first->gammaCorrect = gammaCorrection;
         SetTextureData(GL_TEXTURE_2D, pair.first);
     }
 }

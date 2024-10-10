@@ -1,5 +1,8 @@
 #pragma once
 struct RendererSettings {
+	//MultiSampling
+	bool multiSampling = false;
+	int samples = 4;
 	//Gamma Correction
 	bool gammaCorrection = true;
 	float gamma = 2.2f;

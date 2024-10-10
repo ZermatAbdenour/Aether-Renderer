@@ -87,6 +87,7 @@ public:
 	GLuint CreateComputeShader(ComputeShader* shader);
 
 	std::shared_ptr<GLFrameBuffer> CreateFrameBuffer();
+	void DeleteFrameBuffer(std::shared_ptr<GLFrameBuffer> framebuffer);
 	void SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,int width,int height,int colorAttachmentsCount, int NRChannels,bool useDepthStencil, int sample);
 	//std::shared_ptr<GLFrameBuffer> CreateScreenFrameBuffer(bool useDepthStencil,int samples);
 	//void UpdateScreenFrameBuffer(std::shared_ptr<OpenglRenderer::GLFrameBuffer> frameBuffer, int width, int height);
@@ -103,5 +104,5 @@ public:
 
 	//Settings
 	void RendererSettingsTab() override;
-	void EnableGammaCorrection(bool enable);
+	void ReloadTextures(bool gammaCorrection);
 };
