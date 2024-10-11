@@ -87,6 +87,7 @@ public:
 	GLuint CreateComputeShader(ComputeShader* shader);
 
 	std::shared_ptr<GLFrameBuffer> CreateFrameBuffer();
+	std::shared_ptr<OpenglRenderer::GLFrameBuffer> CreateSimpleFramebuffer();
 	void DeleteFrameBuffer(std::shared_ptr<GLFrameBuffer> framebuffer);
 	void SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,int width,int height,int colorAttachmentsCount, int NRChannels,bool useDepthStencil, int sample);
 	//std::shared_ptr<GLFrameBuffer> CreateScreenFrameBuffer(bool useDepthStencil,int samples);

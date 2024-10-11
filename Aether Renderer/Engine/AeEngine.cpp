@@ -15,7 +15,6 @@ void AeEngine::Load(Scene* scene)
 	while (!glfwWindowShouldClose(m_window))
 	{
 		StartFrame();
-
 		scene->camera.ProcessInputs(m_window,deltaTime);
 		m_renderer->SetupFrame();
 		m_renderer->RenderScene();

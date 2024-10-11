@@ -56,6 +56,7 @@ void OpenglRenderer::Setup()
 
         //m_screenFBO = CreateScreenFrameBuffer(true,4);//add depth stencil attachement with 4 samples
         m_screenFBO = CreateFrameBuffer();
+
         //add depth stencil attachement with 4 samples
         SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3, true, settings.multiSampling ? settings.samples : 0);
 
@@ -92,7 +93,6 @@ void OpenglRenderer::SetupScene(Scene* scene)
                 "skybox/back.jpg"
         });
     }
-
     //Set the "Lights" UBO
     {
         //Genereate GLLights
@@ -160,7 +160,6 @@ void OpenglRenderer::SetupFrame()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
     }
-
     glBindFramebuffer(GL_FRAMEBUFFER,m_screenFBO->id);
     glEnable(GL_DEPTH_TEST);
 	glClearColor(1, 0.2, 0.1, 1);
@@ -231,12 +230,15 @@ void OpenglRenderer::EndFrame()
     //Render Frame buffer
     glUseProgram(m_screenShader);
     glUniform1i(glGetUniformLocation(m_screenShader, "multiSampling"), settings.multiSampling);
-
+    
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->colorAttachments[0]);
     glUniform1i(glGetUniformLocation(m_screenShader, "MSScreenTexture"), 0);
+    
 
-
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachments[0]);
+    glUniform1i(glGetUniformLocation(m_screenShader, "screenTexture"), 1);
 
     glUniform1f(glGetUniformLocation(m_screenShader, "sceneExposure"), m_sceneExposure);
 
@@ -365,6 +367,41 @@ std::shared_ptr<OpenglRenderer::GLFrameBuffer> OpenglRenderer::CreateFrameBuffer
     glGenFramebuffers(1, &fbo->id);
     return fbo;
 }
+std::shared_ptr<OpenglRenderer::GLFrameBuffer> OpenglRenderer::CreateSimpleFramebuffer()
+{
+    auto fbo = std::make_shared<OpenglRenderer::GLFrameBuffer>();
+    glGenFramebuffers(1, &fbo->id);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo->id);
+
+    //Color attachement
+    Image fboImage = Image();
+    fboImage.data = NULL;
+    fboImage.Width = windowWidth + 1;
+    fboImage.Width = windowWidth;
+    fboImage.Height = windowHeight;
+    fboImage.NRChannels = 3;
+
+    //fbo->colorAttachment = CreateTexture(&fboImage);
+    GLuint texture = CreateTexture(GL_TEXTURE_2D);
+    fbo->colorAttachments.push_back(texture);
+    SetTextureData(GL_TEXTURE_2D, &fboImage);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+    //DepthStencil render buffer
+    glGenRenderbuffers(1, &fbo->depthStencilRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, fbo->depthStencilRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fbo->depthStencilRBO);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+
+    glEnable(GL_DEPTH_TEST);//enable depth testing on the frame buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    return fbo;
+}
+
 
 void OpenglRenderer::DeleteFrameBuffer(std::shared_ptr<GLFrameBuffer> framebuffer)
 {
@@ -377,87 +414,102 @@ void OpenglRenderer::DeleteFrameBuffer(std::shared_ptr<GLFrameBuffer> framebuffe
     framebuffer.reset();
 }
 
-void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,int width,int height,int colorAttachementsCount,int NRChannels,bool useDepthStencil, int samples)
+void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,
+    int width,
+    int height,
+    int colorAttachementsCount,
+    int NRChannels,
+    bool useDepthStencil,
+    int samples)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->id);
-    if (samples == 0 && framebuffer->samples > 0 || samples > 0 && framebuffer->samples == 0) {
+
+    // Check for samples change
+    if ((samples == 0 && framebuffer->samples > 0) || (samples > 0 && framebuffer->samples == 0)) {
         GLuint* textures = framebuffer->colorAttachments.data();
         glDeleteTextures(framebuffer->colorAttachments.size(), textures);
-        framebuffer->colorAttachments.resize(0);
+        framebuffer->colorAttachments.clear();
     }
 
-    if(framebuffer->image == nullptr)
+    // Initialize image data
+    if (framebuffer->image == nullptr) {
         framebuffer->image = new Image();
+    }
     framebuffer->image->data = NULL;
     framebuffer->image->Width = width;
     framebuffer->image->Height = height;
     framebuffer->image->NRChannels = NRChannels;
 
-
-    for (int i = 0; i < colorAttachementsCount;i++) {
+    // Create color attachments
+    for (int i = 0; i < colorAttachementsCount; i++) {
         if (framebuffer->colorAttachments.size() < colorAttachementsCount) {
-            //Create attachement
-            if (samples > 0) {
+            GLuint textureColorbuffer;
 
-                framebuffer->colorAttachments.push_back(CreateTexture(GL_TEXTURE_2D_MULTISAMPLE));
+            if (samples > 0) {
+                textureColorbuffer = CreateTexture(GL_TEXTURE_2D_MULTISAMPLE);
             }
-            else
-            {
-                unsigned int textureColorbuffer;
+            else {
                 glGenTextures(1, &textureColorbuffer);
                 glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                framebuffer->colorAttachments.push_back(textureColorbuffer);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
             }
+
+            framebuffer->colorAttachments.push_back(textureColorbuffer);
         }
 
+        // Bind and attach the texture
         if (samples > 0) {
-            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,framebuffer->colorAttachments[i]);
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer->colorAttachments[i]);
             SetMultiSampleTextureData(GL_TEXTURE_2D_MULTISAMPLE, framebuffer->image, samples);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D_MULTISAMPLE, framebuffer->colorAttachments[i], 0);
         }
-        else
-        {
+        else {
             glBindTexture(GL_TEXTURE_2D, framebuffer->colorAttachments[i]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, framebuffer->colorAttachments[i], 0);
         }
     }
-    
-    if (colorAttachementsCount == 1) {
-        unsigned int colorAttachments[2] = { GL_COLOR_ATTACHMENT0 };
-        glDrawBuffers(2, colorAttachments);
-    }
-    if (colorAttachementsCount == 2) {
-        unsigned int colorAttachments[2] = { GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1 };
-        glDrawBuffers(2, colorAttachments);
-    }
 
+    // Setup draw buffers
+    std::vector<GLuint> colorAttachments(colorAttachementsCount);
+    for (int i = 0; i < colorAttachementsCount; ++i) {
+        colorAttachments[i] = GL_COLOR_ATTACHMENT0 + i;
+    }
+    glDrawBuffers(colorAttachementsCount, colorAttachments.data());
 
     framebuffer->samples = samples;
 
-    //DepthStencil render buffer
+    // Setup DepthStencil render buffer
     if (useDepthStencil) {
-        if (m_screenFBO->depthStencilRBO == 0) {
+        if (framebuffer->depthStencilRBO == 0) {
             glGenRenderbuffers(1, &framebuffer->depthStencilRBO);
         }
 
         glBindRenderbuffer(GL_RENDERBUFFER, framebuffer->depthStencilRBO);
-        if(samples>0)
+        if (samples > 0) {
             glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, width, height);
-        else
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width,height);
+        }
+        else {
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+        }
 
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer->depthStencilRBO);
     }
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+
+
+
+    // Check framebuffer status
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-    glEnable(GL_DEPTH_TEST);//enable depth testing on the frame buffer
+    }
+    glEnable(GL_DEPTH_TEST); // Enable depth testing
     glViewport(0, 0, width, height);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // Unbind framebuffer
+
 }
+
 
 std::shared_ptr<OpenglRenderer::GLMesh> OpenglRenderer::CreateMesh(Mesh* mesh)
 {
@@ -542,6 +594,7 @@ void OpenglRenderer::SetTextureData(GLenum target,Image* image)
 {
     //!this function does not bind the texture
     GLenum format;
+    //image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB :
     switch (image->NRChannels)
     {
     case 1: format = GL_RED;break;
@@ -550,7 +603,8 @@ void OpenglRenderer::SetTextureData(GLenum target,Image* image)
     case 4: format = image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB_ALPHA : GL_RGBA;break;
     default: format = GL_RGB;break;
     }
-    glTexImage2D(target,0, format, image->Width, image->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
+    //lTexImage2D(GL_TEXTURE_2D, 0, format, image->Width, image->Height, 0, format, GL_UNSIGNED_BYTE, image->data);
+    glTexImage2D(target,0, GL_RGB, image->Width, image->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
     glGenerateMipmap(target);
 }
 
@@ -576,26 +630,34 @@ GLuint OpenglRenderer::GetTexture(Image* image)
 
 GLuint OpenglRenderer::CreateCubeMap(std::vector<std::string> faces)
 {
-    GLuint cubeMap = CreateTexture(GL_TEXTURE_CUBE_MAP,GL_LINEAR,GL_LINEAR);
+    GLuint cubeMap;
+    glGenTextures(1, &cubeMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap);
     for (int i = 0;i < 6;i++) {
         Image* faceImage = Ressources::LoadImageFromFile(faces[i],false);
-        SetTextureData(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, faceImage);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+            0, GL_RGB, faceImage->Width, faceImage->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, faceImage->data
+        );
 
         delete faceImage;
     }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     return cubeMap;
 }
 
 void OpenglRenderer::RendererSettingsTab()
 {
+
     if (ImGui::CollapsingHeader("Anti-Aliasing")) {
         if (ImGui::Checkbox("Enable multisampling", &settings.multiSampling)) {
-            std::cout << "update" << std::endl;
-            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3, true, settings.multiSampling ? settings.samples : 0);
+            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels, true, settings.multiSampling ? settings.samples : 0);
         }
         if (settings.multiSampling && ImGui::DragInt("Samples", &settings.samples, 1, 1, 8)) {
-            std::cout << "update" << std::endl;
-            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3, true, settings.multiSampling ? settings.samples : 0);
+            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels, true, settings.multiSampling ? settings.samples : 0);
         }
     }
 

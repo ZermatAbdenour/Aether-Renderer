@@ -3,7 +3,7 @@
 in vec2 TexCoord;
 
 uniform sampler2DMS MSScreenTexture;
-//uniform sampler2D screenTexture;
+uniform sampler2D screenTexture;
 uniform bool multiSampling;
 uniform int samples;
 //Settings
@@ -15,18 +15,20 @@ uniform float gamma;
 out vec4 fragColor;
 
 void main(){
-    ivec2 textureCoord = ivec2(gl_FragCoord);
 
     vec3 color;
     //Antialiasing
     if(multiSampling){
+        ivec2 textureCoord = ivec2(gl_FragCoord);
         for(int i=0;i<samples;i++){
-            vec4 sampleColor = texelFetch(MSScreenTexture,textureCoord,i);
+            vec3 sampleColor = texelFetch(MSScreenTexture,textureCoord,i).rgb;
             color += sampleColor.xyz /samples;
         }
     }
-    //else
-    //    color = texture(screenTexture,textureCoord).rgb;
+    else{
+        color = texture(screenTexture,TexCoord).rgb;
+        fragColor = vec4(color,1);
+    }
 
     //Tonemapping
     if(toneMapping)
