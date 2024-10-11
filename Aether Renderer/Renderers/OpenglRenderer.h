@@ -51,7 +51,6 @@ private:
 	std::shared_ptr<GLFrameBuffer> m_screenFBO;
 	std::shared_ptr<GLFrameBuffer> m_autoExposureFBO;
 	std::shared_ptr<GLFrameBuffer> m_pingpongFBOs[2];
-	std::shared_ptr<GLFrameBuffer> m_pingpongBuffers[2];
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
 	std::unordered_map<Mesh*,std::shared_ptr<GLMesh>> m_meshs;
 	std::shared_ptr<GLMesh> m_skyboxMesh;
@@ -62,8 +61,6 @@ private:
 	GLuint m_PBRShader;
 	GLuint m_skyBoxShader;
 
-	GLuint m_autoExposureCompShader;
-
 	//maps
 	GLuint m_skyBoxMap;
 
@@ -72,7 +69,6 @@ private:
 	GLuint m_lightsUBO;
 public:
 	GLFWwindow* Init() override;
-	void Setup() override;
 	void SetupScene(Scene* scene) override;
 	void SetupEntity(std::shared_ptr<Entity> entity) override;
 	void SetupFrame() override;
@@ -99,7 +95,6 @@ public:
 	GLuint CreateTexture(GLenum type);
 	GLuint CreateTexture(GLenum type, GLenum minFilter,GLenum magFilter);
 	void SetTextureData(GLenum target, Image* image);
-	void SetMultiSampleTextureData(GLenum target, Image* image,int samples);
 	GLuint GetTexture(Image* image);
 	GLuint CreateCubeMap(std::vector<std::string> faces);
 

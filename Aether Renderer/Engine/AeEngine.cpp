@@ -9,40 +9,29 @@ AeEngine::AeEngine(Renderer* renderer)
 
 void AeEngine::Load(Scene* scene)
 {
-	m_renderer->Setup();
 	m_renderer->SetupScene(scene);
 	scene->StartEffectors();
 	while (!glfwWindowShouldClose(m_window))
 	{
-		StartFrame();
-		scene->camera.ProcessInputs(m_window,deltaTime);
+		m_time.UpdateTime();
+
+		scene->camera.ProcessInputs(m_window, m_time.deltaTime);
 		m_renderer->SetupFrame();
 		m_renderer->RenderScene();
 	
-		scene->UpdateEffectors(deltaTime);
+		scene->UpdateEffectors(m_time.deltaTime);
+		m_editor.CreateEditorWindow(scene,m_renderer,m_time);
 
-		m_editor.AddEditorWindow(scene,m_renderer);
-		std::cout << FPS << std::endl;
 		m_renderer->EndFrame();
-		EndFrame();
+
+		glfwSwapBuffers(m_window);
+		glfwPollEvents();
 	}
 }
 
 GLFWwindow* AeEngine::GetWindow()
 {
 	return m_window;
-}
-void AeEngine::StartFrame() {
-
-	double currentTime = glfwGetTime();
-	deltaTime = currentTime - time;
-	time = currentTime;
-	FPS = (int)(1.0 / deltaTime);
-}
-void AeEngine::EndFrame()
-{
-	glfwSwapBuffers(m_window);
-	glfwPollEvents();
 }
 
 AeEngine::~AeEngine()

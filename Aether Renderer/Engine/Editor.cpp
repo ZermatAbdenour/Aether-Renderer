@@ -1,7 +1,7 @@
 #include "Editor.h"
 #include <Imgui/imgui.h>
-
-void Editor::AddEditorWindow(Scene* scene, Renderer* renderer)
+#include <glm/gtc/quaternion.hpp>
+void Editor::CreateEditorWindow(Scene* scene, Renderer* renderer,Time& engineTime)
 {
 	ImGui::Begin("Editor", nullptr );
 
@@ -9,8 +9,13 @@ void Editor::AddEditorWindow(Scene* scene, Renderer* renderer)
 		SceneTab();
 		RendererSettingsTab(renderer);
 	ImGui::EndTabBar();
-
-	ImGui::Dummy(ImVec2(0, 20));
+	ImGui::SetCursorPosY(ImGui::GetWindowHeight() - ImGui::GetStyle().ItemSpacing.y - 20);
+	ImGui::Separator();
+	if (averageFPS == 0)//For initialisation
+		averageFPS = engineTime.FPS;
+	else
+		averageFPS = glm::mix(averageFPS,engineTime.FPS,engineTime.deltaTime * 2);
+	ImGui::Text("deltatime : %f | FPS : %i | time : %.2f",engineTime.deltaTime, averageFPS,engineTime.time);
 	ImGui::End();
 }
 

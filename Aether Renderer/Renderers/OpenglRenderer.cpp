@@ -2,6 +2,8 @@
 #include "../Utilities/FileUtil.hpp"
 #include <glm/gtc/type_ptr.hpp>
 #include "../Engine/Ressources.h"
+#include <Imgui/imgui_internal.h>
+
 GLFWwindow* OpenglRenderer::Init()
 {
 	glfwInit();
@@ -46,14 +48,17 @@ GLFWwindow* OpenglRenderer::Init()
 }
 
 
-void OpenglRenderer::Setup()
+void OpenglRenderer::SetupScene(Scene* scene)
 {
-	m_PBRShader = CreateShader(Ressources::Shaders::Default);
+    //Setup each entity
+    Renderer::SetupScene(scene);
+
+    m_PBRShader = CreateShader(Ressources::Shaders::Default);
 
     m_autoExposureFBO = CreateFrameBuffer();
     SetFrameBufferAttachements(m_autoExposureFBO, windowWidth, windowHeight, 1, 3, false, 0);
     //Setup FBO and the Full screen quad
-    { 
+    {
         m_screenShader = CreateShader(Ressources::Shaders::ScreenShader);
 
 
@@ -76,12 +81,7 @@ void OpenglRenderer::Setup()
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_matricesUBO);
     }
 
-}
 
-void OpenglRenderer::SetupScene(Scene* scene)
-{
-    //Setup each entity
-    Renderer::SetupScene(scene);
     //Setup skybox
     {
         m_skyBoxShader = CreateShader(Ressources::Shaders::Skybox);
@@ -128,6 +128,13 @@ void OpenglRenderer::SetupScene(Scene* scene)
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 
+    //Setup bloom ping pong framebuffers
+    {
+        m_pingpongFBOs[0] = CreateFrameBuffer();
+        SetFrameBufferAttachements(m_pingpongFBOs[0], windowWidth, windowHeight, 1, 3, false, 0);
+        m_pingpongFBOs[1] = CreateFrameBuffer();
+        SetFrameBufferAttachements(m_pingpongFBOs[1], windowWidth, windowHeight, 1, 3, false, 0);
+    }
 }
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 {
@@ -227,27 +234,32 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model,Ca
 
 void OpenglRenderer::EndFrame()
 {
-    glBindFramebuffer(GL_READ_BUFFER, m_screenFBO->id);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_autoExposureFBO->id);
-    glReadBuffer(GL_COLOR_ATTACHMENT0);
-    glDrawBuffer(GL_COLOR_ATTACHMENT0);
-    glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    //auto Exposure
+    if (settings.autoExposure) {
+        glBindFramebuffer(GL_READ_BUFFER, m_screenFBO->id);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_autoExposureFBO->id);
+        glReadBuffer(GL_COLOR_ATTACHMENT0);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+        glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-    glBindTexture(GL_TEXTURE_2D, m_autoExposureFBO->colorAttachments[0]);
-    glGenerateMipmap(GL_TEXTURE_2D); 
-    glm::vec3 luminescence;
-    int maxDim = glm::max(windowWidth, windowHeight);
-    int mipmapLevels = static_cast<int>(glm::floor(glm::log2(static_cast<float>(maxDim)))) ;
-    glGetTexImage(GL_TEXTURE_2D, mipmapLevels, GL_RGB, GL_FLOAT, &luminescence);
-    const float lum = 0.2126f * luminescence.r + 0.7152f * luminescence.g + 0.0722f * luminescence.b; 
+        glBindTexture(GL_TEXTURE_2D, m_autoExposureFBO->colorAttachments[0]);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glm::vec3 luminescence;
+        int maxDim = glm::max(windowWidth, windowHeight);
+        int mipmapLevels = static_cast<int>(glm::floor(glm::log2(static_cast<float>(maxDim))));
+        glGetTexImage(GL_TEXTURE_2D, mipmapLevels, GL_RGB, GL_FLOAT, &luminescence);
+        const float lum = 0.2126f * luminescence.r + 0.7152f * luminescence.g + 0.0722f * luminescence.b;
 
-    const float adjSpeed = 0.05f;
-    float sceneExposureMultiplier = 0.6;
-    float sceneExposureRangeMin = 0.1;
-    float sceneExposureRangeMax = 10;
-    settings.exposure = glm::mix(settings.exposure, 0.5f / lum * sceneExposureMultiplier, adjSpeed);
-    settings.exposure = glm::clamp(settings.exposure, sceneExposureRangeMin, sceneExposureRangeMax);
+        float sceneExposureMultiplier = 0.6;
+        float sceneExposureRangeMin = 0.1;
+        float sceneExposureRangeMax = 10;
+        settings.exposure = glm::mix(settings.exposure, 0.5f / lum * settings.exposureMultiplier, settings.adjustmentSpeed);
+        settings.exposure = glm::clamp(settings.exposure, sceneExposureRangeMin, sceneExposureRangeMax);
+    }
 
+    if (settings.bloom) {
+
+    }
 
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     glDisable(GL_DEPTH_TEST);
@@ -256,12 +268,12 @@ void OpenglRenderer::EndFrame()
     glUseProgram(m_screenShader);
     
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->colorAttachments[0]);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->colorAttachments[1]);
     glUniform1i(glGetUniformLocation(m_screenShader, "MSScreenTexture"), 0);
     
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachments[0]);
+    glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachments[1]);
     glUniform1i(glGetUniformLocation(m_screenShader, "screenTexture"), 1);
 
 
@@ -393,51 +405,16 @@ std::shared_ptr<OpenglRenderer::GLFrameBuffer> OpenglRenderer::CreateFrameBuffer
     glGenFramebuffers(1, &fbo->id);
     return fbo;
 }
-std::shared_ptr<OpenglRenderer::GLFrameBuffer> OpenglRenderer::CreateSimpleFramebuffer()
-{
-    auto fbo = std::make_shared<OpenglRenderer::GLFrameBuffer>();
-    glGenFramebuffers(1, &fbo->id);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo->id);
-
-    //Color attachement
-    Image fboImage = Image();
-    fboImage.data = NULL;
-    fboImage.Width = windowWidth + 1;
-    fboImage.Width = windowWidth;
-    fboImage.Height = windowHeight;
-    fboImage.NRChannels = 3;
-
-    //fbo->colorAttachment = CreateTexture(&fboImage);
-    GLuint texture = CreateTexture(GL_TEXTURE_2D);
-    fbo->colorAttachments.push_back(texture);
-    SetTextureData(GL_TEXTURE_2D, &fboImage);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
-
-    //DepthStencil render buffer
-    glGenRenderbuffers(1, &fbo->depthStencilRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, fbo->depthStencilRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowWidth, windowHeight);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fbo->depthStencilRBO);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-
-    glEnable(GL_DEPTH_TEST);//enable depth testing on the frame buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    return fbo;
-}
-
 
 void OpenglRenderer::DeleteFrameBuffer(std::shared_ptr<GLFrameBuffer> framebuffer)
 {
     glDeleteFramebuffers(1, &framebuffer->id);
     for (int i = 0;i < framebuffer->colorAttachments.size();i++)
-        glDeleteTextures(1, &framebuffer->colorAttachments[i]);
-    //Delete render buffers
-    glDeleteTextures(1, &framebuffer->depthStencilRBO);
+            glDeleteTextures(1, &framebuffer->colorAttachments[i]);
+        //Delete render buffers
+        glDeleteTextures(1, &framebuffer->depthStencilRBO);
 
-    framebuffer.reset();
+        framebuffer.reset();
 }
 
 void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,
@@ -479,6 +456,8 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
                 glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             }
 
             framebuffer->colorAttachments.push_back(textureColorbuffer);
@@ -487,7 +466,9 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
         // Bind and attach the texture
         if (samples > 0) {
             glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer->colorAttachments[i]);
-            SetMultiSampleTextureData(GL_TEXTURE_2D_MULTISAMPLE, framebuffer->image, samples);
+
+            //GLenum internalFormat = settings.HDR ? GL_RGB16F : GL_RGB;
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGB16F, framebuffer->image->Width, framebuffer->image->Height, GL_TRUE);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D_MULTISAMPLE, framebuffer->colorAttachments[i], 0);
         }
         else {
@@ -620,33 +601,19 @@ void OpenglRenderer::SetTextureData(GLenum target,Image* image)
 {
     //!this function does not bind the texture
     GLenum format;
+    GLenum internalFormat;
     //image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB :
     switch (image->NRChannels)
     {
-    case 1: format = GL_RED;break;
-    case 2: format = GL_RG;break;
-    case 3: format = image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB : GL_RGB;break;
-    case 4: format = image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB_ALPHA : GL_RGBA;break;
+    case 1: format = GL_RED;internalFormat = GL_RED;break;
+    case 2: format = GL_RG,internalFormat = GL_RG;break;
+    case 3: format = image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB : GL_RGB;internalFormat = GL_RGB;break;
+    case 4: format = image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB_ALPHA : GL_RGBA;internalFormat = GL_RGBA;break;
     default: format = GL_RGB;break;
     }
     //lTexImage2D(GL_TEXTURE_2D, 0, format, image->Width, image->Height, 0, format, GL_UNSIGNED_BYTE, image->data);
-    glTexImage2D(target,0, GL_RGB, image->Width, image->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, image->data);
+    glTexImage2D(target,0, format, image->Width, image->Height, 0, internalFormat, GL_UNSIGNED_BYTE, image->data);
     glGenerateMipmap(target);
-}
-
-void OpenglRenderer::SetMultiSampleTextureData(GLenum target, Image* image,int samples)
-{
-    GLenum format;
-    switch (image->NRChannels)
-    {
-    case 1: format = GL_RED;break;
-    case 2: format = GL_RG;break;
-    case 3: format = GL_RGB;break;
-    case 4: format = GL_RGBA;break;
-    default: format = GL_RGB;break;
-    }
-    GLenum internalFormat = settings.HDR ? GL_RGB16F : GL_RGB;
-    glTexImage2DMultisample(target, samples, internalFormat, image->Width, image->Height, GL_TRUE);
 }
 
 GLuint OpenglRenderer::GetTexture(Image* image)
@@ -701,8 +668,16 @@ void OpenglRenderer::RendererSettingsTab()
         if (settings.HDR)
         {
             ImGui::Checkbox("Tonemapping", &settings.toneMapping);
+            
+            ImGui::BeginDisabled(settings.autoExposure);
+            ImGui::DragFloat("exposure", &settings.exposure, 0.1f, 0.0f, 5.0f);
+            ImGui::EndDisabled();
             if (settings.toneMapping)
-                ImGui::DragFloat("Exposure", &settings.exposure, 0.1f, 0.0f, 5.0f);
+                ImGui::Checkbox("auto exposure", &settings.autoExposure);
+            if (settings.toneMapping && settings.autoExposure) {
+                ImGui::InputFloat("exposure multiplier", &settings.exposureMultiplier);
+                ImGui::InputFloat("adjustment speed", &settings.adjustmentSpeed);
+            }
         }
     }
 }

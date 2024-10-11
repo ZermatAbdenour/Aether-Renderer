@@ -137,6 +137,9 @@
     <ClInclude Include="Engine\Editor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Time.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Scene.inl">

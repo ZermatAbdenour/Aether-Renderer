@@ -191,6 +191,7 @@
     <ClInclude Include="Engine\Ressources.h" />
     <ClInclude Include="Engine\Scene.h" />
     <ClInclude Include="Engine\Shader.h" />
+    <ClInclude Include="Engine\Time.h" />
     <ClInclude Include="Renderers\OpenglRenderer.h" />
   </ItemGroup>
   <ItemGroup>

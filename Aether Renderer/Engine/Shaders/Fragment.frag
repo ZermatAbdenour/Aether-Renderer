@@ -53,8 +53,12 @@ void main()
     spec = pow(max(dot(viewDir, reflectDir), 0.01), 36);
     vec3 specular = spec * directionalLights[0].color.xyz *texture(specularMap,fs_in.uv).xyz;  
     fragColor = vec4(ambiant + diffuse +specular,1);
-
+    
+    //Calculate bloom color
     float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-    //bloomColor = vec4(0.82, 0.35, 0.35, 1.0) * brightness;
+    if(brightness > 1.0)
+        bloomColor = vec4(fragColor.rgb, 1.0);
+    else
+        bloomColor = vec4(0.0, 0.0, 0.0, 1.0);
 
 }
