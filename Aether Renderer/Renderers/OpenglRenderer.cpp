@@ -50,13 +50,16 @@ void OpenglRenderer::Setup()
 {
 	m_PBRShader = CreateShader(Ressources::Shaders::Default);
 
+    m_autoExposureFBO = CreateFrameBuffer();
+    SetFrameBufferAttachements(m_autoExposureFBO, windowWidth, windowHeight, 1, 3, false, 0);
     //Setup FBO and the Full screen quad
     { 
         m_screenShader = CreateShader(Ressources::Shaders::ScreenShader);
 
+
+
         //m_screenFBO = CreateScreenFrameBuffer(true,4);//add depth stencil attachement with 4 samples
         m_screenFBO = CreateFrameBuffer();
-
         //add depth stencil attachement with 4 samples
         SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3, true, settings.multiSampling ? settings.samples : 0);
 
@@ -224,12 +227,33 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model,Ca
 
 void OpenglRenderer::EndFrame()
 {
+    glBindFramebuffer(GL_READ_BUFFER, m_screenFBO->id);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_autoExposureFBO->id);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+    glBindTexture(GL_TEXTURE_2D, m_autoExposureFBO->colorAttachments[0]);
+    glGenerateMipmap(GL_TEXTURE_2D); 
+    glm::vec3 luminescence;
+    int maxDim = glm::max(windowWidth, windowHeight);
+    int mipmapLevels = static_cast<int>(glm::floor(glm::log2(static_cast<float>(maxDim)))) ;
+    glGetTexImage(GL_TEXTURE_2D, mipmapLevels, GL_RGB, GL_FLOAT, &luminescence);
+    const float lum = 0.2126f * luminescence.r + 0.7152f * luminescence.g + 0.0722f * luminescence.b; 
+
+    const float adjSpeed = 0.05f;
+    float sceneExposureMultiplier = 0.6;
+    float sceneExposureRangeMin = 0.1;
+    float sceneExposureRangeMax = 10;
+    settings.exposure = glm::mix(settings.exposure, 0.5f / lum * sceneExposureMultiplier, adjSpeed);
+    settings.exposure = glm::clamp(settings.exposure, sceneExposureRangeMin, sceneExposureRangeMax);
+
+
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     glDisable(GL_DEPTH_TEST);
 
     //Render Frame buffer
     glUseProgram(m_screenShader);
-    glUniform1i(glGetUniformLocation(m_screenShader, "multiSampling"), settings.multiSampling);
     
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->colorAttachments[0]);
@@ -240,9 +264,9 @@ void OpenglRenderer::EndFrame()
     glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachments[0]);
     glUniform1i(glGetUniformLocation(m_screenShader, "screenTexture"), 1);
 
-    glUniform1f(glGetUniformLocation(m_screenShader, "sceneExposure"), m_sceneExposure);
 
     //Settings
+    glUniform1i(glGetUniformLocation(m_screenShader, "multiSampling"), settings.multiSampling);
     glUniform1i(glGetUniformLocation(m_screenShader, "samples"),m_screenFBO->samples);
     glUniform1i(glGetUniformLocation(m_screenShader, "gammaCorrection"), settings.gammaCorrection);
     glUniform1f(glGetUniformLocation(m_screenShader, "gamma"), settings.gamma);
@@ -270,6 +294,8 @@ void OpenglRenderer::FrameBufferResizeCallBack(int width, int height)
     windowWidth = width;
     windowHeight = height;
     SetFrameBufferAttachements(m_screenFBO, width, height, 2, 3, true, settings.multiSampling ? settings.samples : 0);
+    SetFrameBufferAttachements(m_autoExposureFBO, width, height, 1, 3, false, 0);
+
 }
 
 GLuint OpenglRenderer::CreateShader(Shader* shader)
@@ -453,7 +479,6 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
                 glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
             }
 
             framebuffer->colorAttachments.push_back(textureColorbuffer);
@@ -467,6 +492,7 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
         }
         else {
             glBindTexture(GL_TEXTURE_2D, framebuffer->colorAttachments[i]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, framebuffer->colorAttachments[i], 0);
         }
     }
@@ -636,7 +662,7 @@ GLuint OpenglRenderer::CreateCubeMap(std::vector<std::string> faces)
     for (int i = 0;i < 6;i++) {
         Image* faceImage = Ressources::LoadImageFromFile(faces[i],false);
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-            0, GL_RGB, faceImage->Width, faceImage->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, faceImage->data
+            0, GL_SRGB, faceImage->Width, faceImage->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, faceImage->data
         );
 
         delete faceImage;

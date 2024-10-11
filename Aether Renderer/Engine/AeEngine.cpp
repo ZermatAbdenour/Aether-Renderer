@@ -22,7 +22,7 @@ void AeEngine::Load(Scene* scene)
 		scene->UpdateEffectors(deltaTime);
 
 		m_editor.AddEditorWindow(scene,m_renderer);
-		//std::cout << FPS << std::endl;
+		std::cout << FPS << std::endl;
 		m_renderer->EndFrame();
 		EndFrame();
 	}

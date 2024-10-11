@@ -32,7 +32,7 @@ void main(){
 
     //Tonemapping
     if(toneMapping)
-        color = vec3(1.0f) - exp(-color *exposure);
+        color = vec3(1.0f) - exp(-color *max(exposure,0.1));
 
     //Gamma Correction
     if(gammaCorrection)

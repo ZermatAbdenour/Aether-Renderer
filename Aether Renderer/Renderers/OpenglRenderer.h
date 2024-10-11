@@ -47,9 +47,9 @@ public:
 		GLDirectionalLight() = default;
 	};
 private:
-	float m_sceneExposure = 1;
 	std::shared_ptr<GLMesh> m_screenQuad;
 	std::shared_ptr<GLFrameBuffer> m_screenFBO;
+	std::shared_ptr<GLFrameBuffer> m_autoExposureFBO;
 	std::shared_ptr<GLFrameBuffer> m_pingpongFBOs[2];
 	std::shared_ptr<GLFrameBuffer> m_pingpongBuffers[2];
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
