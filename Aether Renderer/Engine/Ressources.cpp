@@ -17,7 +17,6 @@ std::vector<unsigned int>{
 }
 );
 
-
 Mesh* Ressources::Primitives::Cube = new Mesh(
 	std::vector<Mesh::Vertex> {
 	// Front
@@ -70,6 +69,7 @@ std::vector<unsigned int>{
 Shader* Ressources::Shaders::Default = new Shader("Vertex.vert", "Fragment.frag");
 Shader* Ressources::Shaders::ScreenShader = new Shader("Screen.vert", "Screen.frag");
 Shader* Ressources::Shaders::Skybox = new Shader("Skybox.vert", "Skybox.frag");
+Shader* Ressources::Shaders::Gaussianblur = new Shader("Screen.vert", "GaussianBlur.frag");
 //Image Loading
 
 Image* Ressources::LoadImageFromFile(std::string file, bool flip)

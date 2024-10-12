@@ -128,8 +128,9 @@ void OpenglRenderer::SetupScene(Scene* scene)
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 
-    //Setup bloom ping pong framebuffers
+    //Setup bloom and ping pong framebuffers
     {
+        m_bloomShader = CreateShader(Ressources::Shaders::Gaussianblur);
         m_pingpongFBOs[0] = CreateFrameBuffer();
         SetFrameBufferAttachements(m_pingpongFBOs[0], windowWidth, windowHeight, 1, 3, false, 0);
         m_pingpongFBOs[1] = CreateFrameBuffer();
@@ -257,8 +258,37 @@ void OpenglRenderer::EndFrame()
         settings.exposure = glm::clamp(settings.exposure, sceneExposureRangeMin, sceneExposureRangeMax);
     }
 
+    
+    bool horizontal = true, first_iteration = true;
+
+    glBindFramebuffer(GL_READ_BUFFER, m_screenFBO->id);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_pingpongFBOs[0]->id);
+    glReadBuffer(GL_COLOR_ATTACHMENT1);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    
+
     if (settings.bloom) {
 
+        glUseProgram(m_bloomShader);
+        for (unsigned int i = 0; i < settings.amount; i++)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, m_pingpongFBOs[horizontal]->id);
+            glUniform1i(glGetUniformLocation(m_bloomShader, "horizontal"), horizontal);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(
+                GL_TEXTURE_2D, m_pingpongFBOs[!horizontal]->colorAttachments[0]
+            );
+            glUniform1i(glGetUniformLocation(m_bloomShader, "image"), 0);
+
+            glBindVertexArray(m_screenQuad->vao);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+            horizontal = !horizontal;
+            if (first_iteration)
+                first_iteration = false;
+        }
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -267,22 +297,29 @@ void OpenglRenderer::EndFrame()
     //Render Frame buffer
     glUseProgram(m_screenShader);
     
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->colorAttachments[1]);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->colorAttachments[0]);
     glUniform1i(glGetUniformLocation(m_screenShader, "MSScreenTexture"), 0);
-    
+   
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachments[1]);
+    glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachments[0]);
     glUniform1i(glGetUniformLocation(m_screenShader, "screenTexture"), 1);
 
+    if (settings.bloom) {
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, m_pingpongFBOs[!horizontal]->colorAttachments[0]);
+        glUniform1i(glGetUniformLocation(m_screenShader, "bloomTexture"), 2);
+    }
 
     //Settings
     glUniform1i(glGetUniformLocation(m_screenShader, "multiSampling"), settings.multiSampling);
     glUniform1i(glGetUniformLocation(m_screenShader, "samples"),m_screenFBO->samples);
     glUniform1i(glGetUniformLocation(m_screenShader, "gammaCorrection"), settings.gammaCorrection);
     glUniform1f(glGetUniformLocation(m_screenShader, "gamma"), settings.gamma);
-
+    glUniform1i(glGetUniformLocation(m_screenShader, "bloom"), settings.bloom);
     glUniform1i(glGetUniformLocation(m_screenShader, "toneMapping"), settings.toneMapping && settings.HDR);
     glUniform1f(glGetUniformLocation(m_screenShader, "exposure"), settings.exposure);
 
@@ -307,6 +344,9 @@ void OpenglRenderer::FrameBufferResizeCallBack(int width, int height)
     windowHeight = height;
     SetFrameBufferAttachements(m_screenFBO, width, height, 2, 3, true, settings.multiSampling ? settings.samples : 0);
     SetFrameBufferAttachements(m_autoExposureFBO, width, height, 1, 3, false, 0);
+
+    SetFrameBufferAttachements(m_pingpongFBOs[0], width, height, 1, 3, false, 0);
+    SetFrameBufferAttachements(m_pingpongFBOs[1], width, height, 1, 3, false, 0);
 
 }
 
@@ -609,7 +649,7 @@ void OpenglRenderer::SetTextureData(GLenum target,Image* image)
     case 2: format = GL_RG,internalFormat = GL_RG;break;
     case 3: format = image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB : GL_RGB;internalFormat = GL_RGB;break;
     case 4: format = image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB_ALPHA : GL_RGBA;internalFormat = GL_RGBA;break;
-    default: format = GL_RGB;break;
+    default: format = GL_RGB;internalFormat = GL_RGB;break;
     }
     //lTexImage2D(GL_TEXTURE_2D, 0, format, image->Width, image->Height, 0, format, GL_UNSIGNED_BYTE, image->data);
     glTexImage2D(target,0, format, image->Width, image->Height, 0, internalFormat, GL_UNSIGNED_BYTE, image->data);
@@ -646,28 +686,29 @@ void OpenglRenderer::RendererSettingsTab()
 {
 
     if (ImGui::CollapsingHeader("Anti-Aliasing")) {
-        if (ImGui::Checkbox("Enable multisampling", &settings.multiSampling)) {
+        if (ImGui::Checkbox("enable multisampling", &settings.multiSampling)) {
             SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels, true, settings.multiSampling ? settings.samples : 0);
         }
-        if (settings.multiSampling && ImGui::DragInt("Samples", &settings.samples, 1, 1, 8)) {
+        if (settings.multiSampling && ImGui::DragInt("samples", &settings.samples, 1, 1, 8)) {
             SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels, true, settings.multiSampling ? settings.samples : 0);
         }
     }
 
-    if (ImGui::CollapsingHeader("Gamma Correction")) {
+    if (ImGui::CollapsingHeader("Gamma correction")) {
         if (ImGui::Checkbox("enable gamma correction", &settings.gammaCorrection)) {
             ReloadTextures(settings.gammaCorrection);
         }
         if (settings.gammaCorrection)
             ImGui::DragFloat("Gamma", &settings.gamma, 0.1f, 0.0f, 5.0f);
     }
+
     if (ImGui::CollapsingHeader("HDR")) {
         if (ImGui::Checkbox("enable HDR", &settings.HDR)) {
             SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels,true, settings.multiSampling ? settings.samples : 0);
         }
         if (settings.HDR)
         {
-            ImGui::Checkbox("Tonemapping", &settings.toneMapping);
+            ImGui::Checkbox("tonemapping", &settings.toneMapping);
             
             ImGui::BeginDisabled(settings.autoExposure);
             ImGui::DragFloat("exposure", &settings.exposure, 0.1f, 0.0f, 5.0f);
@@ -678,6 +719,14 @@ void OpenglRenderer::RendererSettingsTab()
                 ImGui::InputFloat("exposure multiplier", &settings.exposureMultiplier);
                 ImGui::InputFloat("adjustment speed", &settings.adjustmentSpeed);
             }
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Bloom")) {
+        ImGui::Checkbox("enable gaussian blur", &settings.bloom);
+        if (settings.bloom) {
+            ImGui::InputInt("amount", &settings.amount);
+            settings.amount = glm::clamp(settings.amount, 1, 100);
         }
     }
 }

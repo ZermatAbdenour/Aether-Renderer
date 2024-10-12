@@ -4,9 +4,11 @@ in vec2 TexCoord;
 
 uniform sampler2DMS MSScreenTexture;
 uniform sampler2D screenTexture;
+uniform sampler2D bloomTexture;
+//Settings
 uniform bool multiSampling;
 uniform int samples;
-//Settings
+uniform bool bloom;
 uniform bool toneMapping;
 uniform float exposure;
 uniform bool gammaCorrection;
@@ -29,6 +31,9 @@ void main(){
         color = texture(screenTexture,TexCoord).rgb;
         fragColor = vec4(color,1);
     }
+    //Bloom
+    if(bloom)
+    color += texture(bloomTexture,TexCoord).rgb;
 
     //Tonemapping
     if(toneMapping)

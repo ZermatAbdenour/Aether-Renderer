@@ -15,5 +15,6 @@ struct RendererSettings {
 	float adjustmentSpeed = 0.03f;
 
 	bool bloom = true;
+	int amount = 10;
 };
 const RendererSettings DefaultRendererSettings;
