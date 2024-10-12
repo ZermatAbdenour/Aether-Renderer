@@ -24,6 +24,7 @@ public:
 		static Shader* ScreenShader;
 		static Shader* Skybox;
 		static Shader* Gaussianblur;
+		static Shader* Kernel;
 	};
 	/// <summary>
 	/// Load Immage from a file in the Resources/Images folder

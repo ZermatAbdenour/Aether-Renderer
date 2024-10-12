@@ -60,7 +60,8 @@ private:
 	GLuint m_screenShader;
 	GLuint m_PBRShader;
 	GLuint m_skyBoxShader;
-	GLuint m_bloomShader;
+	GLuint m_gaussianBlurShader;
+	GLuint m_kernelBlurShader;
 
 	//maps
 	GLuint m_skyBoxMap;

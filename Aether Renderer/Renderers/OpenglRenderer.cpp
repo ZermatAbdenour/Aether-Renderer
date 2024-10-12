@@ -130,7 +130,8 @@ void OpenglRenderer::SetupScene(Scene* scene)
 
     //Setup bloom and ping pong framebuffers
     {
-        m_bloomShader = CreateShader(Ressources::Shaders::Gaussianblur);
+        m_gaussianBlurShader = CreateShader(Ressources::Shaders::Gaussianblur);
+        m_kernelBlurShader = CreateShader(Ressources::Shaders::Kernel);
         m_pingpongFBOs[0] = CreateFrameBuffer();
         SetFrameBufferAttachements(m_pingpongFBOs[0], windowWidth, windowHeight, 1, 3, false, 0);
         m_pingpongFBOs[1] = CreateFrameBuffer();
@@ -261,26 +262,32 @@ void OpenglRenderer::EndFrame()
     
     bool horizontal = true, first_iteration = true;
 
-    glBindFramebuffer(GL_READ_BUFFER, m_screenFBO->id);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_pingpongFBOs[0]->id);
-    glReadBuffer(GL_COLOR_ATTACHMENT1);
-    glDrawBuffer(GL_COLOR_ATTACHMENT0);
-    glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    
+
 
     if (settings.bloom) {
 
-        glUseProgram(m_bloomShader);
+        glBindFramebuffer(GL_READ_BUFFER, m_screenFBO->id);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_pingpongFBOs[0]->id);
+        glReadBuffer(GL_COLOR_ATTACHMENT1);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+        glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        
+        if (settings.bloomType == RendererSettings::gaussianBlur)
+            glUseProgram(m_gaussianBlurShader);
+        else
+            glUseProgram(m_kernelBlurShader);
         for (unsigned int i = 0; i < settings.amount; i++)
         {
             glBindFramebuffer(GL_FRAMEBUFFER, m_pingpongFBOs[horizontal]->id);
-            glUniform1i(glGetUniformLocation(m_bloomShader, "horizontal"), horizontal);
+
+            if(settings.bloomType == RendererSettings::gaussianBlur)
+            glUniform1i(glGetUniformLocation(m_gaussianBlurShader, "horizontal"), horizontal);
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(
                 GL_TEXTURE_2D, m_pingpongFBOs[!horizontal]->colorAttachments[0]
             );
-            glUniform1i(glGetUniformLocation(m_bloomShader, "image"), 0);
+            glUniform1i(glGetUniformLocation(m_gaussianBlurShader, "image"), 0);
 
             glBindVertexArray(m_screenQuad->vao);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -723,11 +730,19 @@ void OpenglRenderer::RendererSettingsTab()
     }
 
     if (ImGui::CollapsingHeader("Bloom")) {
-        ImGui::Checkbox("enable gaussian blur", &settings.bloom);
-        if (settings.bloom) {
+        ImGui::Checkbox("enable", &settings.bloom);
+
+        const char* enumNames[] = { "Kernel Blur", "Gaussian Blur"};
+        int currentIndex = static_cast<int>(settings.bloomType);
+        if (ImGui::Combo("blur type", &currentIndex, enumNames, IM_ARRAYSIZE(enumNames))) 
+            settings.bloomType = static_cast<RendererSettings::BloomTypes>(currentIndex);
+
+        if (settings.bloom && settings.bloomType == RendererSettings::gaussianBlur) {
             ImGui::InputInt("amount", &settings.amount);
             settings.amount = glm::clamp(settings.amount, 1, 100);
         }
+        else
+            settings.amount = 1;
     }
 }
 

@@ -14,7 +14,13 @@ struct RendererSettings {
 	float exposureMultiplier = 0.4;
 	float adjustmentSpeed = 0.03f;
 
+	enum BloomTypes {
+		kernel,
+		gaussianBlur
+	};
+
 	bool bloom = true;
+	BloomTypes bloomType = BloomTypes::gaussianBlur;
 	int amount = 10;
 };
 const RendererSettings DefaultRendererSettings;
