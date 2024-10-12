@@ -59,6 +59,7 @@ private:
 	//Shaders
 	GLuint m_screenShader;
 	GLuint m_PBRShader;
+	GLuint m_earlyDepthTestingShader;
 	GLuint m_skyBoxShader;
 	GLuint m_gaussianBlurShader;
 	GLuint m_kernelBlurShader;
@@ -74,6 +75,7 @@ public:
 	void SetupScene(Scene* scene) override;
 	void SetupEntity(std::shared_ptr<Entity> entity) override;
 	void SetupFrame() override;
+	void EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 model, Camera camera) override;
 	void RenderEntity(MeshRenderer* meshRenderer,glm::mat4 model,Camera camera) override;
 	void EndFrame() override;
 	void Clear() override;
@@ -85,7 +87,6 @@ public:
 	GLuint CreateComputeShader(ComputeShader* shader);
 
 	std::shared_ptr<GLFrameBuffer> CreateFrameBuffer();
-	std::shared_ptr<OpenglRenderer::GLFrameBuffer> CreateSimpleFramebuffer();
 	void DeleteFrameBuffer(std::shared_ptr<GLFrameBuffer> framebuffer);
 	void SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,int width,int height,int colorAttachmentsCount, int NRChannels,bool useDepthStencil, int sample);
 	//std::shared_ptr<GLFrameBuffer> CreateScreenFrameBuffer(bool useDepthStencil,int samples);

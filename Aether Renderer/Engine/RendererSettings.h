@@ -22,5 +22,7 @@ struct RendererSettings {
 	bool bloom = true;
 	BloomTypes bloomType = BloomTypes::gaussianBlur;
 	int amount = 10;
+
+	bool zPrePass = true;
 };
 const RendererSettings DefaultRendererSettings;

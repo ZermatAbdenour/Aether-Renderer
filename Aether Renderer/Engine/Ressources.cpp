@@ -71,6 +71,7 @@ Shader* Ressources::Shaders::ScreenShader = new Shader("Screen.vert", "Screen.fr
 Shader* Ressources::Shaders::Skybox = new Shader("Skybox.vert", "Skybox.frag");
 Shader* Ressources::Shaders::Gaussianblur = new Shader("Screen.vert", "GaussianBlur.frag");
 Shader* Ressources::Shaders::Kernel = new Shader("Screen.vert", "Kernel.frag");
+Shader* Ressources::Shaders::EarlyDepthTesting = new Shader("EarlyDepthTesting.vert", "EarlyDepthTesting.frag");
 //Image Loading
 
 Image* Ressources::LoadImageFromFile(std::string file, bool flip)

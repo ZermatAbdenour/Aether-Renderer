@@ -1,21 +1,27 @@
 #include "Editor.h"
 #include <Imgui/imgui.h>
 #include <glm/gtc/quaternion.hpp>
+void Editor::UpdateAverageFPS(float deltaTime)
+{
+	float currentFPS = 1.0f / deltaTime;
+	if (averageFPS == 0) {
+		averageFPS = currentFPS;;
+	}
+	else
+	averageFPS = glm::mix(averageFPS, currentFPS, deltaTime );
+}
 void Editor::CreateEditorWindow(Scene* scene, Renderer* renderer,Time& engineTime)
 {
 	ImGui::Begin("Editor", nullptr );
 
+	UpdateAverageFPS(engineTime.deltaTime );
 	ImGui::BeginTabBar("EditorTabBar");
 		SceneTab();
 		RendererSettingsTab(renderer);
 	ImGui::EndTabBar();
 	ImGui::SetCursorPosY(ImGui::GetWindowHeight() - ImGui::GetStyle().ItemSpacing.y - 20);
 	ImGui::Separator();
-	if (averageFPS == 0)//For initialisation
-		averageFPS = engineTime.FPS;
-	else
-		averageFPS = glm::mix(averageFPS,engineTime.FPS,engineTime.deltaTime * 2);
-	ImGui::Text("deltatime : %f | FPS : %i | time : %.2f",engineTime.deltaTime, averageFPS,engineTime.time);
+	ImGui::Text("deltatime : %f | FPS : %i | time : %.2f",engineTime.deltaTime, (int)averageFPS,engineTime.time);
 	ImGui::End();
 }
 

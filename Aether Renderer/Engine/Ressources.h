@@ -21,6 +21,7 @@ public:
 	class Shaders {
 	public:
 		static Shader* Default;
+		static Shader* EarlyDepthTesting;
 		static Shader* ScreenShader;
 		static Shader* Skybox;
 		static Shader* Gaussianblur;

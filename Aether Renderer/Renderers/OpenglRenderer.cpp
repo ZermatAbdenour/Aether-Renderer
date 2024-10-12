@@ -137,6 +137,11 @@ void OpenglRenderer::SetupScene(Scene* scene)
         m_pingpongFBOs[1] = CreateFrameBuffer();
         SetFrameBufferAttachements(m_pingpongFBOs[1], windowWidth, windowHeight, 1, 3, false, 0);
     }
+
+    //Settup depth testing
+    {
+        m_earlyDepthTestingShader = CreateShader(Ressources::Shaders::EarlyDepthTesting);
+    }
 }
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 {
@@ -199,13 +204,32 @@ void OpenglRenderer::SetupFrame()
         glEnable(GL_CULL_FACE);
     }
 }
-
+void OpenglRenderer::EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 model, Camera camera) {
+    //Get necessary data to render 
+    std::shared_ptr<GLMesh> mesh = GetGLMesh(meshRenderer->mesh);
+    glColorMask(0,0,0,0); 
+    glDepthFunc(GL_LESS);
+    glUseProgram(m_earlyDepthTestingShader);
+    glUniformMatrix4fv(glGetUniformLocation(m_earlyDepthTestingShader, "model"), 1, false, glm::value_ptr(model));
+    glBindVertexArray(mesh->vao);
+    glDrawElements(GL_TRIANGLES, meshRenderer->mesh->indices.size(), GL_UNSIGNED_INT, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
 void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model,Camera camera)
 {
     //Get necessary data to render 
     std::shared_ptr<GLMesh> mesh = GetGLMesh(meshRenderer->mesh);
     GLuint diffuseTexture = GetTexture(meshRenderer->diffuse);
     GLuint normalTexture = GetTexture(meshRenderer->normalMap);
+
+    if (settings.zPrePass) {
+        glDepthFunc(GL_EQUAL);
+        glColorMask(1, 1, 1, 1);
+    }
+    else {
+        glDepthFunc(GL_LESS);
+        glColorMask(1, 1, 1, 1);
+    }
 
 	glUseProgram(m_PBRShader);
 
@@ -236,8 +260,9 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model,Ca
 
 void OpenglRenderer::EndFrame()
 {
+    glDepthFunc(GL_LESS);
     //auto Exposure
-    if (settings.autoExposure) {
+    if (settings.HDR&&settings.toneMapping && settings.autoExposure) {
         glBindFramebuffer(GL_READ_BUFFER, m_screenFBO->id);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_autoExposureFBO->id);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
@@ -717,11 +742,12 @@ void OpenglRenderer::RendererSettingsTab()
         {
             ImGui::Checkbox("tonemapping", &settings.toneMapping);
             
-            ImGui::BeginDisabled(settings.autoExposure);
-            ImGui::DragFloat("exposure", &settings.exposure, 0.1f, 0.0f, 5.0f);
-            ImGui::EndDisabled();
-            if (settings.toneMapping)
+            if (settings.toneMapping) {
+                ImGui::BeginDisabled(settings.autoExposure);
+                ImGui::DragFloat("exposure", &settings.exposure, 0.1f, 0.0f, 5.0f);
+                ImGui::EndDisabled();
                 ImGui::Checkbox("auto exposure", &settings.autoExposure);
+            }
             if (settings.toneMapping && settings.autoExposure) {
                 ImGui::InputFloat("exposure multiplier", &settings.exposureMultiplier);
                 ImGui::InputFloat("adjustment speed", &settings.adjustmentSpeed);
@@ -744,6 +770,7 @@ void OpenglRenderer::RendererSettingsTab()
         else
             settings.amount = 1;
     }
+    ImGui::Checkbox("zPreePass", &settings.zPrePass);
 }
 
 void OpenglRenderer::ReloadTextures(bool gammaCorrection)
