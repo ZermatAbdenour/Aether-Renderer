@@ -15,12 +15,19 @@ public:
 		GLuint ebo;
 		GLuint vao;
 	};
+	enum DepthStencilType {
+		None,
+		RBO,
+		Texture
+	};
 	struct GLFrameBuffer {
 		GLuint id;
 		std::vector<GLuint> colorAttachments;
-		GLuint depthStencilRBO;
+		GLuint depthStencilBuffer;
+		DepthStencilType depthStencilType;
 		Image* image;
 		int samples;
+
 	};
 public:
 	//Lights
@@ -47,14 +54,21 @@ public:
 		GLDirectionalLight() = default;
 	};
 private:
-	std::shared_ptr<GLMesh> m_screenQuad;
+	//FrameBuffers
 	std::shared_ptr<GLFrameBuffer> m_screenFBO;
 	std::shared_ptr<GLFrameBuffer> m_autoExposureFBO;
 	std::shared_ptr<GLFrameBuffer> m_pingpongFBOs[2];
+
+	//Meshes
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
 	std::unordered_map<Mesh*,std::shared_ptr<GLMesh>> m_meshs;
+	std::shared_ptr<GLMesh> m_screenQuad;
 	std::shared_ptr<GLMesh> m_skyboxMesh;
+
+	//Textures
 	std::unordered_map<Image*,GLuint> m_textures;
+	GLuint m_ssaoNoiseTexture;
+	GLuint m_skyBoxMap;
 
 	//Shaders
 	GLuint m_screenShader;
@@ -64,9 +78,6 @@ private:
 	GLuint m_gaussianBlurShader;
 	GLuint m_kernelBlurShader;
 
-	//maps
-	GLuint m_skyBoxMap;
-
 	//Uniform buffer objects
 	GLuint m_matricesUBO;
 	GLuint m_lightsUBO;
@@ -75,11 +86,13 @@ public:
 	void SetupScene(Scene* scene) override;
 	void SetupEntity(std::shared_ptr<Entity> entity) override;
 	void SetupFrame() override;
-	void EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 model, Camera camera) override;
-	void RenderEntity(MeshRenderer* meshRenderer,glm::mat4 model,Camera camera) override;
+	void RenderFrame()override;
 	void EndFrame() override;
 	void Clear() override;
 	void FrameBufferResizeCallBack(int width,int height);
+	void EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 model);
+	void SSAOPass(MeshRenderer* meshRenderer, glm::mat4 model);
+	void RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model);
 	
 	//Shaders
 	GLuint CreateShader(Shader* shader);
@@ -88,15 +101,12 @@ public:
 
 	std::shared_ptr<GLFrameBuffer> CreateFrameBuffer();
 	void DeleteFrameBuffer(std::shared_ptr<GLFrameBuffer> framebuffer);
-	void SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,int width,int height,int colorAttachmentsCount, int NRChannels,bool useDepthStencil, int sample);
-	//std::shared_ptr<GLFrameBuffer> CreateScreenFrameBuffer(bool useDepthStencil,int samples);
-	//void UpdateScreenFrameBuffer(std::shared_ptr<OpenglRenderer::GLFrameBuffer> frameBuffer, int width, int height);
+	void SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,int width,int height,int colorAttachmentsCount, int NRChannels,DepthStencilType depthStencilType, int sample);
 	//Meshs
 	std::shared_ptr<GLMesh> CreateMesh(Mesh* mesh);
 	std::shared_ptr<GLMesh> GetGLMesh(Mesh* mesh);
 	//Textures
-	GLuint CreateTexture(GLenum type);
-	GLuint CreateTexture(GLenum type, GLenum minFilter,GLenum magFilter);
+	GLuint CreateTexture(GLenum type, GLenum minFilter = NULL,GLenum magFilter = NULL,GLenum wrapS = NULL,GLenum wrapT = NULL);
 	void SetTextureData(GLenum target, Image* image);
 	GLuint GetTexture(Image* image);
 	GLuint CreateCubeMap(std::vector<std::string> faces);

@@ -15,17 +15,5 @@ void Renderer::RenderScene()
 		entity->CalculateModel();
 	});
 
-	if(settings.zPrePass)
-	m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
-		if (!entity->meshRenderer)
-			return;
-		EarlyDepthTestEntity(entity->meshRenderer, entity->model, m_currentScene->camera);
-	});
-
-	m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
-		if (!entity->meshRenderer)
-			return;
-		RenderEntity(entity->meshRenderer, entity->model, m_currentScene->camera);
-	});
-
+	RenderFrame();
 }

@@ -14,10 +14,9 @@ public:
 	
 	//renderer loop
 	virtual GLFWwindow* Init() = 0;
+	virtual void RenderFrame() = 0;
 	virtual void SetupEntity(std::shared_ptr<Entity> entity) = 0;
 	virtual void SetupFrame() = 0;
-	virtual void EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 model, Camera camera) = 0;
-	virtual void RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model,Camera camera) = 0;
 	virtual void EndFrame() = 0;
 	virtual void Clear() = 0;
 	

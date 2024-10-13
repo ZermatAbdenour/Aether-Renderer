@@ -1,5 +1,7 @@
 #pragma once
 struct RendererSettings {
+	bool zPrePass = true;
+	int screenFBODepthStencilType = 1;
 	//MultiSampling
 	bool multiSampling = true;
 	int samples = 4;
@@ -23,6 +25,7 @@ struct RendererSettings {
 	BloomTypes bloomType = BloomTypes::gaussianBlur;
 	int amount = 10;
 
-	bool zPrePass = true;
+	bool SSAO = true;
+	int kernelSize = 64;
 };
 const RendererSettings DefaultRendererSettings;
