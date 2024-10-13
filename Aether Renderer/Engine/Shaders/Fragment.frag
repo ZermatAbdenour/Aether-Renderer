@@ -26,22 +26,32 @@ in VS_OUT{
     mat3 TBN;
 } fs_in;
 
-vec3 ambiant = vec3(0.1);
+vec3 ambiantValue = vec3(0.01);
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
 uniform sampler2D specularMap;
+uniform sampler2D occlusionTexture;
 
 in vec3 worldPos;
 layout (location = 0) out vec4 fragColor;
 layout (location = 1) out vec4 bloomColor;
 
+//settings
+uniform bool ssao;
+
 void main()
-{   
+{
     vec3 normal = texture(normalMap,fs_in.uv).rgb * 2-1;
     normal = normalize(fs_in.TBN * normal);
-
+    float AmbientOcclusion = texture(occlusionTexture, gl_FragCoord.xy/vec2(1000,800)).r ;
     vec3 textureSample = texture(diffuseMap,fs_in.uv).xyz;
-    vec3 ambiant = textureSample * ambiant;
+    
+    vec3 ambiant;
+    if(ssao)
+    ambiant = textureSample * ambiantValue * AmbientOcclusion;
+    else
+    ambiant = textureSample * ambiantValue;
+
     vec3 lightDirection = normalize(directionalLights[0].direction.xyz);
 
     float diff =dot(lightDirection,-normal);

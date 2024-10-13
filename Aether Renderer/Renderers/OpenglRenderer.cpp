@@ -135,10 +135,10 @@ void OpenglRenderer::SetupScene(Scene* scene)
     {
         m_gaussianBlurShader = CreateShader(Ressources::Shaders::Gaussianblur);
         m_kernelBlurShader = CreateShader(Ressources::Shaders::Kernel);
-        m_pingpongFBOs[0] = CreateFrameBuffer();
-        SetFrameBufferAttachements(m_pingpongFBOs[0], windowWidth, windowHeight, 1, 3, None, 0);
-        m_pingpongFBOs[1] = CreateFrameBuffer();
-        SetFrameBufferAttachements(m_pingpongFBOs[1], windowWidth, windowHeight, 1, 3, None, 0);
+        m_boomPingpongFBOs[0] = CreateFrameBuffer();
+        SetFrameBufferAttachements(m_boomPingpongFBOs[0], windowWidth, windowHeight, 1, 3, None, 0);
+        m_boomPingpongFBOs[1] = CreateFrameBuffer();
+        SetFrameBufferAttachements(m_boomPingpongFBOs[1], windowWidth, windowHeight, 1, 3, None, 0);
     }
 
     //Settup depth testing
@@ -146,9 +146,13 @@ void OpenglRenderer::SetupScene(Scene* scene)
         m_earlyDepthTestingShader = CreateShader(Ressources::Shaders::EarlyDepthTesting);
     }
 
-    //SSAO
+    //settup SSAO
     {
+        m_ssaoFBO = CreateFrameBuffer();
+        SetFrameBufferAttachements(m_ssaoFBO, windowWidth, windowHeight, 1, 3, None, 0);
+        m_ssaoShader = CreateShader(Ressources::Shaders::SSAO);
         m_ssaoNoiseTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR,GL_REPEAT,GL_REPEAT);
+        glGenBuffers(1, &ssaoKernelSSBO);
     }
 }
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
@@ -241,13 +245,11 @@ void OpenglRenderer::RenderFrame()
                 randomFloats(generator)
             );
             sample = glm::normalize(sample);
-            sample *= randomFloats(generator);
-            float scale = (float)i / 64.0;
+            float scale = (float)i / settings.kernelSize;
             scale = glm::mix(0.1f, 1.0f, scale * scale);
             sample *= scale;
             ssaokernel.push_back(sample);
         }
-
         std::vector<glm::vec3> ssaoNoise;
         for (unsigned int i = 0; i < 16; i++)
         {
@@ -260,16 +262,43 @@ void OpenglRenderer::RenderFrame()
         glBindTexture(GL_TEXTURE_2D,m_ssaoNoiseTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
 
+        glBindFramebuffer(GL_FRAMEBUFFER, m_ssaoFBO->id);
+        glDepthFunc(GL_LESS);
+        glColorMask(1, 1, 1, 1);
 
+        glUseProgram(m_ssaoShader);
 
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_screenFBO->depthStencilBuffer);
+        glUniform1i(glGetUniformLocation(m_ssaoShader, "depthTexture"), 0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, m_ssaoNoiseTexture);
+        glUniform1i(glGetUniformLocation(m_ssaoShader, "noiseTexture"), 1);
+        
+        glUniform1f(glGetUniformLocation(m_ssaoShader, "sampleRad"), 0.5);
+        //set kernel buffer
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssaoKernelSSBO);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, ssaokernel.size() * sizeof(glm::vec3), ssaokernel.data(), GL_STATIC_DRAW);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssaoKernelSSBO);
+        glUniform2f(glGetUniformLocation(m_ssaoShader, "noiseScale"), windowWidth / 4, windowHeight / 4);
+        glm::mat4 projection = m_currentScene->camera.Projection(windowWidth, windowHeight);
+        glUniformMatrix4fv(glGetUniformLocation(m_ssaoShader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-        m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
-            if (!entity->meshRenderer)
-                return;
-            SSAOPass(entity->meshRenderer, entity->model);
-        });
+        glm::mat4 projectionInv = glm::inverse(m_currentScene->camera.Projection(windowWidth, windowHeight));
+        glUniformMatrix4fv(glGetUniformLocation(m_ssaoShader, "projectionInv"), 1, GL_FALSE, glm::value_ptr(projectionInv));
+        glUniform1f(glGetUniformLocation(m_ssaoShader, "power"), settings.power);
+        glBindVertexArray(m_screenQuad->vao);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
     }
-
+    else
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_ssaoFBO->id);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER,m_screenFBO->id);
     //Lighting Pass
     if (settings.zPrePass) {
         glDepthFunc(GL_EQUAL);
@@ -295,9 +324,7 @@ void OpenglRenderer::EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 
     glDrawElements(GL_TRIANGLES, meshRenderer->mesh->indices.size(), GL_UNSIGNED_INT, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
-void OpenglRenderer::SSAOPass(MeshRenderer* meshRenderer, glm::mat4 model) {
 
-}
 void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
 {
     //Get necessary data to render 
@@ -323,6 +350,13 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
         glBindTexture(GL_TEXTURE_2D, normalTexture);
         glUniform1i(glGetUniformLocation(m_PBRShader, "specularMap"), 2);
     }
+    if (settings.SSAO) {
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, m_ssaoFBO->colorAttachments[0]);
+        glUniform1i(glGetUniformLocation(m_PBRShader, "occlusionTexture"), 3);
+    }
+    glUniform1i(glGetUniformLocation(m_PBRShader, "ssao"), settings.SSAO);
+
 
     glBindVertexArray(mesh->vao);
     glDrawElements(GL_TRIANGLES, meshRenderer->mesh->indices.size(), GL_UNSIGNED_INT, 0);
@@ -365,7 +399,7 @@ void OpenglRenderer::EndFrame()
     if (settings.bloom) {
 
         glBindFramebuffer(GL_READ_BUFFER, m_screenFBO->id);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_pingpongFBOs[0]->id);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_boomPingpongFBOs[0]->id);
         glReadBuffer(GL_COLOR_ATTACHMENT1);
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
         glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
@@ -376,14 +410,14 @@ void OpenglRenderer::EndFrame()
             glUseProgram(m_kernelBlurShader);
         for (unsigned int i = 0; i < settings.amount; i++)
         {
-            glBindFramebuffer(GL_FRAMEBUFFER, m_pingpongFBOs[horizontal]->id);
+            glBindFramebuffer(GL_FRAMEBUFFER, m_boomPingpongFBOs[horizontal]->id);
 
             if(settings.bloomType == RendererSettings::gaussianBlur)
             glUniform1i(glGetUniformLocation(m_gaussianBlurShader, "horizontal"), horizontal);
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(
-                GL_TEXTURE_2D, m_pingpongFBOs[!horizontal]->colorAttachments[0]
+                GL_TEXTURE_2D, m_boomPingpongFBOs[!horizontal]->colorAttachments[0]
             );
             glUniform1i(glGetUniformLocation(m_gaussianBlurShader, "image"), 0);
 
@@ -405,21 +439,21 @@ void OpenglRenderer::EndFrame()
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->depthStencilBuffer);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->colorAttachments[0]);
     glUniform1i(glGetUniformLocation(m_screenShader, "MSScreenTexture"), 0);
    
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, m_screenFBO->depthStencilBuffer);
+    glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachments[0]);
     glUniform1i(glGetUniformLocation(m_screenShader, "screenTexture"), 1);
 
     if (settings.bloom) {
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, m_pingpongFBOs[!horizontal]->colorAttachments[0]);
+        glBindTexture(GL_TEXTURE_2D, m_boomPingpongFBOs[!horizontal]->colorAttachments[0]);
         glUniform1i(glGetUniformLocation(m_screenShader, "bloomTexture"), 2);
     }
-
     //Settings
+    glUniform1i(glGetUniformLocation(m_screenShader, "ssao"), settings.SSAO);
     glUniform1i(glGetUniformLocation(m_screenShader, "multiSampling"), settings.multiSampling);
     glUniform1i(glGetUniformLocation(m_screenShader, "samples"),m_screenFBO->samples);
     glUniform1i(glGetUniformLocation(m_screenShader, "gammaCorrection"), settings.gammaCorrection);
@@ -450,8 +484,8 @@ void OpenglRenderer::FrameBufferResizeCallBack(int width, int height)
     SetFrameBufferAttachements(m_screenFBO, width, height, 2, 3, m_screenFBO->depthStencilType, settings.multiSampling ? settings.samples : 0);
     SetFrameBufferAttachements(m_autoExposureFBO, width, height, 1, 3, m_autoExposureFBO->depthStencilType, 0);
 
-    SetFrameBufferAttachements(m_pingpongFBOs[0], width, height, 1, 3, m_pingpongFBOs[0]->depthStencilType, 0);
-    SetFrameBufferAttachements(m_pingpongFBOs[1], width, height, 1, 3, m_pingpongFBOs[1]->depthStencilType, 0);
+    SetFrameBufferAttachements(m_boomPingpongFBOs[0], width, height, 1, 3, m_boomPingpongFBOs[0]->depthStencilType, 0);
+    SetFrameBufferAttachements(m_boomPingpongFBOs[1], width, height, 1, 3, m_boomPingpongFBOs[1]->depthStencilType, 0);
 
 }
 
@@ -622,7 +656,7 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
         }
         else {
             glBindTexture(GL_TEXTURE_2D, framebuffer->colorAttachments[i]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, framebuffer->colorAttachments[i], 0);
         }
     }
@@ -860,7 +894,7 @@ void OpenglRenderer::RendererSettingsTab()
     }
 
     if (ImGui::CollapsingHeader("Bloom")) {
-        ImGui::Checkbox("enable", &settings.bloom);
+        ImGui::Checkbox("enable bloom", &settings.bloom);
 
         const char* enumNames[] = { "Kernel Blur", "Gaussian Blur"};
         int currentIndex = static_cast<int>(settings.bloomType);
@@ -873,6 +907,14 @@ void OpenglRenderer::RendererSettingsTab()
         }
         else
             settings.amount = 1;
+    }
+
+    if (ImGui::CollapsingHeader("SSAO")) {
+        ImGui::Checkbox("enable ssao", &settings.SSAO);
+        if (settings.SSAO)
+        {
+            ImGui::InputFloat("power", &settings.power);
+        }
     }
 }
 

@@ -72,6 +72,7 @@ Shader* Ressources::Shaders::Skybox = new Shader("Skybox.vert", "Skybox.frag");
 Shader* Ressources::Shaders::Gaussianblur = new Shader("Screen.vert", "GaussianBlur.frag");
 Shader* Ressources::Shaders::Kernel = new Shader("Screen.vert", "Kernel.frag");
 Shader* Ressources::Shaders::EarlyDepthTesting = new Shader("EarlyDepthTesting.vert", "EarlyDepthTesting.frag");
+Shader* Ressources::Shaders::SSAO = new Shader("Screen.vert", "ssao.frag");
 //Image Loading
 
 Image* Ressources::LoadImageFromFile(std::string file, bool flip)
@@ -148,6 +149,16 @@ void Ressources::ProcessNode(aiNode* node, std::shared_ptr<Entity> parent, Model
 		aiMesh* mesh = loadingData->scene->mMeshes[node->mMeshes[0]];
 		newEntity->meshRenderer = ProcessMeshRenderer(mesh, loadingData);
 	}
+
+	if (node->mTransformation != aiMatrix4x4()) {
+		ai_real x = node->mTransformation.a4;
+		ai_real y = node->mTransformation.b4;
+		ai_real z = node->mTransformation.c4;
+		newEntity->localPosition = glm::vec3(x,y,z);
+		std::cout << newEntity->localPosition.x << std::endl;
+	}
+
+
 	parent->AddChild(newEntity);
 
 	//process Child 

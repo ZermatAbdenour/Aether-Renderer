@@ -57,7 +57,8 @@ private:
 	//FrameBuffers
 	std::shared_ptr<GLFrameBuffer> m_screenFBO;
 	std::shared_ptr<GLFrameBuffer> m_autoExposureFBO;
-	std::shared_ptr<GLFrameBuffer> m_pingpongFBOs[2];
+	std::shared_ptr<GLFrameBuffer> m_boomPingpongFBOs[2];
+	std::shared_ptr<GLFrameBuffer> m_ssaoFBO;
 
 	//Meshes
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
@@ -77,10 +78,13 @@ private:
 	GLuint m_skyBoxShader;
 	GLuint m_gaussianBlurShader;
 	GLuint m_kernelBlurShader;
+	GLuint m_ssaoShader;
 
 	//Uniform buffer objects
 	GLuint m_matricesUBO;
 	GLuint m_lightsUBO;
+
+	GLuint ssaoKernelSSBO;
 public:
 	GLFWwindow* Init() override;
 	void SetupScene(Scene* scene) override;
@@ -91,7 +95,6 @@ public:
 	void Clear() override;
 	void FrameBufferResizeCallBack(int width,int height);
 	void EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 model);
-	void SSAOPass(MeshRenderer* meshRenderer, glm::mat4 model);
 	void RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model);
 	
 	//Shaders
