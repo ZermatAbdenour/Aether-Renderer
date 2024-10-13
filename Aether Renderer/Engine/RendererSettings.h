@@ -1,9 +1,9 @@
 #pragma once
 struct RendererSettings {
 	bool zPrePass = true;
-	int screenFBODepthStencilType = 1;
+	int screenFBODepthStencilType = 2;
 	//MultiSampling
-	bool multiSampling = true;
+	bool multiSampling = false;
 	int samples = 4;
 	//Gamma Correction
 	bool gammaCorrection = true;

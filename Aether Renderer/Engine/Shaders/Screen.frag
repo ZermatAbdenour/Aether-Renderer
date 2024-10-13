@@ -31,6 +31,8 @@ void main(){
         color = texture(screenTexture,TexCoord).rgb;
         fragColor = vec4(color,1);
     }
+    fragColor = texture(screenTexture,TexCoord);
+    return;
     //Bloom
     if(bloom)
     color += texture(bloomTexture,TexCoord).rgb;

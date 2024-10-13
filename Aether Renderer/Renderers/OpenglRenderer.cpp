@@ -260,6 +260,9 @@ void OpenglRenderer::RenderFrame()
         glBindTexture(GL_TEXTURE_2D,m_ssaoNoiseTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
 
+
+
+
         m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
             if (!entity->meshRenderer)
                 return;
@@ -402,12 +405,12 @@ void OpenglRenderer::EndFrame()
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->colorAttachments[0]);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->depthStencilBuffer);
     glUniform1i(glGetUniformLocation(m_screenShader, "MSScreenTexture"), 0);
    
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachments[0]);
+    glBindTexture(GL_TEXTURE_2D, m_screenFBO->depthStencilBuffer);
     glUniform1i(glGetUniformLocation(m_screenShader, "screenTexture"), 1);
 
     if (settings.bloom) {
@@ -571,12 +574,13 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->id);
 
     // Check for samples change
-    if ((samples == 0 && framebuffer->samples > 0) || (samples > 0 && framebuffer->samples == 0)) {
+    bool changeSampling = (samples == 0 && framebuffer->samples > 0) || (samples > 0 && framebuffer->samples == 0);
+    if (changeSampling) {
         GLuint* textures = framebuffer->colorAttachments.data();
         glDeleteTextures(framebuffer->colorAttachments.size(), textures);
         framebuffer->colorAttachments.clear();
     }
-    if (framebuffer->depthStencilType != None && framebuffer->depthStencilType != depthStencilType) {
+    if (framebuffer->depthStencilType != None && framebuffer->depthStencilType != depthStencilType|| changeSampling) {
         if (framebuffer->depthStencilType == Texture)
             glDeleteTextures(1, &framebuffer->depthStencilBuffer);
         if (framebuffer->depthStencilType == RBO)
@@ -652,7 +656,7 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
     if (depthStencilType == DepthStencilType::Texture) {
         if (framebuffer->depthStencilBuffer == 0) {
             if(samples>0)
-                framebuffer->depthStencilBuffer = CreateTexture(GL_MULTISAMPLE);
+                framebuffer->depthStencilBuffer = CreateTexture(GL_TEXTURE_2D_MULTISAMPLE);
             else
                 framebuffer->depthStencilBuffer = CreateTexture(GL_TEXTURE_2D,GL_NEAREST,GL_NEAREST);
 
@@ -661,18 +665,14 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
         if (samples > 0) {
             glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer->depthStencilBuffer);
             glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_DEPTH24_STENCIL8, width, height, GL_TRUE);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, framebuffer->depthStencilBuffer, 0);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, framebuffer->depthStencilBuffer, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, framebuffer->depthStencilBuffer, 0);
         }
         else {
             glBindTexture(GL_TEXTURE_2D, framebuffer->depthStencilBuffer);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, framebuffer->depthStencilBuffer, 0);
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, framebuffer->depthStencilBuffer, 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, framebuffer->depthStencilBuffer, 0);
         }
 
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer->depthStencilBuffer);
     }
 
     framebuffer->depthStencilType = depthStencilType;
