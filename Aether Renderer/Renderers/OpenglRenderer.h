@@ -59,6 +59,7 @@ private:
 	std::shared_ptr<GLFrameBuffer> m_autoExposureFBO;
 	std::shared_ptr<GLFrameBuffer> m_boomPingpongFBOs[2];
 	std::shared_ptr<GLFrameBuffer> m_ssaoFBO;
+	std::shared_ptr<GLFrameBuffer> m_resolveDepthFBO;
 
 	//Meshes
 	//maps so it does not pass the same data to the GPU if it detects that the data exist

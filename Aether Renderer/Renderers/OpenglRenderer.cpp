@@ -150,6 +150,8 @@ void OpenglRenderer::SetupScene(Scene* scene)
     {
         m_ssaoFBO = CreateFrameBuffer();
         SetFrameBufferAttachements(m_ssaoFBO, windowWidth, windowHeight, 1, 3, None, 0);
+        m_resolveDepthFBO = CreateFrameBuffer();
+        SetFrameBufferAttachements(m_resolveDepthFBO, windowWidth, windowHeight, 1, 3,Texture, 0);
         m_ssaoShader = CreateShader(Ressources::Shaders::SSAO);
         m_ssaoNoiseTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR,GL_REPEAT,GL_REPEAT);
         glGenBuffers(1, &ssaoKernelSSBO);
@@ -269,14 +271,22 @@ void OpenglRenderer::RenderFrame()
         glBindTexture(GL_TEXTURE_2D,m_ssaoNoiseTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
 
+        //resolve depth in an intermediat fbo
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_screenFBO->id);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_resolveDepthFBO->id);
+        glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, m_ssaoFBO->id);
+        
+
         glDepthFunc(GL_LESS);
         glColorMask(1, 1, 1, 1);
 
         glUseProgram(m_ssaoShader);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, m_screenFBO->depthStencilBuffer);
+        glBindTexture(GL_TEXTURE_2D, m_resolveDepthFBO->depthStencilBuffer);
+
         glUniform1i(glGetUniformLocation(m_ssaoShader, "depthTexture"), 0);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, m_ssaoNoiseTexture);
