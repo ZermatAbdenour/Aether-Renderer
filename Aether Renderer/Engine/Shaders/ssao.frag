@@ -1,8 +1,5 @@
 #version 460 core
 
-const int MAX_KERNEL_SIZE = 64;
-const float INV_MAX_KERNEL_SIZE_F = 1.0/float(MAX_KERNEL_SIZE);
-
 in vec2 TexCoord;
 
 uniform sampler2D depthTexture;
@@ -11,7 +8,7 @@ uniform sampler2D noiseTexture;
 // visibility radius
 uniform float sampleRad;
 layout(std430, binding = 0) buffer SSAOKernel {
-    vec3 kernel[MAX_KERNEL_SIZE];
+    vec3 kernel[];
 };
 uniform vec2 noiseScale;
 
@@ -39,7 +36,7 @@ void main(){
     mat3 TBN = mat3(tangent, bitangent, viewNormal);
 
     float occlusion_factor = 0.0;
-    for (int i = 0 ; i < MAX_KERNEL_SIZE ; i++) {
+    for (int i = 0 ; i < kernel.length() ; i++) {
             vec3 samplePos = TBN * kernel[i];
 
             // here we calculate the sampling point position in view space.
@@ -64,7 +61,7 @@ void main(){
             occlusion_factor += (geometryDepth >= samplePos.z  ? 1.0 : 0.0) * rangeCheck; 
         }
         // we will devide the accmulated occlusion by the number of samples to get the average occlusion value. 
-        float average_occlusion_factor = occlusion_factor * INV_MAX_KERNEL_SIZE_F;
+        float average_occlusion_factor = occlusion_factor * 1/kernel.length();
         
         float visibility_factor = 1.0 - average_occlusion_factor;
 

@@ -282,7 +282,7 @@ void OpenglRenderer::RenderFrame()
         glBindTexture(GL_TEXTURE_2D, m_ssaoNoiseTexture);
         glUniform1i(glGetUniformLocation(m_ssaoShader, "noiseTexture"), 1);
         
-        glUniform1f(glGetUniformLocation(m_ssaoShader, "sampleRad"), 0.1);
+        glUniform1f(glGetUniformLocation(m_ssaoShader, "sampleRad"), settings.sampleRad);
         //set kernel buffer
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssaoKernelSSBO);
         glBufferData(GL_SHADER_STORAGE_BUFFER, ssaokernel.size() * sizeof(glm::vec3), ssaokernel.data(), GL_STATIC_DRAW);
@@ -394,7 +394,7 @@ void OpenglRenderer::EndFrame()
 
         float sceneExposureMultiplier = 0.6;
         float sceneExposureRangeMin = 0.1;
-        float sceneExposureRangeMax = 10;
+        float sceneExposureRangeMax = 5;
         settings.exposure = glm::mix(settings.exposure, 0.5f / lum * settings.exposureMultiplier, settings.adjustmentSpeed);
         settings.exposure = glm::clamp(settings.exposure, sceneExposureRangeMin, sceneExposureRangeMax);
     }
@@ -494,6 +494,8 @@ void OpenglRenderer::FrameBufferResizeCallBack(int width, int height)
 
     SetFrameBufferAttachements(m_boomPingpongFBOs[0], width, height, 1, 3, m_boomPingpongFBOs[0]->depthStencilType, 0);
     SetFrameBufferAttachements(m_boomPingpongFBOs[1], width, height, 1, 3, m_boomPingpongFBOs[1]->depthStencilType, 0);
+
+    SetFrameBufferAttachements(m_ssaoFBO, width, height, 1, 3, None, 0);
 
 }
 
@@ -648,7 +650,7 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
                 textureColorbuffer = CreateTexture(GL_TEXTURE_2D_MULTISAMPLE);
             }
             else {
-                textureColorbuffer = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+                textureColorbuffer = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR,GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
             }
 
             framebuffer->colorAttachments.push_back(textureColorbuffer);
@@ -664,7 +666,7 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
         }
         else {
             glBindTexture(GL_TEXTURE_2D, framebuffer->colorAttachments[i]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, framebuffer->colorAttachments[i], 0);
         }
     }
@@ -921,9 +923,14 @@ void OpenglRenderer::RendererSettingsTab()
         if (ImGui::Checkbox("enable ssao", &settings.SSAO)) {
             if (!settings.SSAO) settings.SSAOOnly = false;
         }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Enabling Screen Space Ambient Occlusion requires the depth values of each fragment.");
+        }
         if (settings.SSAO)
         {
             ImGui::Checkbox("SSAO only", &settings.SSAOOnly);
+            ImGui::InputInt("kernel size", &settings.kernelSize);
+            ImGui::DragFloat("sample radius", &settings.sampleRad,0.1f,0,2);
             ImGui::InputFloat("power", &settings.power);
         }
     }

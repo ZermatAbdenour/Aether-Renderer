@@ -27,7 +27,7 @@ in VS_OUT{
     vec4 clipSpaceFragPos;
 } fs_in;
 
-vec3 ambiantValue = vec3(0.2);
+vec3 ambiantValue = vec3(0.05);
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
 uniform sampler2D specularMap;
@@ -57,21 +57,24 @@ void main()
     }
 
     if(ssao)
-    ambiant = textureSample * ambiantValue * AmbientOcclusion;
+        ambiant = textureSample * ambiantValue * AmbientOcclusion;
     else
-    ambiant = textureSample * ambiantValue ;
-
+        ambiant = textureSample * ambiantValue;
+    //fragColor = vec4(vec3(ambiant),1);
+    //return;
     vec3 lightDirection = normalize(directionalLights[0].direction.xyz);
 
-    float diff =dot(lightDirection,-normal);
+    float diff =max(dot(lightDirection,-normal),0.0);
     vec3 diffuse = diff * directionalLights[0].color.xyz * textureSample; 
     vec3 viewDir = normalize(fs_in.camPos - worldPos);
     vec3 reflectDir = reflect(directionalLights[0].direction.xyz, -normal);
     float spec = 0;
-    if(diff>0)  
-    spec = pow(max(dot(viewDir, reflectDir), 0.01), 36);
-    vec3 specular = spec * directionalLights[0].color.xyz *texture(specularMap,fs_in.uv).xyz;  
-    fragColor = vec4(ambiant + diffuse +specular,1);
+    vec3 specular;
+    if(diff>0)  {
+        spec = pow(max(dot(viewDir, reflectDir), 0.01), 36);
+        specular = spec * directionalLights[0].color.xyz *texture(specularMap,fs_in.uv).xyz;  
+    }
+    fragColor = vec4(vec3(ambiant+diffuse+ specular),1);
     
     //Calculate bloom color
     float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));

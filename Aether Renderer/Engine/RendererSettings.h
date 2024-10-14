@@ -21,13 +21,16 @@ struct RendererSettings {
 		gaussianBlur
 	};
 
+	//Bloom
 	bool bloom = true;
 	BloomTypes bloomType = BloomTypes::gaussianBlur;
 	int amount = 10;
 
+	//SSAO
 	bool SSAO = true;
 	bool SSAOOnly = false;
 	int kernelSize = 64;
+	float sampleRad = 0.5f;
 	float power = 2;
 };
 const RendererSettings DefaultRendererSettings;
