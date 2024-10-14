@@ -155,7 +155,6 @@ void Ressources::ProcessNode(aiNode* node, std::shared_ptr<Entity> parent, Model
 		ai_real y = node->mTransformation.b4;
 		ai_real z = node->mTransformation.c4;
 		newEntity->localPosition = glm::vec3(x,y,z);
-		std::cout << newEntity->localPosition.x << std::endl;
 	}
 
 

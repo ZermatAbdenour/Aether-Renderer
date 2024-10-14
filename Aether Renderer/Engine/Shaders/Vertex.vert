@@ -19,6 +19,7 @@ out VS_OUT{
     vec2 uv;
     vec3 camPos;
     mat3 TBN;
+    vec4 clipSpaceFragPos;
 } vs_out;
 
 void main(){
@@ -30,4 +31,5 @@ void main(){
     vs_out.TBN = mat3(model) *mat3(tangent,bitangent,normal); 
 
     gl_Position = projection * view * model * vec4(postion,1.0);
+    vs_out.clipSpaceFragPos = gl_Position;
 }

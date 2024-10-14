@@ -28,7 +28,6 @@ vec3 calcViewPosition(vec2 coords){
     //vec4 worldSpacePosition = viewMatrixInv * viewSpacePosition;
     return viewSpacePosition.xyz/viewSpacePosition.w;
 }
-
 void main(){
     vec3 viewPos = calcViewPosition(TexCoord);
 
@@ -61,7 +60,8 @@ void main(){
             // samplePos.z is the sample's depth i.e. the view_space_sampling_position depth
             // this value is negative in my coordinate system
             // for occlusion to be true the geometry's depth should be greater or equal (equal or less negative and consequently closer to the camera) than the sample's depth
-            occlusion_factor += float(geometryDepth >= samplePos.z + 0.0001) * rangeCheck; 
+
+            occlusion_factor += (geometryDepth >= samplePos.z  ? 1.0 : 0.0) * rangeCheck; 
         }
         // we will devide the accmulated occlusion by the number of samples to get the average occlusion value. 
         float average_occlusion_factor = occlusion_factor * INV_MAX_KERNEL_SIZE_F;

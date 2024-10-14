@@ -179,6 +179,12 @@ void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
         SetTextureData(GL_TEXTURE_2D, meshRenderer->normalMap);
         m_textures.insert({ meshRenderer->normalMap,normalTexture });
     }
+
+    if (meshRenderer->specularMap && !m_textures.contains(meshRenderer->specularMap)) {
+        GLuint specularTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR);
+        SetTextureData(GL_TEXTURE_2D, meshRenderer->normalMap);
+        m_textures.insert({ meshRenderer->specularMap,specularTexture });
+    }
 }
 
 void OpenglRenderer::SetupFrame()
@@ -245,6 +251,7 @@ void OpenglRenderer::RenderFrame()
                 randomFloats(generator)
             );
             sample = glm::normalize(sample);
+            sample *= randomFloats(generator);
             float scale = (float)i / settings.kernelSize;
             scale = glm::mix(0.1f, 1.0f, scale * scale);
             sample *= scale;
@@ -275,7 +282,7 @@ void OpenglRenderer::RenderFrame()
         glBindTexture(GL_TEXTURE_2D, m_ssaoNoiseTexture);
         glUniform1i(glGetUniformLocation(m_ssaoShader, "noiseTexture"), 1);
         
-        glUniform1f(glGetUniformLocation(m_ssaoShader, "sampleRad"), 0.5);
+        glUniform1f(glGetUniformLocation(m_ssaoShader, "sampleRad"), 0.1);
         //set kernel buffer
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssaoKernelSSBO);
         glBufferData(GL_SHADER_STORAGE_BUFFER, ssaokernel.size() * sizeof(glm::vec3), ssaokernel.data(), GL_STATIC_DRAW);
@@ -288,6 +295,7 @@ void OpenglRenderer::RenderFrame()
         glm::mat4 projectionInv = glm::inverse(m_currentScene->camera.Projection(windowWidth, windowHeight));
         glUniformMatrix4fv(glGetUniformLocation(m_ssaoShader, "projectionInv"), 1, GL_FALSE, glm::value_ptr(projectionInv));
         glUniform1f(glGetUniformLocation(m_ssaoShader, "power"), settings.power);
+
         glBindVertexArray(m_screenQuad->vao);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -356,7 +364,7 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
         glUniform1i(glGetUniformLocation(m_PBRShader, "occlusionTexture"), 3);
     }
     glUniform1i(glGetUniformLocation(m_PBRShader, "ssao"), settings.SSAO);
-
+    glUniform1i(glGetUniformLocation(m_PBRShader, "SSAOOnly"), settings.SSAOOnly);
 
     glBindVertexArray(mesh->vao);
     glDrawElements(GL_TRIANGLES, meshRenderer->mesh->indices.size(), GL_UNSIGNED_INT, 0);
@@ -910,9 +918,12 @@ void OpenglRenderer::RendererSettingsTab()
     }
 
     if (ImGui::CollapsingHeader("SSAO")) {
-        ImGui::Checkbox("enable ssao", &settings.SSAO);
+        if (ImGui::Checkbox("enable ssao", &settings.SSAO)) {
+            if (!settings.SSAO) settings.SSAOOnly = false;
+        }
         if (settings.SSAO)
         {
+            ImGui::Checkbox("SSAO only", &settings.SSAOOnly);
             ImGui::InputFloat("power", &settings.power);
         }
     }

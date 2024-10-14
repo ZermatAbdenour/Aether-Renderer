@@ -26,6 +26,7 @@ struct RendererSettings {
 	int amount = 10;
 
 	bool SSAO = true;
+	bool SSAOOnly = false;
 	int kernelSize = 64;
 	float power = 2;
 };

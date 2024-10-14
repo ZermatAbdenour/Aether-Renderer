@@ -7,7 +7,6 @@ uniform sampler2D screenTexture;
 uniform sampler2D bloomTexture;
 
 //Settings
-uniform bool ssao;
 uniform bool multiSampling;
 uniform int samples;
 uniform bool bloom;

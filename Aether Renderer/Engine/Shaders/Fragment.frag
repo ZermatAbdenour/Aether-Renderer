@@ -24,9 +24,10 @@ in VS_OUT{
     vec2 uv;
     vec3 camPos;
     mat3 TBN;
+    vec4 clipSpaceFragPos;
 } fs_in;
 
-vec3 ambiantValue = vec3(0.01);
+vec3 ambiantValue = vec3(0.2);
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
 uniform sampler2D specularMap;
@@ -38,19 +39,27 @@ layout (location = 1) out vec4 bloomColor;
 
 //settings
 uniform bool ssao;
-
+uniform bool SSAOOnly;
 void main()
 {
+    vec2 NDCSpaceFragPos = fs_in.clipSpaceFragPos.xy / fs_in.clipSpaceFragPos.w;
+    vec2 ssaoTextureLookup = NDCSpaceFragPos * 0.5 + 0.5;
+
     vec3 normal = texture(normalMap,fs_in.uv).rgb * 2-1;
     normal = normalize(fs_in.TBN * normal);
-    float AmbientOcclusion = texture(occlusionTexture, gl_FragCoord.xy/vec2(1000,800)).r ;
+    float AmbientOcclusion = texture(occlusionTexture, ssaoTextureLookup).r ;
     vec3 textureSample = texture(diffuseMap,fs_in.uv).xyz;
     
     vec3 ambiant;
+    if(SSAOOnly){
+        fragColor = vec4(vec3(AmbientOcclusion),1);
+        return;
+    }
+
     if(ssao)
     ambiant = textureSample * ambiantValue * AmbientOcclusion;
     else
-    ambiant = textureSample * ambiantValue;
+    ambiant = textureSample * ambiantValue ;
 
     vec3 lightDirection = normalize(directionalLights[0].direction.xyz);
 
@@ -66,7 +75,7 @@ void main()
     
     //Calculate bloom color
     float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-    if(brightness > 1.0)
+    if(brightness > 1.5)
         bloomColor = vec4(fragColor.rgb, 1.0);
     else
         bloomColor = vec4(0.0, 0.0, 0.0, 1.0);
