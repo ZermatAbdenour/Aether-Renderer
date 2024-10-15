@@ -84,6 +84,9 @@
     <ClCompile Include="Engine\Editor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Dependencies\Include\Imgui\imGuIZMO.quat\imGuIZMOquat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Renderer.h">

@@ -99,37 +99,6 @@ void OpenglRenderer::SetupScene(Scene* scene)
                 "skybox/back.jpg"
         });
     }
-    //Set the "Lights" UBO
-    {
-        //Genereate GLLights
-        int numDirectionalLights = scene->DirectionalLights.size();
-        GLDirectionalLight directionalLights[MAX_DIRECTIONALLIGHTS];
-        for (int i = 0;i < numDirectionalLights;i++) {
-            directionalLights[i] = GLDirectionalLight(scene->DirectionalLights[i]);
-        }
-
-        int numPointLights = scene->PointLights.size();
-        GLPointLight pointLights[MAX_POINTLIGHTS];
-        for (int i = 0;i < numPointLights;i++) {
-            pointLights[i] =  GLPointLight(scene->PointLights[i]);
-        }
-
-        glGenBuffers(1, &m_lightsUBO);
-        glBindBuffer(GL_UNIFORM_BUFFER, m_lightsUBO);
-        glBufferData(GL_UNIFORM_BUFFER, 16 + sizeof(GLDirectionalLight) * MAX_DIRECTIONALLIGHTS + sizeof(GLPointLight) * MAX_POINTLIGHTS, nullptr, GL_DYNAMIC_DRAW);
-
-        int offset = 0;
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, 4, &numDirectionalLights);
-        glBufferSubData(GL_UNIFORM_BUFFER, 4, 4, &numPointLights);
-        offset += 16;
-        glBufferSubData(GL_UNIFORM_BUFFER, offset,sizeof(GLDirectionalLight) * MAX_DIRECTIONALLIGHTS, &directionalLights[0]);
-        offset += sizeof(GLDirectionalLight) * MAX_DIRECTIONALLIGHTS;
-        glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(GLPointLight) * MAX_POINTLIGHTS, &pointLights[0]);
-
-        glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_lightsUBO);
-
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    }
 
     //Setup bloom and ping pong framebuffers
     {
@@ -223,6 +192,39 @@ void OpenglRenderer::SetupFrame()
         glDepthMask(GL_TRUE);
         glEnable(GL_CULL_FACE);
     }
+
+    //Set the "Lights" UBO
+    {
+        //Genereate GLLights
+        int numDirectionalLights = m_currentScene->DirectionalLights.size();
+        GLDirectionalLight directionalLights[MAX_DIRECTIONALLIGHTS];
+        for (int i = 0;i < numDirectionalLights;i++) {
+            directionalLights[i] = GLDirectionalLight(m_currentScene->DirectionalLights[i]);
+        }
+
+        int numPointLights = m_currentScene->PointLights.size();
+        GLPointLight pointLights[MAX_POINTLIGHTS];
+        for (int i = 0;i < numPointLights;i++) {
+            pointLights[i] = GLPointLight(m_currentScene->PointLights[i]);
+        }
+
+        glGenBuffers(1, &m_lightsUBO);
+        glBindBuffer(GL_UNIFORM_BUFFER, m_lightsUBO);
+        glBufferData(GL_UNIFORM_BUFFER, 16 + sizeof(GLDirectionalLight) * MAX_DIRECTIONALLIGHTS + sizeof(GLPointLight) * MAX_POINTLIGHTS, nullptr, GL_DYNAMIC_DRAW);
+
+        int offset = 0;
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, 4, &numDirectionalLights);
+        glBufferSubData(GL_UNIFORM_BUFFER, 4, 4, &numPointLights);
+        offset += 16;
+        glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(GLDirectionalLight) * MAX_DIRECTIONALLIGHTS, &directionalLights[0]);
+        offset += sizeof(GLDirectionalLight) * MAX_DIRECTIONALLIGHTS;
+        glBufferSubData(GL_UNIFORM_BUFFER, offset, sizeof(GLPointLight) * MAX_POINTLIGHTS, &pointLights[0]);
+
+        glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_lightsUBO);
+
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    }
+
 }
 
 void OpenglRenderer::RenderFrame()
@@ -506,6 +508,7 @@ void OpenglRenderer::FrameBufferResizeCallBack(int width, int height)
     SetFrameBufferAttachements(m_boomPingpongFBOs[1], width, height, 1, 3, m_boomPingpongFBOs[1]->depthStencilType, 0);
 
     SetFrameBufferAttachements(m_ssaoFBO, width, height, 1, 3, None, 0);
+    SetFrameBufferAttachements(m_resolveDepthFBO, width, height, 1, 3, Texture, 0);
 
 }
 

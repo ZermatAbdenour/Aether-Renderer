@@ -13,6 +13,6 @@ public:
 	Editor() = default;
 	void UpdateAverageFPS(float deltaTime);
 	void CreateEditorWindow(Scene* scene,Renderer* renderer,Time& time);
-	void SceneTab();
+	void RenderSceneTab(Scene* scene);
 	void RendererSettingsTab(Renderer* renderer);
 };

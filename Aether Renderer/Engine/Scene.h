@@ -30,6 +30,7 @@ public:
 	void UpdateEffectors(float deltaTime);
 
 	void ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& func);
+	void RenderSceneTab();
 	/// <summary>
 	/// Debug: Print the scene heirarchy
 	/// </summary>

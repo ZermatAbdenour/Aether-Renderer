@@ -16,7 +16,7 @@ void Editor::CreateEditorWindow(Scene* scene, Renderer* renderer,Time& engineTim
 
 	UpdateAverageFPS(engineTime.deltaTime );
 	ImGui::BeginTabBar("EditorTabBar");
-		SceneTab();
+		RenderSceneTab(scene);
 		RendererSettingsTab(renderer);
 	ImGui::EndTabBar();
 	ImGui::SetCursorPosY(ImGui::GetWindowHeight() - ImGui::GetStyle().ItemSpacing.y - 20);
@@ -25,11 +25,11 @@ void Editor::CreateEditorWindow(Scene* scene, Renderer* renderer,Time& engineTim
 	ImGui::End();
 }
 
-void Editor::SceneTab()
+void Editor::RenderSceneTab(Scene* scene)
 {
 	if (!ImGui::BeginTabItem("Scene"))
 		return;
-	ImGui::Text("Here you can update the scene");
+	scene->RenderSceneTab();
 	ImGui::EndTabItem();
 }
 

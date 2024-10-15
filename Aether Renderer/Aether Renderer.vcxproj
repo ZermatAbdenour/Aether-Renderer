@@ -152,6 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Dependencies\Include\Imgui\imgui.cpp" />
+    <ClCompile Include="..\Dependencies\Include\Imgui\imGuIZMO.quat\imGuIZMOquat.cpp" />
     <ClCompile Include="..\Dependencies\Include\Imgui\imgui_demo.cpp" />
     <ClCompile Include="..\Dependencies\Include\Imgui\imgui_draw.cpp" />
     <ClCompile Include="..\Dependencies\Include\Imgui\imgui_impl_glfw.cpp" />
