@@ -55,70 +55,99 @@ void Scene::ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& fu
 }
 void Scene::RenderSceneTab()
 {
+	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); 
+
+	ImGui::BeginChild("Heirarchy", ImVec2(ImGui::GetWindowWidth(), 100));
+	for (auto root : rootEntities) {
+		RenderSceneHierarchyUI(root);
+	}
+	ImGui::EndChild();
+
+	ImGui::PopStyleColor();
+}
+void Scene::RenderLightingTab()
+{
 	ImVec2 buttonsize = ImVec2(20,20);
-	if (ImGui::CollapsingHeader("Lights",ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::Indent();
-		if (ImGui::CollapsingHeader("Directional Lights")) {
-			for (int i = 0;i < DirectionalLights.size();i++) {
-				ImVec2 firstPos = ImGui::GetCursorPos();
-				ImVec2 buttonPos = firstPos;
-				buttonPos.x += ImGui::GetWindowWidth() - buttonsize.x- ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing;
-				ImGui::SetCursorPos(buttonPos+ImVec2(-30,15));
-				std::string special = "-##d" + std::to_string(i);
-				if (ImGui::Button(special.c_str(), buttonsize)) {
-					DirectionalLights.erase(DirectionalLights.begin() + i);
-				}
-				ImGui::SetCursorPos(firstPos);
-				//Get light view Direction
-				ImGui::Text("direction");
-				vec3 direction = camera.directionToViewSpace(DirectionalLights[i].direction);
-				ImGui::gizmo3D("##ddir" + i, direction);
-				DirectionalLights[i].direction = camera.viewSpaceToDirection(direction);
-				ImGui::Text("color");
-				ImGui::ColorEdit3("##dcolor" + i, &DirectionalLights[0].color[0]);
-				ImGui::Text("intensity");
-				ImGui::InputFloat("##dintensity" + i, &DirectionalLights[0].intensity);
-				DirectionalLights[0].intensity = glm::clamp(DirectionalLights[0].intensity, 0.0f, DirectionalLights[0].intensity + 1);
-				ImGui::Separator();
+	if (ImGui::CollapsingHeader("Directional Lights")) {
+		for (int i = 0;i < DirectionalLights.size();i++) {
+			ImVec2 firstPos = ImGui::GetCursorPos();
+			ImVec2 buttonPos = firstPos;
+			buttonPos.x += ImGui::GetWindowWidth() - buttonsize.x - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing;
+			ImGui::SetCursorPos(buttonPos + ImVec2(-30, 15));
+			std::string special = "-##d" + std::to_string(i);
+			if (ImGui::Button(special.c_str(), buttonsize)) {
+				DirectionalLights.erase(DirectionalLights.begin() + i);
 			}
-			ImVec2 addButtonSize = ImVec2(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing, 20);
-			if (ImGui::Button("add directional light", addButtonSize)) {
-				DirectionalLights.push_back(DirectionalLight());
-			}
+			ImGui::SetCursorPos(firstPos);
+			//Get light view Direction
+			ImGui::Text("direction");
+			vec3 direction = camera.directionToViewSpace(DirectionalLights[i].direction);
+			ImGui::gizmo3D("##ddir" + i, direction);
+			DirectionalLights[i].direction = camera.viewSpaceToDirection(direction);
+			ImGui::Text("color");
+			ImGui::ColorEdit3("##dcolor" + i, &DirectionalLights[0].color[0]);
+			ImGui::Text("intensity");
+			ImGui::InputFloat("##dintensity" + i, &DirectionalLights[0].intensity);
+			DirectionalLights[0].intensity = glm::clamp(DirectionalLights[0].intensity, 0.0f, DirectionalLights[0].intensity + 1);
+			ImGui::Separator();
 		}
+		ImVec2 addButtonSize = ImVec2(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing, 20);
+		if (ImGui::Button("add directional light", addButtonSize)) {
+			DirectionalLights.push_back(DirectionalLight());
+		}
+	}
 
-		ImGui::Spacing();
-		ImGui::Unindent();
-		ImGui::Separator();
-		ImGui::Indent();
-		ImGui::Spacing();
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
 
-		if (ImGui::CollapsingHeader("Point Lights")) {
-			for (int i = 0;i < PointLights.size();i++) {
-				ImVec2 firstPos = ImGui::GetCursorPos();
-				ImVec2 buttonPos = firstPos;
-				buttonPos.x += ImGui::GetWindowWidth() - buttonsize.x - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing;
-				ImGui::SetCursorPos(buttonPos + ImVec2(-30, 15));
-				std::string special = "-##p" + std::to_string(i);
-				if (ImGui::Button(special.c_str(), buttonsize)) {
-					PointLights.erase(PointLights.begin() + i);
-				}
-				ImGui::SetCursorPos(firstPos);
-				//Get light view Direction
-				ImGui::Text("color");
-				ImGui::ColorEdit3("##pcolor" + i, &PointLights[0].color[0]);
-				ImGui::Text("intensity");
-				ImGui::InputFloat("##pintensity" + i, &PointLights[0].intensity);
-				PointLights[0].intensity = glm::clamp(PointLights[0].intensity, 0.0f, PointLights[0].intensity + 1);
-				ImGui::Separator();
+	if (ImGui::CollapsingHeader("Point Lights")) {
+		for (int i = 0;i < PointLights.size();i++) {
+			ImVec2 firstPos = ImGui::GetCursorPos();
+			ImVec2 buttonPos = firstPos;
+			buttonPos.x += ImGui::GetWindowWidth() - buttonsize.x - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing;
+			ImGui::SetCursorPos(buttonPos + ImVec2(-30, 15));
+			std::string special = "-##p" + std::to_string(i);
+			if (ImGui::Button(special.c_str(), buttonsize)) {
+				PointLights.erase(PointLights.begin() + i);
 			}
-			ImVec2 addButtonSize = ImVec2(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing, 20);
-			if (ImGui::Button("add point light", addButtonSize)) {
-				PointLights.push_back(PointLight());
-			}
+			ImGui::SetCursorPos(firstPos);
+			//Get light view Direction
+			ImGui::Text("color");
+			ImGui::ColorEdit3("##pcolor" + i, &PointLights[0].color[0]);
+			ImGui::Text("intensity");
+			ImGui::InputFloat("##pintensity" + i, &PointLights[0].intensity);
+			PointLights[0].intensity = glm::clamp(PointLights[0].intensity, 0.0f, PointLights[0].intensity + 1);
+			ImGui::Separator();
+		}
+		ImVec2 addButtonSize = ImVec2(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing, 20);
+		if (ImGui::Button("add point light", addButtonSize)) {
+			PointLights.push_back(PointLight());
 		}
 	}
 }
+
+void Scene::RenderSceneHierarchyUI(std::shared_ptr<Entity> entity)
+{
+	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags();
+	if (entity->childs.size() == 0)
+		flags |= ImGuiTreeNodeFlags_Leaf;
+	if (entity == m_selectedEntity)
+		flags |= ImGuiTreeNodeFlags_Selected;
+	bool opened = ImGui::TreeNodeExV(std::to_string(entity->id).c_str(), flags, entity->Name.c_str(), NULL);
+
+	if (ImGui::IsItemClicked()) {
+		m_selectedEntity = entity;
+	}
+
+	if (opened) {
+		for (auto& child : entity->childs) {
+			RenderSceneHierarchyUI(child);
+		}
+		ImGui::TreePop();
+	}
+}
+
 
 void Scene::PrintSceneHeirarchy()
 {

@@ -16,6 +16,7 @@ public:
 	std::vector<PointLight> PointLights;
 private:
 	std::vector<std::shared_ptr<Effector>> m_effectors;
+	std::shared_ptr<Entity> m_selectedEntity;
 public:
 	Scene();
 	~Scene() = default;
@@ -30,7 +31,9 @@ public:
 	void UpdateEffectors(float deltaTime);
 
 	void ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& func);
+	void RenderLightingTab();
 	void RenderSceneTab();
+	void RenderSceneHierarchyUI(std::shared_ptr<Entity> entity);
 	/// <summary>
 	/// Debug: Print the scene heirarchy
 	/// </summary>

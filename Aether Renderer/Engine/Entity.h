@@ -7,8 +7,10 @@
 class Entity
 {
 public:
-	const char* Name = "Entity";
+	static int s_currentEntityId;
+	std::string Name = "Entity";
 	Entity* parent;
+	int id;
 
 	glm::vec3 localPosition = glm::vec3(0);
 	glm::vec3 eulerAngles = glm::vec3(0);
@@ -50,10 +52,10 @@ public:
 	/// Create the Renderer
 	/// </summary>
 	void CreateMeshRenderer();
+	void SetID();
 	/// <summary>
 	/// debug: print the Entity hierarchy
 	/// </summary>
 	void PrintEntityHierarchy(int depth);
 
-	
 };

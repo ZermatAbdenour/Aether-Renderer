@@ -2,15 +2,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
+int Entity::s_currentEntityId = 0;
 Entity::Entity()
 {
     CreateMeshRenderer();
     parent = nullptr;
+    SetID();
 }
 Entity::Entity(bool createRenderer) {
     parent = nullptr;
     if (createRenderer)
         CreateMeshRenderer();
+    SetID();
 }
 Entity::~Entity() {
     std::cout << "Entity " << Name << " destroyed" << std::endl;
@@ -53,6 +56,12 @@ void Entity::CalculateModel()
 void Entity::CreateMeshRenderer()
 {
     meshRenderer = new MeshRenderer();
+}
+
+void Entity::SetID()
+{
+    id = s_currentEntityId;
+    s_currentEntityId++;
 }
 
 void Entity::PrintEntityHierarchy(int depth) {

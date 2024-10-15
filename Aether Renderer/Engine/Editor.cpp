@@ -17,6 +17,7 @@ void Editor::CreateEditorWindow(Scene* scene, Renderer* renderer,Time& engineTim
 	UpdateAverageFPS(engineTime.deltaTime );
 	ImGui::BeginTabBar("EditorTabBar");
 		RenderSceneTab(scene);
+		RenderLightingTab(scene);
 		RendererSettingsTab(renderer);
 	ImGui::EndTabBar();
 	float windowHeight = ImGui::GetWindowHeight();
@@ -32,6 +33,14 @@ void Editor::RenderSceneTab(Scene* scene)
 	if (!ImGui::BeginTabItem("Scene"))
 		return;
 	scene->RenderSceneTab();
+	ImGui::EndTabItem();
+}
+
+void Editor::RenderLightingTab(Scene* scene)
+{
+	if (!ImGui::BeginTabItem("Lighting"))
+		return;
+	scene->RenderLightingTab();
 	ImGui::EndTabItem();
 }
 

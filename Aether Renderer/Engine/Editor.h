@@ -14,5 +14,6 @@ public:
 	void UpdateAverageFPS(float deltaTime);
 	void CreateEditorWindow(Scene* scene,Renderer* renderer,Time& time);
 	void RenderSceneTab(Scene* scene);
+	void RenderLightingTab(Scene* scene);
 	void RendererSettingsTab(Renderer* renderer);
 };
