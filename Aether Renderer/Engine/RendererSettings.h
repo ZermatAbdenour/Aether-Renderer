@@ -3,7 +3,7 @@ struct RendererSettings {
 	bool zPrePass = true;
 	int screenFBODepthStencilType = 2;
 	//MultiSampling
-	bool multiSampling = false;
+	bool multiSampling = true;
 	int samples = 4;
 	//Gamma Correction
 	bool gammaCorrection = true;

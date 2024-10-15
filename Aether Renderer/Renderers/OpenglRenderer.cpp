@@ -866,9 +866,20 @@ GLuint OpenglRenderer::CreateCubeMap(std::vector<std::string> faces)
     return cubeMap;
 }
 
+void OpenglRenderer::ReloadTextures(bool gammaCorrection)
+{
+    for (const auto& pair : m_textures) {
+        if (pair.first->imageType == Image::ImageType::normal)
+            continue;
+        glBindTexture(GL_TEXTURE_2D, pair.second);
+        pair.first->gammaCorrect = gammaCorrection;
+        SetTextureData(GL_TEXTURE_2D, pair.first);
+    }
+}
+
 void OpenglRenderer::RendererSettingsTab()
 {
-    if (ImGui::CollapsingHeader("Pipline")) {
+    if (ImGui::CollapsingHeader("Pipline",ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Checkbox("Z pre-pass", &settings.zPrePass);
         const char* enumNames[] = { "None", "RBO" ,"Texture"};
         if (ImGui::Combo("DepthStencil type", &settings.screenFBODepthStencilType, enumNames, IM_ARRAYSIZE(enumNames))) {
@@ -878,7 +889,7 @@ void OpenglRenderer::RendererSettingsTab()
         }
     }
 
-    if (ImGui::CollapsingHeader("Anti-Aliasing")) {
+    if (ImGui::CollapsingHeader("Anti-Aliasing", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Checkbox("enable multisampling", &settings.multiSampling)) {
             SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels, m_screenFBO->depthStencilType, settings.multiSampling ? settings.samples : 0);
         }
@@ -887,7 +898,7 @@ void OpenglRenderer::RendererSettingsTab()
         }
     }
 
-    if (ImGui::CollapsingHeader("Gamma correction")) {
+    if (ImGui::CollapsingHeader("Gamma correction", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Checkbox("enable gamma correction", &settings.gammaCorrection)) {
             ReloadTextures(settings.gammaCorrection);
         }
@@ -895,7 +906,7 @@ void OpenglRenderer::RendererSettingsTab()
             ImGui::DragFloat("Gamma", &settings.gamma, 0.1f, 0.0f, 5.0f);
     }
 
-    if (ImGui::CollapsingHeader("HDR")) {
+    if (ImGui::CollapsingHeader("HDR", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Checkbox("enable HDR", &settings.HDR)) {
             SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels, m_screenFBO->depthStencilType, settings.multiSampling ? settings.samples : 0);
         }
@@ -916,7 +927,7 @@ void OpenglRenderer::RendererSettingsTab()
         }
     }
 
-    if (ImGui::CollapsingHeader("Bloom")) {
+    if (ImGui::CollapsingHeader("Bloom", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Checkbox("enable bloom", &settings.bloom);
 
         const char* enumNames[] = { "Kernel Blur", "Gaussian Blur"};
@@ -932,7 +943,7 @@ void OpenglRenderer::RendererSettingsTab()
             settings.amount = 1;
     }
 
-    if (ImGui::CollapsingHeader("SSAO")) {
+    if (ImGui::CollapsingHeader("SSAO", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Checkbox("enable ssao", &settings.SSAO)) {
             if (!settings.SSAO) settings.SSAOOnly = false;
         }
@@ -946,16 +957,5 @@ void OpenglRenderer::RendererSettingsTab()
             ImGui::DragFloat("sample radius", &settings.sampleRad,0.1f,0,2);
             ImGui::InputFloat("power", &settings.power);
         }
-    }
-}
-
-void OpenglRenderer::ReloadTextures(bool gammaCorrection)
-{
-    for (const auto& pair : m_textures) {
-        if (pair.first->imageType == Image::ImageType::normal)
-            continue;
-        glBindTexture(GL_TEXTURE_2D, pair.second);
-        pair.first->gammaCorrect = gammaCorrection;
-        SetTextureData(GL_TEXTURE_2D, pair.first);
     }
 }

@@ -55,15 +55,39 @@ void Scene::ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& fu
 }
 void Scene::RenderSceneTab()
 {
-	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); 
+	ImGui::Text("Heirarchy");
 
-	ImGui::BeginChild("Heirarchy", ImVec2(ImGui::GetWindowWidth(), 100));
+	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::GetStyle().Colors[7]);
+
+	ImVec2 childSize = ImVec2(ImGui::GetWindowWidth(), 150);
+	ImVec2 childPos = ImGui::GetCursorScreenPos();
+	ImGui::GetWindowDrawList()->AddRectFilled(childPos,
+		ImVec2(childPos.x + childSize.x, childPos.y + childSize.y),
+		ImGui::ColorConvertFloat4ToU32(ImGui::GetStyle().Colors[ImGuiCol_ChildBg]),
+		10);
+
+	ImGui::BeginChild("Heirarchy", childSize,false);
+
+
 	for (auto root : rootEntities) {
 		RenderSceneHierarchyUI(root);
 	}
 	ImGui::EndChild();
 
 	ImGui::PopStyleColor();
+	ImGui::Separator();
+
+	ImGui::Text("Properties");
+	if (m_selectedEntity != nullptr) {
+		ImGui::DragFloat3("Postion", &m_selectedEntity->localPosition[0],0.5f);
+		ImGui::DragFloat3("EulerEngles", &m_selectedEntity->eulerAngles[0],0.5f);
+		ImGui::DragFloat3("Scale", &m_selectedEntity->scale[0], 0.5f);
+		if (m_selectedEntity->meshRenderer != nullptr) {
+			ImGui::Text("Mesh renderer");
+			Mesh* mesh = m_selectedEntity->meshRenderer->mesh;
+			ImGui::Text("Vertices : %i Indices : %i",mesh->vertices.size(),mesh->indices.size());
+		}
+	}
 }
 void Scene::RenderLightingTab()
 {
