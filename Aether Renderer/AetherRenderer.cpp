@@ -17,15 +17,10 @@ int main()
     ent->scale = glm::vec3(1, 1, 1);
     DirectionalLight dirlight = DirectionalLight{
         glm::vec3(0,-0.5,-1),
-        glm::vec4(10,10,10,0)
+        glm::vec4(1,1,1,0),
+        1
     };
     scene->DirectionalLights.push_back(dirlight);
-    PointLight light = PointLight{
-        glm::vec3(1),
-        glm::vec3(1),
-        glm::vec4(1,0,0,0)
-    };
-    scene->PointLights.push_back(light);
     aetherEngine.Load(scene);
     return 0;
 }

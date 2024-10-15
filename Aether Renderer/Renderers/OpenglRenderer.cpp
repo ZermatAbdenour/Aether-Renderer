@@ -175,8 +175,8 @@ void OpenglRenderer::SetupFrame()
     //Set the "Camera" UBO sub data 
     {
         glBindBuffer(GL_UNIFORM_BUFFER, m_matricesUBO);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(m_currentScene->camera.Projection(windowWidth, windowHeight)));
-        glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(m_currentScene->camera.View()));
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(m_currentScene->camera.projection));
+        glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(m_currentScene->camera.view));
         glBufferSubData(GL_UNIFORM_BUFFER,2* sizeof(glm::mat4), sizeof(glm::vec3), glm::value_ptr(m_currentScene->camera.position));
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
@@ -301,10 +301,10 @@ void OpenglRenderer::RenderFrame()
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssaoKernelSSBO);
         glUniform2f(glGetUniformLocation(m_ssaoShader, "noiseScale"), windowWidth / 4, windowHeight / 4);
-        glm::mat4 projection = m_currentScene->camera.Projection(windowWidth, windowHeight);
+        glm::mat4 projection = m_currentScene->camera.projection;
         glUniformMatrix4fv(glGetUniformLocation(m_ssaoShader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-        glm::mat4 projectionInv = glm::inverse(m_currentScene->camera.Projection(windowWidth, windowHeight));
+        glm::mat4 projectionInv = glm::inverse(m_currentScene->camera.projection);
         glUniformMatrix4fv(glGetUniformLocation(m_ssaoShader, "projectionInv"), 1, GL_FALSE, glm::value_ptr(projectionInv));
         glUniform1f(glGetUniformLocation(m_ssaoShader, "power"), settings.power);
 

@@ -40,7 +40,7 @@ public:
 		GLPointLight(PointLight pointLight) {
 			position = glm::vec4(pointLight.position,0);
 			direction = glm::vec4(pointLight.direction, 0);
-			color = pointLight.color;
+			color = pointLight.color * pointLight.intensity;
 		}
 		GLPointLight() = default;
 	};
@@ -50,6 +50,7 @@ public:
 		GLDirectionalLight(DirectionalLight directionalLight) {
 			direction = glm::vec4(directionalLight.direction,0);
 			color = directionalLight.color;
+			color = directionalLight.color * directionalLight.intensity;
 		}
 		GLDirectionalLight() = default;
 	};

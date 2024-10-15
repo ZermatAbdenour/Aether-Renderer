@@ -19,7 +19,9 @@ void Editor::CreateEditorWindow(Scene* scene, Renderer* renderer,Time& engineTim
 		RenderSceneTab(scene);
 		RendererSettingsTab(renderer);
 	ImGui::EndTabBar();
-	ImGui::SetCursorPosY(ImGui::GetWindowHeight() - ImGui::GetStyle().ItemSpacing.y - 20);
+	float windowHeight = ImGui::GetWindowHeight();
+	float textHeight = ImGui::GetTextLineHeight();
+	ImGui::SetCursorPosY(windowHeight - textHeight - ImGui::GetStyle().WindowPadding.y + ImGui::GetScrollY());
 	ImGui::Separator();
 	ImGui::Text("deltatime : %f | FPS : %i | time : %.2f",engineTime.deltaTime, (int)averageFPS,engineTime.time);
 	ImGui::End();

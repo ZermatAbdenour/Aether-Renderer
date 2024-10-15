@@ -52,10 +52,12 @@ public:
 private:
 	struct ModelLoadingData {
 		const aiScene* scene;
+		std::string rootEntity;
 		std::string directory;
 		std::string fileExtension;
 		std::unordered_map<std::string,Image*> loadedImages;
 	};
+
 	static void ProcessNode(aiNode* node, std::shared_ptr<Entity> parent, ModelLoadingData* loadingData);
 	static MeshRenderer* ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* loadingData);
 };

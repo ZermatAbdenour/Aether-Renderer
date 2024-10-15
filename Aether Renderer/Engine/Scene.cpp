@@ -55,33 +55,68 @@ void Scene::ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& fu
 }
 void Scene::RenderSceneTab()
 {
-	if (ImGui::CollapsingHeader("Lights")) {
-		ImGui::BeginListBox("Directional Lights");
-		for (int i = 0;i < DirectionalLights.size();i++ ) {
-
-			//Get light view Direction
-			glm::vec4 dir = glm::vec4(DirectionalLights[i].direction.x, DirectionalLights[i].direction.y, DirectionalLights[i].direction.z,1);
-			dir =  dir * glm::inverse(camera.View());
-			vec3 direction = vec3(dir.x, dir.y, dir.z);
-
-			ImGui::gizmo3D("##Dir1", direction);
-			
-			//Set light direction
-			dir = glm::vec4(direction.x, direction.y, direction.z, 1);
-			dir =  dir * camera.View();
-			DirectionalLights[i].direction = glm::vec3(dir.x, dir.y, dir.z);
-
-
-			ImGui::ColorPicker3("color", &DirectionalLights[0].color[0]);
+	ImVec2 buttonsize = ImVec2(20,20);
+	if (ImGui::CollapsingHeader("Lights",ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::Indent();
+		if (ImGui::CollapsingHeader("Directional Lights")) {
+			for (int i = 0;i < DirectionalLights.size();i++) {
+				ImVec2 firstPos = ImGui::GetCursorPos();
+				ImVec2 buttonPos = firstPos;
+				buttonPos.x += ImGui::GetWindowWidth() - buttonsize.x- ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing;
+				ImGui::SetCursorPos(buttonPos+ImVec2(-30,15));
+				std::string special = "-##d" + std::to_string(i);
+				if (ImGui::Button(special.c_str(), buttonsize)) {
+					DirectionalLights.erase(DirectionalLights.begin() + i);
+				}
+				ImGui::SetCursorPos(firstPos);
+				//Get light view Direction
+				ImGui::Text("direction");
+				vec3 direction = camera.directionToViewSpace(DirectionalLights[i].direction);
+				ImGui::gizmo3D("##ddir" + i, direction);
+				DirectionalLights[i].direction = camera.viewSpaceToDirection(direction);
+				ImGui::Text("color");
+				ImGui::ColorEdit3("##dcolor" + i, &DirectionalLights[0].color[0]);
+				ImGui::Text("intensity");
+				ImGui::InputFloat("##dintensity" + i, &DirectionalLights[0].intensity);
+				DirectionalLights[0].intensity = glm::clamp(DirectionalLights[0].intensity, 0.0f, DirectionalLights[0].intensity + 1);
+				ImGui::Separator();
+			}
+			ImVec2 addButtonSize = ImVec2(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing, 20);
+			if (ImGui::Button("add directional light", addButtonSize)) {
+				DirectionalLights.push_back(DirectionalLight());
+			}
 		}
-		ImGui::EndListBox();
 
-		ImGui::BeginListBox("Point Lights");
-		for (int i = 0;i < DirectionalLights.size();i++) {
-			ImGui::DragFloat3("position", &PointLights[0].direction[0]);
-			ImGui::ColorPicker3("color", &PointLights[0].color[0]);
+		ImGui::Spacing();
+		ImGui::Unindent();
+		ImGui::Separator();
+		ImGui::Indent();
+		ImGui::Spacing();
+
+		if (ImGui::CollapsingHeader("Point Lights")) {
+			for (int i = 0;i < PointLights.size();i++) {
+				ImVec2 firstPos = ImGui::GetCursorPos();
+				ImVec2 buttonPos = firstPos;
+				buttonPos.x += ImGui::GetWindowWidth() - buttonsize.x - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing;
+				ImGui::SetCursorPos(buttonPos + ImVec2(-30, 15));
+				std::string special = "-##p" + std::to_string(i);
+				if (ImGui::Button(special.c_str(), buttonsize)) {
+					PointLights.erase(PointLights.begin() + i);
+				}
+				ImGui::SetCursorPos(firstPos);
+				//Get light view Direction
+				ImGui::Text("color");
+				ImGui::ColorEdit3("##pcolor" + i, &PointLights[0].color[0]);
+				ImGui::Text("intensity");
+				ImGui::InputFloat("##pintensity" + i, &PointLights[0].intensity);
+				PointLights[0].intensity = glm::clamp(PointLights[0].intensity, 0.0f, PointLights[0].intensity + 1);
+				ImGui::Separator();
+			}
+			ImVec2 addButtonSize = ImVec2(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing, 20);
+			if (ImGui::Button("add point light", addButtonSize)) {
+				PointLights.push_back(PointLight());
+			}
 		}
-		ImGui::EndListBox();
 	}
 }
 

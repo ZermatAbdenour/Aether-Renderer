@@ -30,8 +30,13 @@ glm::vec3 Camera::getRight()
 	return glm::normalize(glm::cross(getForward(), glm::vec3(0.0f, 1.0f, 0.0f)));
 }
 
-void Camera::ProcessInputs(GLFWwindow* window, float deltaTime)
+void Camera::Update(GLFWwindow* window, float deltaTime)
 {
+	int width, height;
+	glfwGetWindowSize(window, &width,&height);
+	projection = Projection(width, height);
+	view = View();
+
     float velocity = speed * deltaTime;
 
 	// Handle keyboard input for camera movement
@@ -64,4 +69,18 @@ void Camera::ProcessInputs(GLFWwindow* window, float deltaTime)
 		eulerAngles.x = 89.0f;
 	if (eulerAngles.x < -89.0f)
 		eulerAngles.x = -89.0f;
+}
+
+vec3 Camera::directionToViewSpace(glm::vec3 direction)
+{
+	glm::vec4 dir = glm::vec4(direction.x, direction.y, direction.z, 1);
+	dir = dir * glm::inverse(view);
+	return vec3(dir[0], dir[1], dir[2]);
+}
+
+glm::vec3 Camera::viewSpaceToDirection(vec3 viewSpaceDirection)
+{
+	glm::vec4 dir = glm::vec4(viewSpaceDirection.x, viewSpaceDirection.y, viewSpaceDirection.z, 1);
+	dir = dir * view;
+	return glm::vec3(dir.x, dir.y, dir.z);
 }
