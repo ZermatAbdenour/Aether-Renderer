@@ -73,6 +73,7 @@ void Editor::CreateEditorWindow(Scene* scene, Renderer* renderer,Time& engineTim
 {
 	EditorStyle();
 	ImGui::Begin("Editor", nullptr );
+	uiInteracting = ImGui::IsWindowFocused();
 	UpdateAverageFPS(engineTime.deltaTime );
 	ImGui::BeginTabBar("EditorTabBar");
 		RenderSceneTab(scene);

@@ -30,12 +30,25 @@ glm::vec3 Camera::getRight()
 	return glm::normalize(glm::cross(getForward(), glm::vec3(0.0f, 1.0f, 0.0f)));
 }
 
-void Camera::Update(GLFWwindow* window, float deltaTime)
+void Camera::Update(GLFWwindow* window, float deltaTime,bool allawMovement)
 {
 	int width, height;
 	glfwGetWindowSize(window, &width,&height);
 	projection = Projection(width, height);
 	view = View();
+
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
+		mouseDown = true;
+	}
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_RELEASE)
+		mouseDown = false;
+
+	if (!mouseDown|| !allawMovement) {
+		glfwGetCursorPos(window, &lastX, &lastY);
+		SetCursorMode(window, Normal);
+		return;
+	}
+	SetCursorMode(window,Disabled);
 
     float velocity = speed * deltaTime;
 
@@ -83,4 +96,9 @@ glm::vec3 Camera::viewSpaceToDirection(vec3 viewSpaceDirection)
 	glm::vec4 dir = glm::vec4(viewSpaceDirection.x, viewSpaceDirection.y, viewSpaceDirection.z, 1);
 	dir = dir * view;
 	return glm::vec3(dir.x, dir.y, dir.z);
+}
+
+void Camera::SetCursorMode(GLFWwindow* window,Camera::CursorMode cursormode)
+{
+	glfwSetInputMode(window, GLFW_CURSOR, cursormode);
 }

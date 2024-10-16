@@ -17,4 +17,5 @@ public:
 	void RenderSceneTab(Scene* scene);
 	void RenderLightingTab(Scene* scene);
 	void RendererSettingsTab(Renderer* renderer);
+	bool uiInteracting;
 };
