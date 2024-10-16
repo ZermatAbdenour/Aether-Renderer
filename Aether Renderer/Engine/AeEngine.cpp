@@ -11,6 +11,7 @@ void AeEngine::Load(Scene* scene)
 {
 	m_renderer->SetupScene(scene);
 	scene->StartEffectors();
+	m_editor.SetEditorTargets(scene, m_renderer, &m_time);
 	while (!glfwWindowShouldClose(m_window))
 	{
 		m_time.UpdateTime();
@@ -20,7 +21,7 @@ void AeEngine::Load(Scene* scene)
 		m_renderer->RenderScene();
 	
 		scene->UpdateEffectors(m_time.deltaTime);
-		m_editor.CreateEditorWindow(scene,m_renderer,m_time);
+		m_editor.UpdateEditorWindow();
 
 		m_renderer->EndFrame();
 

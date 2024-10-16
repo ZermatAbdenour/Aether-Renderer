@@ -1,6 +1,6 @@
 #include "Scene.h"
 #include <Imgui/imGuIZMO.quat/imGuIZMOquat.h>
-
+#include "Renderer.h"
 Scene::Scene()
 {
 	camera = Camera();
@@ -53,7 +53,7 @@ void Scene::ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& fu
 		applyFunc(rootEntity);
 	}
 }
-void Scene::RenderSceneTab()
+void Scene::RenderSceneTab(Renderer* renderer)
 {
 	ImGui::Text("Heirarchy");
 
@@ -82,10 +82,17 @@ void Scene::RenderSceneTab()
 		ImGui::DragFloat3("Postion", &m_selectedEntity->localPosition[0],0.5f);
 		ImGui::DragFloat3("EulerEngles", &m_selectedEntity->eulerAngles[0],0.5f);
 		ImGui::DragFloat3("Scale", &m_selectedEntity->scale[0], 0.5f);
-		if (m_selectedEntity->meshRenderer != nullptr) {
+		MeshRenderer* meshRenderer = m_selectedEntity->meshRenderer;
+		if (meshRenderer != nullptr) {
 			ImGui::Text("Mesh renderer");
 			Mesh* mesh = m_selectedEntity->meshRenderer->mesh;
 			ImGui::Text("Vertices : %i Indices : %i",mesh->vertices.size(),mesh->indices.size());
+			if (ImGui::CollapsingHeader("Material")) {
+				if (meshRenderer->diffuse != nullptr) {
+					ImGui::Text("diffuse map");
+					ImGui::Image((void*)renderer->GetUITexture(meshRenderer->diffuse), ImVec2(100, 100));
+				}
+			}
 		}
 	}
 }

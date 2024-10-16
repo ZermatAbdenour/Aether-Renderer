@@ -1,3 +1,4 @@
+#include <glad/glad.h>
 #include "OpenglRenderer.h"
 #include "../Utilities/FileUtil.hpp"
 #include <glm/gtc/type_ptr.hpp>
@@ -892,6 +893,11 @@ void OpenglRenderer::ReloadTextures(bool gammaCorrection)
         pair.first->gammaCorrect = gammaCorrection;
         SetTextureData(GL_TEXTURE_2D, pair.first);
     }
+}
+
+intptr_t OpenglRenderer::GetUITexture(Image* image)
+{
+    return (intptr_t)GetTexture(image);
 }
 
 void OpenglRenderer::RendererSettingsTab()

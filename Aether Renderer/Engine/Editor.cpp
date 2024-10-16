@@ -1,6 +1,12 @@
 #include "Editor.h"
 #include <Imgui/imgui.h>
 #include <glm/gtc/quaternion.hpp>
+void Editor::SetEditorTargets(Scene* scene, Renderer* renderer, Time* time)
+{
+	m_scene = scene;
+	m_renderer = renderer;
+	m_time = time;
+}
 void Editor::UpdateAverageFPS(float deltaTime)
 {
 	float currentFPS = 1.0f / deltaTime;
@@ -69,46 +75,46 @@ void Editor::EditorStyle()
 	style->Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.25f, 1.00f, 0.00f, 0.43f);
 	style->Colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 0.98f, 0.95f, 0.73f);
 }
-void Editor::CreateEditorWindow(Scene* scene, Renderer* renderer,Time& engineTime)
+void Editor::UpdateEditorWindow()
 {
 	EditorStyle();
 	ImGui::Begin("Editor", nullptr );
 	uiInteracting = ImGui::IsWindowFocused();
-	UpdateAverageFPS(engineTime.deltaTime );
+	UpdateAverageFPS(m_time->deltaTime);
 	ImGui::BeginTabBar("EditorTabBar");
-		RenderSceneTab(scene);
-		RenderLightingTab(scene);
-		RendererSettingsTab(renderer);
+		RenderSceneTab();
+		RenderLightingTab();
+		RendererSettingsTab();
 	ImGui::EndTabBar();
 
 	ImGui::Dummy(ImVec2(0.0f, 50.0f));
 	float windowHeight = ImGui::GetWindowHeight();
 	float textHeight = ImGui::GetTextLineHeight();
 	ImGui::SetCursorPosY(windowHeight - textHeight - ImGui::GetStyle().WindowPadding.y +  glm::min(ImGui::GetScrollY(),ImGui::GetScrollMaxY()-10));
-	ImGui::Text("deltatime : %f | FPS : %i | time : %.2f",engineTime.deltaTime, (int)averageFPS,engineTime.time);
+	ImGui::Text("deltatime : %f | FPS : %i | time : %.2f",m_time->deltaTime, (int)averageFPS,m_time->time);
 	//ImGui::End();
 }
 
-void Editor::RenderSceneTab(Scene* scene)
+void Editor::RenderSceneTab()
 {
 	if (!ImGui::BeginTabItem("Scene"))
 		return;
-	scene->RenderSceneTab();
+	m_scene->RenderSceneTab(m_renderer);
 	ImGui::EndTabItem();
 }
 
-void Editor::RenderLightingTab(Scene* scene)
+void Editor::RenderLightingTab()
 {
 	if (!ImGui::BeginTabItem("Lighting"))
 		return;
-	scene->RenderLightingTab();
+	m_scene->RenderLightingTab();
 	ImGui::EndTabItem();
 }
 
-void Editor::RendererSettingsTab(Renderer* renderer)
+void Editor::RendererSettingsTab()
 {
 	if (!ImGui::BeginTabItem("Settings"))
 		return;
-	renderer->RendererSettingsTab();
+	m_renderer->RendererSettingsTab();
 	ImGui::EndTabItem();
 }

@@ -17,3 +17,4 @@ void Renderer::RenderScene()
 
 	RenderFrame();
 }
+

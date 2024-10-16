@@ -7,6 +7,8 @@
 #include "Camera.h"
 #include "Lights.h"
 
+class Renderer;
+
 class Scene {
 public:
 public:
@@ -32,7 +34,7 @@ public:
 
 	void ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& func);
 	void RenderLightingTab();
-	void RenderSceneTab();
+	void RenderSceneTab(Renderer* renderer);
 	void RenderSceneHierarchyUI(std::shared_ptr<Entity> entity);
 	/// <summary>
 	/// Debug: Print the scene heirarchy

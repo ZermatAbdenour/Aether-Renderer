@@ -118,7 +118,8 @@ public:
 	GLuint GetTexture(Image* image);
 	GLuint CreateCubeMap(std::vector<std::string> faces);
 
-	//Settings
+	//UI
+	intptr_t GetUITexture(Image* image);
 	void RendererSettingsTab() override;
 	void ReloadTextures(bool gammaCorrection);
 };

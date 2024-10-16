@@ -10,12 +10,17 @@ public:
 	int frameCount = 0;
 	float totalFrameTime = 0.0f;
 	float averageFPS = 0;
+	Renderer* m_renderer;
+	Scene* m_scene;
+	Time* m_time;
+
 	Editor() = default;
+	void SetEditorTargets(Scene* scene, Renderer* renderer, Time* time);
 	void UpdateAverageFPS(float deltaTime);
 	void EditorStyle();
-	void CreateEditorWindow(Scene* scene,Renderer* renderer,Time& time);
-	void RenderSceneTab(Scene* scene);
-	void RenderLightingTab(Scene* scene);
-	void RendererSettingsTab(Renderer* renderer);
+	void UpdateEditorWindow();
+	void RenderSceneTab();
+	void RenderLightingTab();
+	void RendererSettingsTab();
 	bool uiInteracting;
 };

@@ -1,7 +1,5 @@
 #pragma once
 #include <glm/glm.hpp>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include "Scene.h"
 #include "RendererSettings.h"
 
@@ -19,7 +17,7 @@ public:
 	virtual void SetupFrame() = 0;
 	virtual void EndFrame() = 0;
 	virtual void Clear() = 0;
-	
+	virtual intptr_t GetUITexture(Image* image) = 0;
 	//settings
 	virtual void RendererSettingsTab() = 0;
 
