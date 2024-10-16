@@ -15,7 +15,10 @@ uniform vec2 noiseScale;
 uniform mat4 projection;
 uniform mat4 projectionInv;
 uniform float power = 2; 
+uniform float bias;
+
 out float fragColor;
+
 vec3 calcViewPosition(vec2 coords){
     float depth = texture(depthTexture, coords).r;
 
@@ -58,7 +61,7 @@ void main(){
             // this value is negative in my coordinate system
             // for occlusion to be true the geometry's depth should be greater or equal (equal or less negative and consequently closer to the camera) than the sample's depth
 
-            occlusion_factor += (geometryDepth >= samplePos.z  ? 1.0 : 0.0) * rangeCheck; 
+            occlusion_factor += (geometryDepth >= samplePos.z+bias  ? 1.0 : 0.0) * rangeCheck; 
         }
         // we will devide the accmulated occlusion by the number of samples to get the average occlusion value. 
         float average_occlusion_factor = occlusion_factor * 1/kernel.length();

@@ -32,5 +32,6 @@ struct RendererSettings {
 	int kernelSize = 64;
 	float sampleRad = 0.5f;
 	float power = 2;
+	float bias = 0.03f;
 };
 const RendererSettings DefaultRendererSettings;

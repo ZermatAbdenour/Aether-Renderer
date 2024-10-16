@@ -27,6 +27,7 @@ public:
 		static Shader* Gaussianblur;
 		static Shader* Kernel;
 		static Shader* SSAO;
+		static Shader* SSAOBlur;
 	};
 	/// <summary>
 	/// Load Immage from a file in the Resources/Images folder

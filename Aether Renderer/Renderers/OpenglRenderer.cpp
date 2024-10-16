@@ -121,7 +121,11 @@ void OpenglRenderer::SetupScene(Scene* scene)
         SetFrameBufferAttachements(m_ssaoFBO, windowWidth, windowHeight, 1, 3, None, 0);
         m_resolveDepthFBO = CreateFrameBuffer();
         SetFrameBufferAttachements(m_resolveDepthFBO, windowWidth, windowHeight, 1, 3,Texture, 0);
+        m_ssaoBlurFBO = CreateFrameBuffer();
+        SetFrameBufferAttachements(m_ssaoBlurFBO, windowWidth, windowHeight, 1, 3, None, 0);
+
         m_ssaoShader = CreateShader(Ressources::Shaders::SSAO);
+        m_ssaoBlurShader = CreateShader(Ressources::Shaders::SSAOBlur);
         m_ssaoNoiseTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR,GL_REPEAT,GL_REPEAT);
         glGenBuffers(1, &ssaoKernelSSBO);
     }
@@ -307,10 +311,22 @@ void OpenglRenderer::RenderFrame()
         glm::mat4 projectionInv = glm::inverse(m_currentScene->camera.projection);
         glUniformMatrix4fv(glGetUniformLocation(m_ssaoShader, "projectionInv"), 1, GL_FALSE, glm::value_ptr(projectionInv));
         glUniform1f(glGetUniformLocation(m_ssaoShader, "power"), settings.power);
+        glUniform1f(glGetUniformLocation(m_ssaoShader, "bias"), settings.bias);
 
         glBindVertexArray(m_screenQuad->vao);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+        //Blur ssao
+        glBindFramebuffer(GL_FRAMEBUFFER, m_ssaoBlurFBO->id);
+
+        glUseProgram(m_ssaoBlurShader);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_ssaoFBO->colorAttachments[0]);
+        
+        glUniform1i(glGetUniformLocation(m_ssaoBlurShader, "ssaoTexture"), 0);
+
+        glBindVertexArray(m_screenQuad->vao);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
     else
     {
@@ -372,7 +388,7 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     }
     if (settings.SSAO) {
         glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, m_ssaoFBO->colorAttachments[0]);
+        glBindTexture(GL_TEXTURE_2D, m_ssaoBlurFBO->colorAttachments[0]);
         glUniform1i(glGetUniformLocation(m_PBRShader, "occlusionTexture"), 3);
     }
     glUniform1i(glGetUniformLocation(m_PBRShader, "ssao"), settings.SSAO);
@@ -509,6 +525,7 @@ void OpenglRenderer::FrameBufferResizeCallBack(int width, int height)
 
     SetFrameBufferAttachements(m_ssaoFBO, width, height, 1, 3, None, 0);
     SetFrameBufferAttachements(m_resolveDepthFBO, width, height, 1, 3, Texture, 0);
+    SetFrameBufferAttachements(m_ssaoBlurFBO, windowWidth, windowHeight, 1, 3, None, 0);
 
 }
 
@@ -956,6 +973,7 @@ void OpenglRenderer::RendererSettingsTab()
             ImGui::InputInt("kernel size", &settings.kernelSize);
             ImGui::DragFloat("sample radius", &settings.sampleRad,0.1f,0,2);
             ImGui::InputFloat("power", &settings.power);
+            ImGui::InputFloat("bias", &settings.bias);
         }
     }
 }

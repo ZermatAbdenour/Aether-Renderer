@@ -61,6 +61,7 @@ private:
 	std::shared_ptr<GLFrameBuffer> m_boomPingpongFBOs[2];
 	std::shared_ptr<GLFrameBuffer> m_ssaoFBO;
 	std::shared_ptr<GLFrameBuffer> m_resolveDepthFBO;
+	std::shared_ptr<GLFrameBuffer> m_ssaoBlurFBO;
 
 	//Meshes
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
@@ -81,6 +82,7 @@ private:
 	GLuint m_gaussianBlurShader;
 	GLuint m_kernelBlurShader;
 	GLuint m_ssaoShader;
+	GLuint m_ssaoBlurShader;
 
 	//Uniform buffer objects
 	GLuint m_matricesUBO;
