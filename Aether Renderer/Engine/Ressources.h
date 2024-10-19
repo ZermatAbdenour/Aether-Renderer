@@ -28,6 +28,7 @@ public:
 		static Shader* Kernel;
 		static Shader* SSAO;
 		static Shader* SSAOBlur;
+		static Shader* ShadowMap;
 	};
 	/// <summary>
 	/// Load Immage from a file in the Resources/Images folder

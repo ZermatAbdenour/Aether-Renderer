@@ -74,6 +74,7 @@ Shader* Ressources::Shaders::Kernel = new Shader("Screen.vert", "Kernel.frag");
 Shader* Ressources::Shaders::EarlyDepthTesting = new Shader("EarlyDepthTesting.vert", "EarlyDepthTesting.frag");
 Shader* Ressources::Shaders::SSAO = new Shader("Screen.vert", "ssao.frag");
 Shader* Ressources::Shaders::SSAOBlur = new Shader("Screen.vert", "ssaoBlur.frag");
+Shader* Ressources::Shaders::ShadowMap = new Shader("ShadowMap.vert", "ShadowMap.frag");
 //Image Loading
 
 Image* Ressources::LoadImageFromFile(std::string file, bool flip)

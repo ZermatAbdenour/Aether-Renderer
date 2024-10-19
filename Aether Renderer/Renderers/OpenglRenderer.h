@@ -62,6 +62,7 @@ private:
 	std::shared_ptr<GLFrameBuffer> m_ssaoFBO;
 	std::shared_ptr<GLFrameBuffer> m_resolveDepthFBO;
 	std::shared_ptr<GLFrameBuffer> m_ssaoBlurFBO;
+	std::shared_ptr<GLFrameBuffer> m_shadowDepthFBO;
 
 	//Meshes
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
@@ -83,6 +84,7 @@ private:
 	GLuint m_kernelBlurShader;
 	GLuint m_ssaoShader;
 	GLuint m_ssaoBlurShader;
+	GLuint m_shadowMapShader;
 
 	//Uniform buffer objects
 	GLuint m_matricesUBO;
@@ -99,6 +101,7 @@ public:
 	void Clear() override;
 	void FrameBufferResizeCallBack(int width,int height);
 	void EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 model);
+	void ShadowMapEntity(MeshRenderer* meshRenderer, glm::mat4 model);
 	void RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model);
 	
 	//Shaders
@@ -119,7 +122,8 @@ public:
 	GLuint CreateCubeMap(std::vector<std::string> faces);
 
 	//UI
-	intptr_t GetUITexture(Image* image);
+	intptr_t GetUITexture(Image* image) override;
+	intptr_t GetShadowMapTexture() override;
 	void RendererSettingsTab() override;
 	void ReloadTextures(bool gammaCorrection);
 };

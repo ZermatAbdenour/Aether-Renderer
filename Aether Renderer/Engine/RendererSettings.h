@@ -33,5 +33,9 @@ struct RendererSettings {
 	float sampleRad = 0.5f;
 	float power = 2;
 	float bias = 0.03f;
+
+	//Shadow map
+	bool shadowMapping = true;
+	glm::ivec2 shadowResolution = glm::ivec2(1920, 1080);
 };
 const RendererSettings DefaultRendererSettings;

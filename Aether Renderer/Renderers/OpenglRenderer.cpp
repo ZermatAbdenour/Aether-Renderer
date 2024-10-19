@@ -5,6 +5,7 @@
 #include "../Engine/Ressources.h"
 #include <Imgui/imgui_internal.h>
 #include <random>
+#include <glm/gtc/matrix_transform.hpp>
 
 GLFWwindow* OpenglRenderer::Init()
 {
@@ -111,12 +112,17 @@ void OpenglRenderer::SetupScene(Scene* scene)
         SetFrameBufferAttachements(m_boomPingpongFBOs[1], windowWidth, windowHeight, 1, 3, None, 0);
     }
 
-    //Settup depth testing
+    //Setup depth testing
     {
         m_earlyDepthTestingShader = CreateShader(Ressources::Shaders::EarlyDepthTesting);
     }
-
-    //settup SSAO
+    //Setup shadowmaping
+    {
+        m_shadowDepthFBO = CreateFrameBuffer();
+        SetFrameBufferAttachements(m_shadowDepthFBO, settings.shadowResolution.x, settings.shadowResolution.y, 1, 3, Texture, 0);
+        m_shadowMapShader = CreateShader(Ressources::Shaders::ShadowMap);
+    }
+    //setup SSAO
     {
         m_ssaoFBO = CreateFrameBuffer();
         SetFrameBufferAttachements(m_ssaoFBO, windowWidth, windowHeight, 1, 3, None, 0);
@@ -335,6 +341,32 @@ void OpenglRenderer::RenderFrame()
         glClear(GL_DEPTH_BUFFER_BIT);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+
+    //Shadowmap pass
+    if(settings.shadowMapping){
+        glBindFramebuffer(GL_FRAMEBUFFER, m_shadowDepthFBO->id);
+        glViewport(0, 0, settings.shadowResolution.x, settings.shadowResolution.y);
+        glClearColor(1, 1, 1, 1);
+        glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+
+        //LightSpace matrix
+        float near_plane = 1.0f, far_plane = 7.5f;
+        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.5f, 1000.0f);
+        float lightDistance = 100;
+        glm::mat4 lightView = glm::lookAt(glm::vec3(m_currentScene->DirectionalLights[0].direction * -lightDistance),
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+        glUseProgram(m_shadowMapShader);
+        glUniformMatrix4fv(glGetUniformLocation(m_shadowMapShader, "lightSpaceMatrix"), 1, false, glm::value_ptr(lightSpaceMatrix));
+        m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
+            if (!entity->meshRenderer)
+                return;
+            ShadowMapEntity(entity->meshRenderer, entity->model);
+            });
+    }
+    glViewport(0, 0, windowWidth, windowHeight);
     glBindFramebuffer(GL_FRAMEBUFFER,m_screenFBO->id);
     //Lighting Pass
     if (settings.zPrePass) {
@@ -357,6 +389,16 @@ void OpenglRenderer::EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 
     //Get necessary data to render 
     std::shared_ptr<GLMesh> mesh = GetGLMesh(meshRenderer->mesh);
     glUniformMatrix4fv(glGetUniformLocation(m_earlyDepthTestingShader, "model"), 1, false, glm::value_ptr(model));
+    glBindVertexArray(mesh->vao);
+    glDrawElements(GL_TRIANGLES, meshRenderer->mesh->indices.size(), GL_UNSIGNED_INT, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void OpenglRenderer::ShadowMapEntity(MeshRenderer* meshRenderer, glm::mat4 model)
+{
+    //Get necessary data to render 
+    std::shared_ptr<GLMesh> mesh = GetGLMesh(meshRenderer->mesh);
+    glUniformMatrix4fv(glGetUniformLocation(m_shadowMapShader, "model"), 1, false, glm::value_ptr(model));
     glBindVertexArray(mesh->vao);
     glDrawElements(GL_TRIANGLES, meshRenderer->mesh->indices.size(), GL_UNSIGNED_INT, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -673,6 +715,11 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
     framebuffer->image->NRChannels = NRChannels;
 
     // Create color attachments
+    if (colorAttachementsCount == 0)
+    {
+        glDrawBuffer(GL_NONE);  
+        glReadBuffer(GL_NONE);
+    }
     for (int i = 0; i < colorAttachementsCount; i++) {
         if (framebuffer->colorAttachments.size() < colorAttachementsCount) {
             GLuint textureColorbuffer;
@@ -757,7 +804,7 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     }
     glEnable(GL_DEPTH_TEST); // Enable depth testing
-    glViewport(0, 0, width, height);
+    //glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // Unbind framebuffer
 
 }
@@ -900,6 +947,11 @@ intptr_t OpenglRenderer::GetUITexture(Image* image)
     return (intptr_t)GetTexture(image);
 }
 
+intptr_t OpenglRenderer::GetShadowMapTexture()
+{
+    return m_shadowDepthFBO->colorAttachments[0];
+}
+
 void OpenglRenderer::RendererSettingsTab()
 {
     if (ImGui::CollapsingHeader("Pipline",ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -981,5 +1033,12 @@ void OpenglRenderer::RendererSettingsTab()
             ImGui::InputFloat("power", &settings.power);
             ImGui::InputFloat("bias", &settings.bias);
         }
+    }
+
+    if (ImGui::CollapsingHeader("ShadowMapping", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Checkbox("enable shadow", &settings.shadowMapping);
+        ImGui::InputInt2("shadowmap resolution", &settings.shadowResolution[0]);
+
+        ImGui::Image(((void*)GetShadowMapTexture()),ImVec2(100* settings.shadowResolution.x / settings.shadowResolution.y,100));
     }
 }
