@@ -91,6 +91,8 @@ private:
 	GLuint m_lightsUBO;
 
 	GLuint ssaoKernelSSBO;
+
+	glm::mat4 m_lightSpaceMatrix;
 public:
 	GLFWwindow* Init() override;
 	void SetupScene(Scene* scene) override;

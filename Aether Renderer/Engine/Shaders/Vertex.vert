@@ -13,23 +13,25 @@ layout (std140,binding = 0) uniform Camera{
 };
 
 uniform mat4 model;
-
-out vec3 worldPos;
+uniform mat4 lightSpace;
 out VS_OUT{
     vec2 uv;
     vec3 camPos;
     mat3 TBN;
-    vec4 clipSpaceFragPos;
+    vec3 fragPos;
+    vec4 fragPosClipSpace;
+    vec4 fragPosLightSpace;
 } vs_out;
 
 void main(){
 
-    worldPos = vec3(model * vec4(postion,1.0f));
+    vs_out.fragPos = vec3(model * vec4(postion,1.0f));
     
     vs_out.uv = uv;
     vs_out.camPos = camPos;
     vs_out.TBN = mat3(model) *mat3(tangent,bitangent,normal); 
 
     gl_Position = projection * view * model * vec4(postion,1.0);
-    vs_out.clipSpaceFragPos = gl_Position;
+    vs_out.fragPosClipSpace = gl_Position;
+    vs_out.fragPosLightSpace = lightSpace * vec4(vs_out.fragPos,1);
 }

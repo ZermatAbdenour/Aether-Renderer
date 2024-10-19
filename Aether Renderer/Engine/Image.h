@@ -5,7 +5,7 @@ class Image {
 public:
 	enum ImageType
 	{
-		texture, normal
+		diffuse, map
 	};
 
 	int Width, Height, NRChannels;

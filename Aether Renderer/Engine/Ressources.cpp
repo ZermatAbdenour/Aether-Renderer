@@ -302,7 +302,7 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 
 				Image* normalMap = LoadImageFromPath(fullPath, flip);
 				normalMap->gammaCorrect = false;
-				normalMap->imageType = Image::ImageType::normal;
+				normalMap->imageType = Image::ImageType::map;
 				meshRenderer->normalMap = normalMap;
 				loadingData->loadedImages.insert({ str.C_Str() ,normalMap });
 			}
@@ -329,6 +329,7 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 
 				Image* specularMap = LoadImageFromPath(fullPath, flip);
 				specularMap->gammaCorrect = false;
+				specularMap->imageType = Image::ImageType::map;
 				meshRenderer->specularMap = specularMap;
 				loadingData->loadedImages.insert({ str.C_Str() ,specularMap });
 			}

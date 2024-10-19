@@ -24,7 +24,9 @@ in VS_OUT{
     vec2 uv;
     vec3 camPos;
     mat3 TBN;
-    vec4 clipSpaceFragPos;
+    vec3 fragPos;
+    vec4 fragPosClipSpace;
+    vec4 fragPosLightSpace;
 } fs_in;
 
 vec3 ambiantValue = vec3(0.05);
@@ -34,17 +36,29 @@ uniform bool baseColorOnly;
 uniform sampler2D normalMap;
 uniform sampler2D specularMap;
 uniform sampler2D occlusionTexture;
+uniform sampler2D shadowMap;
 
-in vec3 worldPos;
 layout (location = 0) out vec4 fragColor;
 layout (location = 1) out vec4 bloomColor;
 
 //settings
 uniform bool ssao;
 uniform bool SSAOOnly;
+
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+    float currentDepth = projCoords.z;
+    float bias = 0.00005;
+    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
+    return shadow;
+}  
+
 void main()
 {
-    vec2 NDCSpaceFragPos = fs_in.clipSpaceFragPos.xy / fs_in.clipSpaceFragPos.w;
+    vec2 NDCSpaceFragPos = fs_in.fragPosClipSpace.xy / fs_in.fragPosClipSpace.w;
     vec2 ssaoTextureLookup = NDCSpaceFragPos * 0.5 + 0.5;
 
     vec3 normal = texture(normalMap,fs_in.uv).rgb * 2-1;
@@ -66,21 +80,23 @@ void main()
         ambiant = textureSample * ambiantValue * AmbientOcclusion;
     else
         ambiant = textureSample * ambiantValue;
-    //fragColor = vec4(vec3(ambiant),1);
-    //return;
+
+
     vec3 lightDirection = normalize(directionalLights[0].direction.xyz);
 
     float diff =max(dot(lightDirection,-normal),0.0);
     vec3 diffuse = diff * directionalLights[0].color.xyz * textureSample; 
-    vec3 viewDir = normalize(fs_in.camPos - worldPos);
+    vec3 viewDir = normalize(fs_in.camPos - fs_in.fragPos);
     vec3 reflectDir = reflect(directionalLights[0].direction.xyz, -normal);
     float spec = 0;
-    vec3 specular;
+    vec3 specular = vec3(0);
     if(diff>0)  {
         spec = pow(max(dot(viewDir, reflectDir), 0.01), 36);
         specular = spec * directionalLights[0].color.xyz *texture(specularMap,fs_in.uv).xyz;  
     }
-    fragColor = vec4(vec3(ambiant+diffuse+ specular),1);
+    float shadow = ShadowCalculation(fs_in.fragPosLightSpace);
+
+    fragColor = vec4(vec3(ambiant+(1-shadow)*diffuse+ specular),1);
     
     //Calculate bloom color
     float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));

@@ -236,6 +236,18 @@ void OpenglRenderer::SetupFrame()
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 
+    //Shadow map
+    {
+        //LightSpace matrix
+        glm::mat4 lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.5f, 1000.0f);
+        float lightDistance = 100;
+        glm::mat4 lightView = glm::lookAt(glm::vec3(m_currentScene->DirectionalLights[0].direction * -lightDistance),
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f));
+        m_lightSpaceMatrix = lightProjection * lightView;
+
+    }
+
 }
 
 void OpenglRenderer::RenderFrame()
@@ -343,23 +355,16 @@ void OpenglRenderer::RenderFrame()
     }
 
     //Shadowmap pass
+    glDepthFunc(GL_LESS);
+    glColorMask(1, 1, 1, 1);
     if(settings.shadowMapping){
         glBindFramebuffer(GL_FRAMEBUFFER, m_shadowDepthFBO->id);
         glViewport(0, 0, settings.shadowResolution.x, settings.shadowResolution.y);
         glClearColor(1, 1, 1, 1);
         glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 
-        //LightSpace matrix
-        float near_plane = 1.0f, far_plane = 7.5f;
-        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.5f, 1000.0f);
-        float lightDistance = 100;
-        glm::mat4 lightView = glm::lookAt(glm::vec3(m_currentScene->DirectionalLights[0].direction * -lightDistance),
-            glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f, 1.0f, 0.0f));
-        glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-
         glUseProgram(m_shadowMapShader);
-        glUniformMatrix4fv(glGetUniformLocation(m_shadowMapShader, "lightSpaceMatrix"), 1, false, glm::value_ptr(lightSpaceMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(m_shadowMapShader, "lightSpaceMatrix"), 1, false, glm::value_ptr(m_lightSpaceMatrix));
         m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
             if (!entity->meshRenderer)
                 return;
@@ -378,6 +383,7 @@ void OpenglRenderer::RenderFrame()
         glColorMask(1, 1, 1, 1);
     }
     glUseProgram(m_PBRShader);
+    glUniformMatrix4fv(glGetUniformLocation(m_PBRShader, "lightSpace"), 1, false, glm::value_ptr(m_lightSpaceMatrix));
     m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
         if (!entity->meshRenderer)
             return;
@@ -443,6 +449,13 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     else
         glBindTexture(GL_TEXTURE_2D, 0);
     glUniform1i(glGetUniformLocation(m_PBRShader, "occlusionTexture"), 3);
+    
+    glActiveTexture(GL_TEXTURE4);
+    if (settings.shadowMapping)
+        glBindTexture(GL_TEXTURE_2D, m_shadowDepthFBO->depthStencilBuffer);
+    else
+        glBindTexture(GL_TEXTURE_2D, 0);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "shadowMap"), 4);
 
     glUniform1i(glGetUniformLocation(m_PBRShader, "ssao"), settings.SSAO);
     glUniform1i(glGetUniformLocation(m_PBRShader, "SSAOOnly"), settings.SSAOOnly);
@@ -493,30 +506,31 @@ void OpenglRenderer::EndFrame()
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
         glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
         
-        if (settings.bloomType == RendererSettings::gaussianBlur)
+        if (settings.bloomType == RendererSettings::gaussianBlur) {
             glUseProgram(m_gaussianBlurShader);
+            for (unsigned int i = 0; i < settings.amount; i++)
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, m_boomPingpongFBOs[horizontal]->id);
+
+                if (settings.bloomType == RendererSettings::gaussianBlur)
+                    glUniform1i(glGetUniformLocation(m_gaussianBlurShader, "horizontal"), horizontal);
+
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(
+                    GL_TEXTURE_2D, m_boomPingpongFBOs[!horizontal]->colorAttachments[0]
+                );
+                glUniform1i(glGetUniformLocation(m_gaussianBlurShader, "image"), 0);
+
+                glBindVertexArray(m_screenQuad->vao);
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+                horizontal = !horizontal;
+                if (first_iteration)
+                    first_iteration = false;
+            }
+        }
         else
             glUseProgram(m_kernelBlurShader);
-        for (unsigned int i = 0; i < settings.amount; i++)
-        {
-            glBindFramebuffer(GL_FRAMEBUFFER, m_boomPingpongFBOs[horizontal]->id);
-
-            if(settings.bloomType == RendererSettings::gaussianBlur)
-            glUniform1i(glGetUniformLocation(m_gaussianBlurShader, "horizontal"), horizontal);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(
-                GL_TEXTURE_2D, m_boomPingpongFBOs[!horizontal]->colorAttachments[0]
-            );
-            glUniform1i(glGetUniformLocation(m_gaussianBlurShader, "image"), 0);
-
-            glBindVertexArray(m_screenQuad->vao);
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-            horizontal = !horizontal;
-            if (first_iteration)
-                first_iteration = false;
-        }
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -536,11 +550,13 @@ void OpenglRenderer::EndFrame()
     glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachments[0]);
     glUniform1i(glGetUniformLocation(m_screenShader, "screenTexture"), 1);
 
+    glActiveTexture(GL_TEXTURE2);
     if (settings.bloom) {
-        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, m_boomPingpongFBOs[!horizontal]->colorAttachments[0]);
-        glUniform1i(glGetUniformLocation(m_screenShader, "bloomTexture"), 2);
     }
+    else
+        glBindTexture(GL_TEXTURE_2D, 0);
+    glUniform1i(glGetUniformLocation(m_screenShader, "bloomTexture"), 2);
     //Settings
     glUniform1i(glGetUniformLocation(m_screenShader, "ssao"), settings.SSAO);
     glUniform1i(glGetUniformLocation(m_screenShader, "multiSampling"), settings.multiSampling);
@@ -775,10 +791,10 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
 
         glBindRenderbuffer(GL_RENDERBUFFER, framebuffer->depthStencilBuffer);
         if (samples > 0) {
-            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, width, height);
+            glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH32F_STENCIL8, width, height);
         }
         else {
-            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH32F_STENCIL8, width, height);
         }
 
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -796,12 +812,12 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
 
         if (samples > 0) {
             glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer->depthStencilBuffer);
-            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_DEPTH24_STENCIL8, width, height, GL_TRUE);
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_DEPTH32F_STENCIL8, width, height, GL_TRUE);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, framebuffer->depthStencilBuffer, 0);
         }
         else {
             glBindTexture(GL_TEXTURE_2D, framebuffer->depthStencilBuffer);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, framebuffer->depthStencilBuffer, 0);
         }
 
@@ -906,8 +922,8 @@ void OpenglRenderer::SetTextureData(GLenum target,Image* image)
     {
     case 1: format = GL_RED;internalFormat = GL_RED;break;
     case 2: format = GL_RG,internalFormat = GL_RG;break;
-    case 3: format = image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB : GL_RGB;internalFormat = GL_RGB;break;
-    case 4: format = image->gammaCorrect && image->imageType != Image::ImageType::normal ? GL_SRGB_ALPHA : GL_RGBA;internalFormat = GL_RGBA;break;
+    case 3: format = image->gammaCorrect && image->imageType != Image::ImageType::map ? GL_SRGB : GL_RGB;internalFormat = GL_RGB;break;
+    case 4: format = image->gammaCorrect && image->imageType != Image::ImageType::map ? GL_SRGB_ALPHA : GL_RGBA;internalFormat = GL_RGBA;break;
     default: format = GL_RGB;internalFormat = GL_RGB;break;
     }
     //lTexImage2D(GL_TEXTURE_2D, 0, format, image->Width, image->Height, 0, format, GL_UNSIGNED_BYTE, image->data);
@@ -944,7 +960,7 @@ GLuint OpenglRenderer::CreateCubeMap(std::vector<std::string> faces)
 void OpenglRenderer::ReloadTextures(bool gammaCorrection)
 {
     for (const auto& pair : m_textures) {
-        if (pair.first->imageType == Image::ImageType::normal)
+        if (pair.first->imageType == Image::ImageType::map)
             continue;
         glBindTexture(GL_TEXTURE_2D, pair.second);
         pair.first->gammaCorrect = gammaCorrection;
@@ -1024,8 +1040,6 @@ void OpenglRenderer::RendererSettingsTab()
             ImGui::InputInt("amount", &settings.amount);
             settings.amount = glm::clamp(settings.amount, 1, 100);
         }
-        else
-            settings.amount = 1;
     }
 
     if (ImGui::CollapsingHeader("SSAO", ImGuiTreeNodeFlags_DefaultOpen)) {

@@ -6,10 +6,10 @@ struct RendererSettings {
 	bool multiSampling = true;
 	int samples = 4;
 	//Gamma Correction
-	bool gammaCorrection = true;
+	bool gammaCorrection = false;
 	float gamma = 2.2f;
 	//HDR
-	bool HDR = true;
+	bool HDR = false;
 	bool toneMapping = true;
 	float exposure = 0.3f;
 	bool autoExposure = true;
@@ -22,12 +22,12 @@ struct RendererSettings {
 	};
 
 	//Bloom
-	bool bloom = true;
+	bool bloom = false;
 	BloomTypes bloomType = BloomTypes::gaussianBlur;
 	int amount = 10;
 
 	//SSAO
-	bool SSAO = true;
+	bool SSAO = false;
 	bool SSAOOnly = false;
 	int kernelSize = 64;
 	float sampleRad = 0.5f;
