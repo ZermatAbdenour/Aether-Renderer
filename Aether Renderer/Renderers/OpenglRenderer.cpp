@@ -410,30 +410,40 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     std::shared_ptr<GLMesh> mesh = GetGLMesh(meshRenderer->mesh);
     GLuint diffuseTexture = GetTexture(meshRenderer->diffuse);
     GLuint normalTexture = GetTexture(meshRenderer->normalMap);
-
+    GLuint specularTexture = GetTexture(meshRenderer->specularMap);
 
     glUniformMatrix4fv(glGetUniformLocation(m_PBRShader, "model"), 1, false, glm::value_ptr(model));
 
-    if (meshRenderer->diffuse) {
-        glActiveTexture(GL_TEXTURE0);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "baseColorOnly"), meshRenderer->diffuse == nullptr);
+    glUniform4fv(glGetUniformLocation(m_PBRShader, "baseColor"),1,glm::value_ptr(meshRenderer->baseColor));
+    glActiveTexture(GL_TEXTURE0);
+    if (meshRenderer->diffuse)
         glBindTexture(GL_TEXTURE_2D, diffuseTexture);
-        glUniform1i(glGetUniformLocation(m_PBRShader, "diffuseMap"), 0);
-    }
-    if (meshRenderer->normalMap) {
-        glActiveTexture(GL_TEXTURE1);
+    else
+        glBindTexture(GL_TEXTURE_2D, 0);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "diffuseMap"), 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    if (meshRenderer->normalMap) 
         glBindTexture(GL_TEXTURE_2D, normalTexture);
-        glUniform1i(glGetUniformLocation(m_PBRShader, "normalMap"), 1);
-    }
-    if (meshRenderer->specularMap) {
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, normalTexture);
-        glUniform1i(glGetUniformLocation(m_PBRShader, "specularMap"), 2);
-    }
-    if (settings.SSAO) {
-        glActiveTexture(GL_TEXTURE3);
+    else
+        glBindTexture(GL_TEXTURE_2D, 0);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "normalMap"), 1);
+
+    glActiveTexture(GL_TEXTURE2);
+    if (meshRenderer->specularMap)
+        glBindTexture(GL_TEXTURE_2D, specularTexture);
+    else
+        glBindTexture(GL_TEXTURE_2D, 0);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "specularMap"), 2);
+
+    glActiveTexture(GL_TEXTURE3);
+    if (settings.SSAO)
         glBindTexture(GL_TEXTURE_2D, m_ssaoBlurFBO->colorAttachments[0]);
-        glUniform1i(glGetUniformLocation(m_PBRShader, "occlusionTexture"), 3);
-    }
+    else
+        glBindTexture(GL_TEXTURE_2D, 0);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "occlusionTexture"), 3);
+
     glUniform1i(glGetUniformLocation(m_PBRShader, "ssao"), settings.SSAO);
     glUniform1i(glGetUniformLocation(m_PBRShader, "SSAOOnly"), settings.SSAOOnly);
 

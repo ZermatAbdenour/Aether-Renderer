@@ -16,6 +16,7 @@ public:
 	public:
 		static Mesh* Quad;
 		static Mesh* Cube;
+		static Mesh* Plane;
 	};
 	
 	class Shaders {

@@ -66,6 +66,59 @@ std::vector<unsigned int>{
 );
 
 
+Mesh* createPlaneMesh(float width, float height, unsigned int widthSegments, unsigned int heightSegments) {
+	std::vector<Mesh::Vertex> vertices;
+	std::vector<unsigned int> indices;
+
+	float halfWidth = width * 0.5f;
+	float halfHeight = height * 0.5f;
+	float stepX = width / widthSegments;
+	float stepY = height / heightSegments;
+
+	// Create vertices
+	for (unsigned int y = 0; y <= heightSegments; ++y) {
+		for (unsigned int x = 0; x <= widthSegments; ++x) {
+			float posX = -halfWidth + x * stepX;
+			float posY = -halfHeight + y * stepY;
+
+			Mesh::Vertex vertex;
+			vertex.position = glm::vec3(posX, 0.0f, posY); // Plane on the XZ plane
+			vertex.normal = glm::vec3(0.0f, 1.0f, 0.0f);    // Upwards normal
+			vertex.uv = glm::vec2((float)x / widthSegments, (float)y / heightSegments);
+			vertex.tangent = glm::vec3(1.0f, 0.0f, 0.0f);   // Tangent pointing in X direction
+			vertex.biTangent = glm::vec3(0.0f, 0.0f, 1.0f); // BiTangent pointing in Z direction
+
+			vertices.push_back(vertex);
+		}
+	}
+
+	// Create indices
+	for (unsigned int y = 0; y < heightSegments; ++y) {
+		for (unsigned int x = 0; x < widthSegments; ++x) {
+			unsigned int topLeft = y * (widthSegments + 1) + x;
+			unsigned int topRight = topLeft + 1;
+			unsigned int bottomLeft = (y + 1) * (widthSegments + 1) + x;
+			unsigned int bottomRight = bottomLeft + 1;
+
+			// First triangle
+			indices.push_back(topLeft);
+			indices.push_back(bottomLeft);
+			indices.push_back(topRight);
+
+			// Second triangle
+			indices.push_back(topRight);
+			indices.push_back(bottomLeft);
+			indices.push_back(bottomRight);
+		}
+	}
+
+	return new Mesh(vertices, indices);
+}
+
+
+Mesh* Ressources::Primitives::Plane = createPlaneMesh(10, 10, 10, 10);
+
+
 Shader* Ressources::Shaders::Default = new Shader("Vertex.vert", "Fragment.frag");
 Shader* Ressources::Shaders::ScreenShader = new Shader("Screen.vert", "Screen.frag");
 Shader* Ressources::Shaders::Skybox = new Shader("Skybox.vert", "Skybox.frag");
@@ -257,10 +310,16 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 				meshRenderer->normalMap = loadingData->loadedImages[str.C_Str()];
 			}
 		}
-
+		//for (int i = 0;i < 18;i++) {
+		//	aiTextureType a = static_cast<aiTextureType>(i);
+		//	if (material->GetTextureCount(a))
+		//	{
+		//		std::cout << i << std::endl;
+		//	}
+		//}
 		//specular map
-		if (material->GetTextureCount(aiTextureType_SPECULAR)) {
-			material->GetTexture(aiTextureType_SPECULAR, 0, &str);
+		if (material->GetTextureCount(aiTextureType_METALNESS)) {
+			material->GetTexture(aiTextureType_METALNESS, 0, &str);
 			std::string fullPath = loadingData->directory + "/" + str.C_Str();
 
 			if (!loadingData->loadedImages.contains(str.C_Str())) {

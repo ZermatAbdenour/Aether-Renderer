@@ -29,6 +29,8 @@ in VS_OUT{
 
 vec3 ambiantValue = vec3(0.05);
 uniform sampler2D diffuseMap;
+uniform vec4 baseColor;
+uniform bool baseColorOnly;
 uniform sampler2D normalMap;
 uniform sampler2D specularMap;
 uniform sampler2D occlusionTexture;
@@ -48,8 +50,12 @@ void main()
     vec3 normal = texture(normalMap,fs_in.uv).rgb * 2-1;
     normal = normalize(fs_in.TBN * normal);
     float AmbientOcclusion = texture(occlusionTexture, ssaoTextureLookup).r ;
-    vec3 textureSample = texture(diffuseMap,fs_in.uv).xyz;
-    
+    vec3 textureSample;
+    if(baseColorOnly)
+        textureSample = baseColor.xyz;
+    else
+        textureSample = texture(diffuseMap,fs_in.uv).xyz * baseColor.xyz;
+
     vec3 ambiant;
     if(SSAOOnly){
         fragColor = vec4(vec3(AmbientOcclusion),1);

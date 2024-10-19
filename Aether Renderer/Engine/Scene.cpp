@@ -88,6 +88,8 @@ void Scene::RenderSceneTab(Renderer* renderer)
 			Mesh* mesh = m_selectedEntity->meshRenderer->mesh;
 			ImGui::Text("Vertices : %i Indices : %i",mesh->vertices.size(),mesh->indices.size());
 			if (ImGui::CollapsingHeader("Material")) {
+				ImGui::Text("base color");
+				ImGui::ColorEdit3("##basecolor", &meshRenderer->baseColor[0]);
 				if (meshRenderer->diffuse != nullptr) {
 					ImGui::Text("diffuse map");
 					ImGui::Image((void*)renderer->GetUITexture(meshRenderer->diffuse), ImVec2(100, 100));
@@ -116,10 +118,10 @@ void Scene::RenderLightingTab()
 			ImGui::gizmo3D("##ddir" + i, direction);
 			DirectionalLights[i].direction = camera.viewSpaceToDirection(direction);
 			ImGui::Text("color");
-			ImGui::ColorEdit3("##dcolor" + i, &DirectionalLights[0].color[0]);
+			ImGui::ColorEdit3("##dcolor" + i, &DirectionalLights[i].color[0]);
 			ImGui::Text("intensity");
-			ImGui::InputFloat("##dintensity" + i, &DirectionalLights[0].intensity);
-			DirectionalLights[0].intensity = glm::clamp(DirectionalLights[0].intensity, 0.0f, DirectionalLights[0].intensity + 1);
+			ImGui::InputFloat("##dintensity" + i, &DirectionalLights[i].intensity);
+			DirectionalLights[i].intensity = glm::clamp(DirectionalLights[i].intensity, 0.0f, DirectionalLights[0].intensity + 1);
 			ImGui::Separator();
 		}
 		ImVec2 addButtonSize = ImVec2(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing, 20);
@@ -145,10 +147,10 @@ void Scene::RenderLightingTab()
 			ImGui::SetCursorPos(firstPos);
 			//Get light view Direction
 			ImGui::Text("color");
-			ImGui::ColorEdit3("##pcolor" + i, &PointLights[0].color[0]);
+			ImGui::ColorEdit3("##pcolor" + i, &PointLights[i].color[0]);
 			ImGui::Text("intensity");
-			ImGui::InputFloat("##pintensity" + i, &PointLights[0].intensity);
-			PointLights[0].intensity = glm::clamp(PointLights[0].intensity, 0.0f, PointLights[0].intensity + 1);
+			ImGui::InputFloat("##pintensity" + i, &PointLights[i].intensity);
+			PointLights[i].intensity = glm::clamp(PointLights[i].intensity, 0.0f, PointLights[0].intensity + 1);
 			ImGui::Separator();
 		}
 		ImVec2 addButtonSize = ImVec2(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing, 20);

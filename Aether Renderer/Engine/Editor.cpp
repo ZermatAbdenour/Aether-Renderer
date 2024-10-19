@@ -79,7 +79,7 @@ void Editor::UpdateEditorWindow()
 {
 	EditorStyle();
 	ImGui::Begin("Editor", nullptr );
-	uiInteracting = ImGui::IsWindowFocused();
+	uiInteracting = ImGui::IsWindowFocused() || ImGui::IsAnyItemHovered() || ImGui::IsWindowHovered()||ImGui::IsAnyItemActive();
 	UpdateAverageFPS(m_time->deltaTime);
 	ImGui::BeginTabBar("EditorTabBar");
 		RenderSceneTab();
