@@ -120,6 +120,12 @@ void OpenglRenderer::SetupScene(Scene* scene)
     {
         m_shadowDepthFBO = CreateFrameBuffer();
         SetFrameBufferAttachements(m_shadowDepthFBO, settings.shadowResolution.x, settings.shadowResolution.y, 1, 3, Texture, 0);
+        //Since the default is GL_Repeat
+        glBindTexture(GL_TEXTURE_2D,m_shadowDepthFBO->depthStencilBuffer);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
         m_shadowMapShader = CreateShader(Ressources::Shaders::ShadowMap);
     }
     //setup SSAO
@@ -239,8 +245,8 @@ void OpenglRenderer::SetupFrame()
     //Shadow map
     {
         //LightSpace matrix
-        glm::mat4 lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.5f, 1000.0f);
-        float lightDistance = 100;
+        glm::mat4 lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.5f, 10.0f);
+        float lightDistance = 5;
         glm::mat4 lightView = glm::lookAt(glm::vec3(m_currentScene->DirectionalLights[0].direction * -lightDistance),
             glm::vec3(0.0f, 0.0f, 0.0f),
             glm::vec3(0.0f, 1.0f, 0.0f));
@@ -457,8 +463,11 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
         glBindTexture(GL_TEXTURE_2D, 0);
     glUniform1i(glGetUniformLocation(m_PBRShader, "shadowMap"), 4);
 
-    glUniform1i(glGetUniformLocation(m_PBRShader, "ssao"), settings.SSAO);
+    //Settings
+    glUniform1i(glGetUniformLocation(m_PBRShader, "SSAO"), settings.SSAO);
     glUniform1i(glGetUniformLocation(m_PBRShader, "SSAOOnly"), settings.SSAOOnly);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "shadowMapping"), settings.shadowMapping);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "softShadow"), settings.softShadow);
 
     glBindVertexArray(mesh->vao);
     glDrawElements(GL_TRIANGLES, meshRenderer->mesh->indices.size(), GL_UNSIGNED_INT, 0);
@@ -1061,8 +1070,15 @@ void OpenglRenderer::RendererSettingsTab()
 
     if (ImGui::CollapsingHeader("ShadowMapping", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Checkbox("enable shadow", &settings.shadowMapping);
-        ImGui::InputInt2("shadowmap resolution", &settings.shadowResolution[0]);
-
-        ImGui::Image(((void*)GetShadowMapTexture()),ImVec2(100* settings.shadowResolution.x / settings.shadowResolution.y,100));
+        if (settings.shadowMapping) {
+            if (ImGui::DragInt2("shadowmap resolution", &settings.shadowResolution[0])) {
+                SetFrameBufferAttachements(m_shadowDepthFBO, settings.shadowResolution.x, settings.shadowResolution.y, 1, 3, Texture, 0);
+            }
+            const char* enumNames[] = { "Hard shadow", "Soft shadow" };
+            int currentIndex = settings.softShadow;
+            if (ImGui::Combo("shadow type", &currentIndex, enumNames, IM_ARRAYSIZE(enumNames)))
+                settings.softShadow = currentIndex;
+            ImGui::Image(((void*)GetShadowMapTexture()), ImVec2(100 * settings.shadowResolution.x / settings.shadowResolution.y, 100));
+        }
     }
 }

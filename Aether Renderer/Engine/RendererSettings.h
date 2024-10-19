@@ -6,10 +6,10 @@ struct RendererSettings {
 	bool multiSampling = true;
 	int samples = 4;
 	//Gamma Correction
-	bool gammaCorrection = false;
+	bool gammaCorrection = true;
 	float gamma = 2.2f;
 	//HDR
-	bool HDR = false;
+	bool HDR = true;
 	bool toneMapping = true;
 	float exposure = 0.3f;
 	bool autoExposure = true;
@@ -27,7 +27,7 @@ struct RendererSettings {
 	int amount = 10;
 
 	//SSAO
-	bool SSAO = false;
+	bool SSAO = true;
 	bool SSAOOnly = false;
 	int kernelSize = 64;
 	float sampleRad = 0.5f;
@@ -36,6 +36,7 @@ struct RendererSettings {
 
 	//Shadow map
 	bool shadowMapping = true;
+	bool softShadow = true;
 	glm::ivec2 shadowResolution = glm::ivec2(1920, 1080);
 };
 const RendererSettings DefaultRendererSettings;

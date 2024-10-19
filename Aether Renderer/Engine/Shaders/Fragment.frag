@@ -42,17 +42,40 @@ layout (location = 0) out vec4 fragColor;
 layout (location = 1) out vec4 bloomColor;
 
 //settings
-uniform bool ssao;
+uniform bool SSAO;
 uniform bool SSAOOnly;
+uniform bool shadowMapping;
+uniform bool softShadow;
 
-float ShadowCalculation(vec4 fragPosLightSpace)
+float ShadowCalculation(vec4 fragPosLightSpace,vec3 normal,vec3 lightDir)
 {
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5;
-    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+    float closestDepth = texture(shadowMap, projCoords.xy).r;
+    
+     
     float currentDepth = projCoords.z;
-    float bias = 0.00005;
-    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
+    float minBias = 0.0003;  
+    float bias = max(0.0005 * (1.0 - dot(normal, lightDir)), minBias);  
+
+    float shadow = 0;
+    if(softShadow){
+        vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+        for(int x = -1; x <= 1; ++x)
+        {
+            for(int y = -1; y <= 1; ++y)
+            {
+                float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+                shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+            }    
+        }
+        shadow /= 9.0;
+    }
+    else
+        shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;  
+    if(projCoords.z > 1.0)
+        shadow = 0.0;
+
     return shadow;
 }  
 
@@ -76,7 +99,7 @@ void main()
         return;
     }
 
-    if(ssao)
+    if(SSAO)
         ambiant = textureSample * ambiantValue * AmbientOcclusion;
     else
         ambiant = textureSample * ambiantValue;
@@ -94,7 +117,9 @@ void main()
         spec = pow(max(dot(viewDir, reflectDir), 0.01), 36);
         specular = spec * directionalLights[0].color.xyz *texture(specularMap,fs_in.uv).xyz;  
     }
-    float shadow = ShadowCalculation(fs_in.fragPosLightSpace);
+    float shadow = 0;
+    if(shadowMapping)
+    shadow = ShadowCalculation(fs_in.fragPosLightSpace,normal,lightDirection);
 
     fragColor = vec4(vec3(ambiant+(1-shadow)*diffuse+ specular),1);
     

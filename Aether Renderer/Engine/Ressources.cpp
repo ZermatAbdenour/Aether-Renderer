@@ -310,16 +310,9 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 				meshRenderer->normalMap = loadingData->loadedImages[str.C_Str()];
 			}
 		}
-		//for (int i = 0;i < 18;i++) {
-		//	aiTextureType a = static_cast<aiTextureType>(i);
-		//	if (material->GetTextureCount(a))
-		//	{
-		//		std::cout << i << std::endl;
-		//	}
-		//}
 		//specular map
-		if (material->GetTextureCount(aiTextureType_METALNESS)) {
-			material->GetTexture(aiTextureType_METALNESS, 0, &str);
+		if (material->GetTextureCount(aiTextureType_NORMALS)) {
+			material->GetTexture(aiTextureType_NORMALS, 0, &str);
 			std::string fullPath = loadingData->directory + "/" + str.C_Str();
 
 			if (!loadingData->loadedImages.contains(str.C_Str())) {
