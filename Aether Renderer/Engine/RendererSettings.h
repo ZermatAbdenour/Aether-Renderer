@@ -38,5 +38,7 @@ struct RendererSettings {
 	bool shadowMapping = true;
 	bool softShadow = true;
 	glm::ivec2 shadowResolution = glm::ivec2(1920, 1080);
+	float shadowbias = 0.0005f;
+	float minBias = 0.0003f;
 };
 const RendererSettings DefaultRendererSettings;

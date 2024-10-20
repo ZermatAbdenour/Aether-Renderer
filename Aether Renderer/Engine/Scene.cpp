@@ -103,6 +103,10 @@ void Scene::RenderLightingTab()
 	ImVec2 buttonsize = ImVec2(20,20);
 	if (ImGui::CollapsingHeader("Directional Lights")) {
 		for (int i = 0;i < DirectionalLights.size();i++) {
+
+			if (i == 0) {
+				ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Warning: Shadow map target");
+			}
 			ImVec2 firstPos = ImGui::GetCursorPos();
 			ImVec2 buttonPos = firstPos;
 			buttonPos.x += ImGui::GetWindowWidth() - buttonsize.x - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing;

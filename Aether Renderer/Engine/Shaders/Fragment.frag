@@ -46,6 +46,8 @@ uniform bool SSAO;
 uniform bool SSAOOnly;
 uniform bool shadowMapping;
 uniform bool softShadow;
+uniform float bias ;
+uniform float minBias;
 
 float ShadowCalculation(vec4 fragPosLightSpace,vec3 normal,vec3 lightDir)
 {
@@ -55,8 +57,7 @@ float ShadowCalculation(vec4 fragPosLightSpace,vec3 normal,vec3 lightDir)
     
      
     float currentDepth = projCoords.z;
-    float minBias = 0.0003;  
-    float bias = max(0.0005 * (1.0 - dot(normal, lightDir)), minBias);  
+    float bias = max(bias * (1.0 - dot(normal, lightDir)), minBias);  
 
     float shadow = 0;
     if(softShadow){
@@ -78,6 +79,7 @@ float ShadowCalculation(vec4 fragPosLightSpace,vec3 normal,vec3 lightDir)
 
     return shadow;
 }  
+
 
 void main()
 {
@@ -120,7 +122,6 @@ void main()
     float shadow = 0;
     if(shadowMapping)
     shadow = ShadowCalculation(fs_in.fragPosLightSpace,normal,lightDirection);
-
     fragColor = vec4(vec3(ambiant+(1-shadow)*diffuse+ specular),1);
     
     //Calculate bloom color

@@ -390,6 +390,13 @@ void OpenglRenderer::RenderFrame()
     }
     glUseProgram(m_PBRShader);
     glUniformMatrix4fv(glGetUniformLocation(m_PBRShader, "lightSpace"), 1, false, glm::value_ptr(m_lightSpaceMatrix));
+    //Settings
+    glUniform1i(glGetUniformLocation(m_PBRShader, "SSAO"), settings.SSAO);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "SSAOOnly"), settings.SSAOOnly);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "shadowMapping"), settings.shadowMapping);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "softShadow"), settings.softShadow);
+    glUniform1f(glGetUniformLocation(m_PBRShader, "bias"), settings.shadowbias);
+    glUniform1f(glGetUniformLocation(m_PBRShader, "minBias"), settings.minBias);
     m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
         if (!entity->meshRenderer)
             return;
@@ -463,11 +470,6 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
         glBindTexture(GL_TEXTURE_2D, 0);
     glUniform1i(glGetUniformLocation(m_PBRShader, "shadowMap"), 4);
 
-    //Settings
-    glUniform1i(glGetUniformLocation(m_PBRShader, "SSAO"), settings.SSAO);
-    glUniform1i(glGetUniformLocation(m_PBRShader, "SSAOOnly"), settings.SSAOOnly);
-    glUniform1i(glGetUniformLocation(m_PBRShader, "shadowMapping"), settings.shadowMapping);
-    glUniform1i(glGetUniformLocation(m_PBRShader, "softShadow"), settings.softShadow);
 
     glBindVertexArray(mesh->vao);
     glDrawElements(GL_TRIANGLES, meshRenderer->mesh->indices.size(), GL_UNSIGNED_INT, 0);
@@ -1074,6 +1076,11 @@ void OpenglRenderer::RendererSettingsTab()
             if (ImGui::DragInt2("shadowmap resolution", &settings.shadowResolution[0])) {
                 SetFrameBufferAttachements(m_shadowDepthFBO, settings.shadowResolution.x, settings.shadowResolution.y, 1, 3, Texture, 0);
             }
+            ImGui::InputFloat("shadow bias", &settings.shadowbias, 0.01, 0.1, "%8f");
+            ImGui::InputFloat("min bias", &settings.minBias, 0.01, 0.1, "%8f");
+            settings.shadowbias = glm::clamp(settings.shadowbias, settings.minBias, settings.shadowbias + 1);
+            settings.minBias = glm::clamp(settings.minBias, 0.0f, settings.minBias + 1);
+
             const char* enumNames[] = { "Hard shadow", "Soft shadow" };
             int currentIndex = settings.softShadow;
             if (ImGui::Combo("shadow type", &currentIndex, enumNames, IM_ARRAYSIZE(enumNames)))
