@@ -25,17 +25,24 @@ void Scene::RemoveEntity(std::shared_ptr<Entity> entity)
 	rootEntities.erase(std::remove(rootEntities.begin(), rootEntities.end(), entity), rootEntities.end());
 }
 
-void Scene::StartEffectors()
+void Scene::Setup()
 {
+	//Start the effectors
 	for (auto effector : m_effectors) {
 		effector->Start();
 	}
 }
-void Scene::UpdateEffectors(float deltaTime)
+void Scene::Update(GLFWwindow* window, Editor* editor, Time* time)
 {
+	ForEachEntity([this](std::shared_ptr<Entity> entity) {
+		entity->CalculateModel();
+		});
+	//Update effectors
 	for (auto effector : m_effectors) {
-		effector->Update(deltaTime);
+		effector->Update(time->deltaTime);
 	}
+
+	camera.Update(window, editor, time);
 }
 
 void Scene::ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& func)

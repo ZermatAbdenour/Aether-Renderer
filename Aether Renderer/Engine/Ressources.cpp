@@ -2,7 +2,7 @@
 #include "Ressources.h"
 #include "../Utilities/FileUtil.hpp"
 #include "RendererSettings.h"
-#include <stb/stb_image.h>
+#include <stb/stb_image.h>s
 
 Mesh* Ressources::Primitives::Quad = new Mesh(
 	std::vector<Mesh::Vertex> {
@@ -65,7 +65,6 @@ std::vector<unsigned int>{
 }
 );
 
-
 Mesh* createPlaneMesh(float width, float height, unsigned int widthSegments, unsigned int heightSegments) {
 	std::vector<Mesh::Vertex> vertices;
 	std::vector<unsigned int> indices;
@@ -117,7 +116,6 @@ Mesh* createPlaneMesh(float width, float height, unsigned int widthSegments, uns
 
 
 Mesh* Ressources::Primitives::Plane = createPlaneMesh(10, 10, 10, 10);
-
 
 Shader* Ressources::Shaders::Default = new Shader("Vertex.vert", "Fragment.frag");
 Shader* Ressources::Shaders::ScreenShader = new Shader("Screen.vert", "Screen.frag");

@@ -15,10 +15,10 @@ public:
 	Time* m_time;
 
 	Editor() = default;
-	void SetEditorTargets(Scene* scene, Renderer* renderer, Time* time);
+	void Setup(Scene* scene, Renderer* renderer, Time* time);
 	void UpdateAverageFPS(float deltaTime);
 	void EditorStyle();
-	void UpdateEditorWindow();
+	void Update();
 	void RenderSceneTab();
 	void RenderLightingTab();
 	void RendererSettingsTab();

@@ -13,6 +13,7 @@ int main()
 
     Scene* scene = new Scene();
     auto ent = scene->AddEntity(Ressources::LoadModelFromFile("glTF-Sample-Models/2.0/FlightHelmet/glTF/FlightHelmet.gltf"));
+    //auto ent = scene->AddEntity(Ressources::LoadModelFromFile("sphere/sphere.glb"));
     //auto ent = scene->AddEntity(Ressources::LoadModelFromFile("glTF-Sample-Models/2.0/ABeautifulGame/glTF/ABeautifulGame.gltf"));
     ent->scale = glm::vec3(1, 1, 1);
 

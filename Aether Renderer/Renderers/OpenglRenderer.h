@@ -92,14 +92,16 @@ private:
 
 	GLuint ssaoKernelSSBO;
 
+	std::vector<glm::vec3> m_ssaokernel;
+	std::vector<glm::vec3> m_ssaoNoise;
 	glm::mat4 m_lightSpaceMatrix;
 public:
 	GLFWwindow* Init() override;
-	void SetupScene(Scene* scene) override;
+	void Setup(Scene* scene) override;
 	void SetupEntity(std::shared_ptr<Entity> entity) override;
-	void SetupFrame() override;
-	void RenderFrame()override;
-	void EndFrame() override;
+	void RenderScene(Scene* scene)override;
+	void PostProcess() override;
+	void RenderEditor(Editor* editor) override;
 	void Clear() override;
 	void FrameBufferResizeCallBack(int width,int height);
 	void EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 model);

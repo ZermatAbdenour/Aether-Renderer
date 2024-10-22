@@ -5,7 +5,7 @@ struct Time {
 	double time;
 	double deltaTime;
 	int FPS;
-	void UpdateTime() {
+	void Update() {
 		double currentTime = glfwGetTime();
 		deltaTime = currentTime - time;
 		time = currentTime;

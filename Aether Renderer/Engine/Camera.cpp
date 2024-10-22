@@ -3,6 +3,7 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
 #include <iostream>
+#include "Editor.h"
 
 Camera::Camera()
 {
@@ -30,7 +31,7 @@ glm::vec3 Camera::getRight()
 	return glm::normalize(glm::cross(getForward(), glm::vec3(0.0f, 1.0f, 0.0f)));
 }
 
-void Camera::Update(GLFWwindow* window, float deltaTime,bool allawMovement)
+void Camera::Update(GLFWwindow* window,Editor* editor, Time* time)
 {
 	int width, height;
 	glfwGetWindowSize(window, &width,&height);
@@ -43,14 +44,14 @@ void Camera::Update(GLFWwindow* window, float deltaTime,bool allawMovement)
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_RELEASE)
 		mouseDown = false;
 
-	if (!mouseDown|| !allawMovement) {
+	if (!mouseDown|| editor->uiInteracting) {
 		glfwGetCursorPos(window, &lastX, &lastY);
 		SetCursorMode(window, Normal);
 		return;
 	}
 	SetCursorMode(window,Disabled);
 
-    float velocity = speed * deltaTime;
+    float velocity = speed * time->deltaTime;
 
 	// Handle keyboard input for camera movement
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

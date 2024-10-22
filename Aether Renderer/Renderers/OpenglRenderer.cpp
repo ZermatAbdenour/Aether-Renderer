@@ -6,6 +6,7 @@
 #include <Imgui/imgui_internal.h>
 #include <random>
 #include <glm/gtc/matrix_transform.hpp>
+#include "../Engine/Editor.h"
 
 GLFWwindow* OpenglRenderer::Init()
 {
@@ -51,13 +52,14 @@ GLFWwindow* OpenglRenderer::Init()
 }
 
 
-void OpenglRenderer::SetupScene(Scene* scene)
+void OpenglRenderer::Setup(Scene* scene)
 {
     //Setup each entity
-    Renderer::SetupScene(scene);
+    scene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
+        SetupEntity(entity);
+    });
 
     m_PBRShader = CreateShader(Ressources::Shaders::Default);
-
 
     m_autoExposureFBO = CreateFrameBuffer();
     SetFrameBufferAttachements(m_autoExposureFBO, windowWidth, windowHeight, 1, 3, None, 0);
@@ -141,6 +143,32 @@ void OpenglRenderer::SetupScene(Scene* scene)
         m_ssaoBlurShader = CreateShader(Ressources::Shaders::SSAOBlur);
         m_ssaoNoiseTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR,GL_REPEAT,GL_REPEAT);
         glGenBuffers(1, &ssaoKernelSSBO);
+
+        //Generating Kernel
+        std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+        std::default_random_engine generator;
+        for (unsigned int i = 0; i < settings.kernelSize; ++i)
+        {
+            glm::vec3 sample(
+                randomFloats(generator) * 2.0 - 1.0,
+                randomFloats(generator) * 2.0 - 1.0,
+                randomFloats(generator)
+            );
+            sample = glm::normalize(sample);
+            sample *= randomFloats(generator);
+            float scale = (float)i / settings.kernelSize;
+            scale = glm::mix(0.1f, 1.0f, scale * scale);
+            sample *= scale;
+            m_ssaokernel.push_back(sample);
+        }
+        for (unsigned int i = 0; i < 16; i++)
+        {
+            glm::vec3 noise(
+                randomFloats(generator) * 2.0 - 1.0,
+                randomFloats(generator) * 2.0 - 1.0,
+                0.0f);
+            m_ssaoNoise.push_back(noise);
+        }
     }
 }
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
@@ -175,26 +203,21 @@ void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
     }
 }
 
-void OpenglRenderer::SetupFrame()
+void OpenglRenderer::RenderScene(Scene* scene)
 {
-    //ImGui new frame
-    {
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER,m_screenFBO->id);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_screenFBO->id);
     glEnable(GL_DEPTH_TEST);
-	glClearColor(1, 0.2, 0.1, 1);
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glClearColor(1, 0.2, 0.1, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_CULL_FACE);
 
     //Set the "Camera" UBO sub data 
     {
         glBindBuffer(GL_UNIFORM_BUFFER, m_matricesUBO);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(m_currentScene->camera.projection));
-        glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(m_currentScene->camera.view));
-        glBufferSubData(GL_UNIFORM_BUFFER,2* sizeof(glm::mat4), sizeof(glm::vec3), glm::value_ptr(m_currentScene->camera.position));
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(scene->camera.projection));
+        glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(scene->camera.view));
+        glBufferSubData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), sizeof(glm::vec3), glm::value_ptr(scene->camera.position));
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     }
@@ -205,7 +228,7 @@ void OpenglRenderer::SetupFrame()
         glUseProgram(m_skyBoxShader);
         glBindVertexArray(m_skyboxMesh->vao);
         glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBoxMap);
-	    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         glDepthMask(GL_TRUE);
         glEnable(GL_CULL_FACE);
     }
@@ -213,16 +236,16 @@ void OpenglRenderer::SetupFrame()
     //Set the "Lights" UBO
     {
         //Genereate GLLights
-        int numDirectionalLights = m_currentScene->DirectionalLights.size();
+        int numDirectionalLights = scene->DirectionalLights.size();
         GLDirectionalLight directionalLights[MAX_DIRECTIONALLIGHTS];
         for (int i = 0;i < numDirectionalLights;i++) {
-            directionalLights[i] = GLDirectionalLight(m_currentScene->DirectionalLights[i]);
+            directionalLights[i] = GLDirectionalLight(scene->DirectionalLights[i]);
         }
 
-        int numPointLights = m_currentScene->PointLights.size();
+        int numPointLights = scene->PointLights.size();
         GLPointLight pointLights[MAX_POINTLIGHTS];
         for (int i = 0;i < numPointLights;i++) {
-            pointLights[i] = GLPointLight(m_currentScene->PointLights[i]);
+            pointLights[i] = GLPointLight(scene->PointLights[i]);
         }
 
         glGenBuffers(1, &m_lightsUBO);
@@ -247,24 +270,20 @@ void OpenglRenderer::SetupFrame()
         //LightSpace matrix
         glm::mat4 lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.5f, 10.0f);
         float lightDistance = 5;
-        glm::mat4 lightView = glm::lookAt(glm::vec3(m_currentScene->DirectionalLights[0].direction * -lightDistance),
+        glm::mat4 lightView = glm::lookAt(glm::vec3(scene->DirectionalLights[0].direction * -lightDistance),
             glm::vec3(0.0f, 0.0f, 0.0f),
             glm::vec3(0.0f, 1.0f, 0.0f));
         m_lightSpaceMatrix = lightProjection * lightView;
 
     }
 
-}
-
-void OpenglRenderer::RenderFrame()
-{
     //Depth Pre-pass
     if (settings.zPrePass) {
         glColorMask(0, 0, 0, 0);
         glDepthFunc(GL_LESS);
         glUseProgram(m_earlyDepthTestingShader);
 
-        m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
+        scene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
             if (!entity->meshRenderer)
                 return;
             EarlyDepthTestEntity(entity->meshRenderer, entity->model);
@@ -272,35 +291,9 @@ void OpenglRenderer::RenderFrame()
     }
     //SSAO Pass
     if (settings.SSAO) {
-        //Generating Kernek
-        std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
-        std::default_random_engine generator;
-        std::vector<glm::vec3> ssaokernel;
-        for (unsigned int i = 0; i < settings.kernelSize; ++i)
-        {
-            glm::vec3 sample(
-                randomFloats(generator) * 2.0 - 1.0,
-                randomFloats(generator) * 2.0 - 1.0,
-                randomFloats(generator)
-            );
-            sample = glm::normalize(sample);
-            sample *= randomFloats(generator);
-            float scale = (float)i / settings.kernelSize;
-            scale = glm::mix(0.1f, 1.0f, scale * scale);
-            sample *= scale;
-            ssaokernel.push_back(sample);
-        }
-        std::vector<glm::vec3> ssaoNoise;
-        for (unsigned int i = 0; i < 16; i++)
-        {
-            glm::vec3 noise(
-                randomFloats(generator) * 2.0 - 1.0,
-                randomFloats(generator) * 2.0 - 1.0,
-                0.0f);
-            ssaoNoise.push_back(noise);
-        }
+
         glBindTexture(GL_TEXTURE_2D,m_ssaoNoiseTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 4, 4, 0, GL_RGB, GL_FLOAT, &m_ssaoNoise[0]);
 
         //resolve depth in an intermediat fbo
         glBindFramebuffer(GL_READ_FRAMEBUFFER, m_screenFBO->id);
@@ -326,14 +319,14 @@ void OpenglRenderer::RenderFrame()
         glUniform1f(glGetUniformLocation(m_ssaoShader, "sampleRad"), settings.sampleRad);
         //set kernel buffer
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssaoKernelSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, ssaokernel.size() * sizeof(glm::vec3), ssaokernel.data(), GL_STATIC_DRAW);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, m_ssaokernel.size() * sizeof(glm::vec3), m_ssaokernel.data(), GL_STATIC_DRAW);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssaoKernelSSBO);
         glUniform2f(glGetUniformLocation(m_ssaoShader, "noiseScale"), windowWidth / 4, windowHeight / 4);
-        glm::mat4 projection = m_currentScene->camera.projection;
+        glm::mat4 projection = scene->camera.projection;
         glUniformMatrix4fv(glGetUniformLocation(m_ssaoShader, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-        glm::mat4 projectionInv = glm::inverse(m_currentScene->camera.projection);
+        glm::mat4 projectionInv = glm::inverse(scene->camera.projection);
         glUniformMatrix4fv(glGetUniformLocation(m_ssaoShader, "projectionInv"), 1, GL_FALSE, glm::value_ptr(projectionInv));
         glUniform1f(glGetUniformLocation(m_ssaoShader, "power"), settings.power);
         glUniform1f(glGetUniformLocation(m_ssaoShader, "bias"), settings.bias);
@@ -371,7 +364,7 @@ void OpenglRenderer::RenderFrame()
 
         glUseProgram(m_shadowMapShader);
         glUniformMatrix4fv(glGetUniformLocation(m_shadowMapShader, "lightSpaceMatrix"), 1, false, glm::value_ptr(m_lightSpaceMatrix));
-        m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
+        scene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
             if (!entity->meshRenderer)
                 return;
             ShadowMapEntity(entity->meshRenderer, entity->model);
@@ -397,7 +390,7 @@ void OpenglRenderer::RenderFrame()
     glUniform1i(glGetUniformLocation(m_PBRShader, "softShadow"), settings.softShadow);
     glUniform1f(glGetUniformLocation(m_PBRShader, "bias"), settings.shadowbias);
     glUniform1f(glGetUniformLocation(m_PBRShader, "minBias"), settings.minBias);
-    m_currentScene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
+    scene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
         if (!entity->meshRenderer)
             return;
         RenderEntity(entity->meshRenderer, entity->model);
@@ -478,7 +471,7 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
 
 }
 
-void OpenglRenderer::EndFrame()
+void OpenglRenderer::PostProcess()
 {
     glDepthFunc(GL_LESS);
     //auto Exposure
@@ -503,11 +496,8 @@ void OpenglRenderer::EndFrame()
         settings.exposure = glm::mix(settings.exposure, 0.5f / lum * settings.exposureMultiplier, settings.adjustmentSpeed);
         settings.exposure = glm::clamp(settings.exposure, sceneExposureRangeMin, sceneExposureRangeMax);
     }
-
     
     bool horizontal = true, first_iteration = true;
-
-
 
     if (settings.bloom) {
 
@@ -581,9 +571,25 @@ void OpenglRenderer::EndFrame()
     glBindVertexArray(m_screenQuad->vao);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+
+}
+
+void OpenglRenderer::RenderEditor(Editor* editor)
+{
+    //ImGui new frame
+    {
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+    }
+
+    editor->Update();
+
     //render ImGui
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    {
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    }
 }
 
 void OpenglRenderer::Clear()
