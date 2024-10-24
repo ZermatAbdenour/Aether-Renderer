@@ -22,6 +22,7 @@ public:
 	class Shaders {
 	public:
 		static Shader* Default;
+		static Shader* PBR;
 		static Shader* EarlyDepthTesting;
 		static Shader* ScreenShader;
 		static Shader* Skybox;

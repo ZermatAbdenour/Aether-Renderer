@@ -1,4 +1,5 @@
 #pragma once
+#include <glm/glm.hpp>
 struct RendererSettings {
 	bool zPrePass = true;
 	int screenFBODepthStencilType = 2;

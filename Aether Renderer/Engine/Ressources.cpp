@@ -118,6 +118,7 @@ Mesh* createPlaneMesh(float width, float height, unsigned int widthSegments, uns
 Mesh* Ressources::Primitives::Plane = createPlaneMesh(10, 10, 10, 10);
 
 Shader* Ressources::Shaders::Default = new Shader("Vertex.vert", "Fragment.frag");
+Shader* Ressources::Shaders::PBR = new Shader("vertex.vert", "PBR.frag");
 Shader* Ressources::Shaders::ScreenShader = new Shader("Screen.vert", "Screen.frag");
 Shader* Ressources::Shaders::Skybox = new Shader("Skybox.vert", "Skybox.frag");
 Shader* Ressources::Shaders::Gaussianblur = new Shader("Screen.vert", "GaussianBlur.frag");
@@ -308,24 +309,28 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 				meshRenderer->normalMap = loadingData->loadedImages[str.C_Str()];
 			}
 		}
+		for (int i = 0;i < 18;i++) {
+			int count = material->GetTextureCount(static_cast<aiTextureType>(i));
+			if( count >0)
+				std::cout<<i<<std::endl;
+		}
 		//specular map
-		if (material->GetTextureCount(aiTextureType_NORMALS)) {
-			material->GetTexture(aiTextureType_NORMALS, 0, &str);
+		if (material->GetTextureCount(aiTextureType_METALNESS)) {
+			material->GetTexture(aiTextureType_METALNESS, 0, &str);
 			std::string fullPath = loadingData->directory + "/" + str.C_Str();
-
 			if (!loadingData->loadedImages.contains(str.C_Str())) {
 				bool flip = true;
 				if (loadingData->fileExtension == "gltf")
 					flip = false;
 
-				Image* specularMap = LoadImageFromPath(fullPath, flip);
-				specularMap->gammaCorrect = false;
-				specularMap->imageType = Image::ImageType::map;
-				meshRenderer->specularMap = specularMap;
-				loadingData->loadedImages.insert({ str.C_Str() ,specularMap });
+				Image* metalicMap = LoadImageFromPath(fullPath, flip);
+				metalicMap->gammaCorrect = false;
+				metalicMap->imageType = Image::ImageType::map;
+				meshRenderer->metalicMap = metalicMap;
+				loadingData->loadedImages.insert({ str.C_Str() ,metalicMap });
 			}
 			else {
-				meshRenderer->specularMap = loadingData->loadedImages[str.C_Str()];
+				meshRenderer->metalicMap = loadingData->loadedImages[str.C_Str()];
 			}
 		}
 	}

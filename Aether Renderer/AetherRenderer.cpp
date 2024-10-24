@@ -22,7 +22,13 @@ int main()
         glm::vec4(1,1,1,0),
         1
     };
+    PointLight pointLight = PointLight{
+        glm::vec3(-2,2,0),
+        glm::vec4(1,1,1,0),
+        1
+    };
     scene->DirectionalLights.push_back(dirlight);
+    scene->PointLights.push_back(pointLight);
     aetherEngine.Load(scene);
     return 0;
 }

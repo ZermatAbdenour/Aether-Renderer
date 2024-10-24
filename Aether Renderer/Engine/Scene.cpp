@@ -101,6 +101,10 @@ void Scene::RenderSceneTab(Renderer* renderer)
 					ImGui::Text("diffuse map");
 					ImGui::Image((void*)renderer->GetUITexture(meshRenderer->diffuse), ImVec2(100, 100));
 				}
+
+				ImGui::DragFloat("metallic", &meshRenderer->metallic, 0.05, 0, 1);
+				ImGui::DragFloat("roughness", &meshRenderer->roughness, 0.05, 0, 1);
+				ImGui::DragFloat("ao", &meshRenderer->ao, 0.05, 0, 1);
 			}
 		}
 	}
@@ -156,6 +160,8 @@ void Scene::RenderLightingTab()
 				PointLights.erase(PointLights.begin() + i);
 			}
 			ImGui::SetCursorPos(firstPos);
+			ImGui::Text("position");
+			ImGui::DragFloat3("##pposition" + i, &PointLights[i].position[0]);
 			//Get light view Direction
 			ImGui::Text("color");
 			ImGui::ColorEdit3("##pcolor" + i, &PointLights[i].color[0]);

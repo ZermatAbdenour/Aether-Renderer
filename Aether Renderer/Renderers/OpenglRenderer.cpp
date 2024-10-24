@@ -59,15 +59,13 @@ void OpenglRenderer::Setup(Scene* scene)
         SetupEntity(entity);
     });
 
-    m_PBRShader = CreateShader(Ressources::Shaders::Default);
+    m_PBRShader = CreateShader(Ressources::Shaders::PBR);
 
     m_autoExposureFBO = CreateFrameBuffer();
     SetFrameBufferAttachements(m_autoExposureFBO, windowWidth, windowHeight, 1, 3, None, 0);
     //Setup FBO and the Full screen quad
     {
         m_screenShader = CreateShader(Ressources::Shaders::ScreenShader);
-
-
 
         //m_screenFBO = CreateScreenFrameBuffer(true,4);//add depth stencil attachement with 4 samples
         m_screenFBO = CreateFrameBuffer();
@@ -196,10 +194,10 @@ void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
         m_textures.insert({ meshRenderer->normalMap,normalTexture });
     }
 
-    if (meshRenderer->specularMap && !m_textures.contains(meshRenderer->specularMap)) {
-        GLuint specularTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR);
-        SetTextureData(GL_TEXTURE_2D, meshRenderer->normalMap);
-        m_textures.insert({ meshRenderer->specularMap,specularTexture });
+    if (meshRenderer->metalicMap && !m_textures.contains(meshRenderer->metalicMap)) {
+        GLuint metalicTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR);
+        SetTextureData(GL_TEXTURE_2D, meshRenderer->metalicMap);
+        m_textures.insert({ meshRenderer->metalicMap,metalicTexture });
     }
 }
 
@@ -268,8 +266,8 @@ void OpenglRenderer::RenderScene(Scene* scene)
     //Shadow map
     {
         //LightSpace matrix
-        glm::mat4 lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.5f, 10.0f);
-        float lightDistance = 5;
+        glm::mat4 lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f,1.0f, 0.5f, 5.0f);
+        float lightDistance = 2;
         glm::mat4 lightView = glm::lookAt(glm::vec3(scene->DirectionalLights[0].direction * -lightDistance),
             glm::vec3(0.0f, 0.0f, 0.0f),
             glm::vec3(0.0f, 1.0f, 0.0f));
@@ -422,12 +420,15 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     std::shared_ptr<GLMesh> mesh = GetGLMesh(meshRenderer->mesh);
     GLuint diffuseTexture = GetTexture(meshRenderer->diffuse);
     GLuint normalTexture = GetTexture(meshRenderer->normalMap);
-    GLuint specularTexture = GetTexture(meshRenderer->specularMap);
+    GLuint metalicTexture = GetTexture(meshRenderer->metalicMap);
 
     glUniformMatrix4fv(glGetUniformLocation(m_PBRShader, "model"), 1, false, glm::value_ptr(model));
 
     glUniform1i(glGetUniformLocation(m_PBRShader, "baseColorOnly"), meshRenderer->diffuse == nullptr);
     glUniform4fv(glGetUniformLocation(m_PBRShader, "baseColor"),1,glm::value_ptr(meshRenderer->baseColor));
+    glUniform1f(glGetUniformLocation(m_PBRShader, "metallic"), meshRenderer->metallic);
+    glUniform1f(glGetUniformLocation(m_PBRShader, "roughness"), meshRenderer->roughness);
+    glUniform1f(glGetUniformLocation(m_PBRShader, "ao"), meshRenderer->ao);
     glActiveTexture(GL_TEXTURE0);
     if (meshRenderer->diffuse)
         glBindTexture(GL_TEXTURE_2D, diffuseTexture);
@@ -443,11 +444,11 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     glUniform1i(glGetUniformLocation(m_PBRShader, "normalMap"), 1);
 
     glActiveTexture(GL_TEXTURE2);
-    if (meshRenderer->specularMap)
-        glBindTexture(GL_TEXTURE_2D, specularTexture);
+    if (meshRenderer->metalicMap)
+        glBindTexture(GL_TEXTURE_2D, metalicTexture);
     else
         glBindTexture(GL_TEXTURE_2D, 0);
-    glUniform1i(glGetUniformLocation(m_PBRShader, "specularMap"), 2);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "metalicMap"), 2);
 
     glActiveTexture(GL_TEXTURE3);
     if (settings.SSAO)

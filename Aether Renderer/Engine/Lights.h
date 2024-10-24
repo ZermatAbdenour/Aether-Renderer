@@ -3,18 +3,15 @@
 
 struct PointLight {
 	glm::vec3 position;
-	glm::vec3 direction;
 	glm::vec4 color;
 	float intensity;
 	PointLight() {
 		position = glm::vec3();
-		direction = glm::vec3(0, 0, 1);
 		color = glm::vec4(1);
 		intensity = 1;
 	}
-	PointLight(glm::vec3 pos, glm::vec3 dir, glm::vec4 col,float intens) {
+	PointLight(glm::vec3 pos, glm::vec4 col,float intens) {
 		position = pos;
-		direction = dir;
 		color = col;
 		intensity = intens;
 	}

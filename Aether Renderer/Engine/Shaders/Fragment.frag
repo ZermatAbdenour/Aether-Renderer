@@ -7,7 +7,6 @@ const int MAX_DIRECTIONALLIGHTS =5;
 
 struct PointLight{
     vec4 position;
-    vec4 direction;
     vec4 color;
 };
 struct DirectionalLight{
@@ -61,6 +60,7 @@ float ShadowCalculation(vec4 fragPosLightSpace,vec3 normal,vec3 lightDir)
 
     float shadow = 0;
     if(softShadow){
+        //Percentage closer filtering
         vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
         for(int x = -1; x <= 1; ++x)
         {
@@ -72,7 +72,7 @@ float ShadowCalculation(vec4 fragPosLightSpace,vec3 normal,vec3 lightDir)
         }
         shadow /= 9.0;
     }
-    else
+    else//Hard shadows (no filtering)
         shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;  
     if(projCoords.z > 1.0)
         shadow = 0.0;

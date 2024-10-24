@@ -35,11 +35,9 @@ public:
 	static const int MAX_POINTLIGHTS = 10;
 	struct GLPointLight {
 		glm::vec4 position;
-		glm::vec4 direction;
 		glm::vec4 color;
 		GLPointLight(PointLight pointLight) {
 			position = glm::vec4(pointLight.position,0);
-			direction = glm::vec4(pointLight.direction, 0);
 			color = pointLight.color * pointLight.intensity;
 		}
 		GLPointLight() = default;
