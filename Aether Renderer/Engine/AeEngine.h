@@ -10,11 +10,10 @@ public:
 	AeEngine(Renderer* renderer);
 	~AeEngine();
 	void Load(Scene* scene);
-	GLFWwindow* GetWindow();
 	Time m_time;
 
 private:
 	GLFWwindow* m_window;
 	Renderer* m_renderer;
-	Editor m_editor = Editor();
+	Editor* m_editor ;
 };

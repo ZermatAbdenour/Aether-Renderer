@@ -10,5 +10,10 @@ public:
 	Image* diffuse = nullptr;
 	glm::vec4 baseColor = glm::vec4(1);
 	Image* normalMap = nullptr;
-	Image* specularMap = nullptr;
+	Image* metalicMap = nullptr;
+
+	//PBR Values
+	float metallic = 1;
+	float roughness = 0.5f;
+	float ao = 0;
 };

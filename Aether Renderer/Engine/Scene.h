@@ -16,6 +16,7 @@ public:
 	Camera camera;
 	std::vector<DirectionalLight> DirectionalLights;
 	std::vector<PointLight> PointLights;
+	Image* environmentMap;
 private:
 	std::vector<std::shared_ptr<Effector>> m_effectors;
 	std::shared_ptr<Entity> m_selectedEntity;
@@ -29,8 +30,8 @@ public:
 	template<typename T, typename... Args>
 	std::shared_ptr<T> AddEffector(std::shared_ptr<Entity> entity, Args&&... args);
 	//Effectors Loop
-	void StartEffectors();
-	void UpdateEffectors(float deltaTime);
+	void Setup();
+	void Update(GLFWwindow* window, Editor* editor, Time* time);
 
 	void ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& func);
 	void RenderLightingTab();

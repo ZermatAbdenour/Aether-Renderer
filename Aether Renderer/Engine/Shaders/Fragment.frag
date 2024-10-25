@@ -7,7 +7,6 @@ const int MAX_DIRECTIONALLIGHTS =5;
 
 struct PointLight{
     vec4 position;
-    vec4 direction;
     vec4 color;
 };
 struct DirectionalLight{
@@ -46,6 +45,8 @@ uniform bool SSAO;
 uniform bool SSAOOnly;
 uniform bool shadowMapping;
 uniform bool softShadow;
+uniform float bias ;
+uniform float minBias;
 
 float ShadowCalculation(vec4 fragPosLightSpace,vec3 normal,vec3 lightDir)
 {
@@ -55,11 +56,11 @@ float ShadowCalculation(vec4 fragPosLightSpace,vec3 normal,vec3 lightDir)
     
      
     float currentDepth = projCoords.z;
-    float minBias = 0.0003;  
-    float bias = max(0.0005 * (1.0 - dot(normal, lightDir)), minBias);  
+    float bias = max(bias * (1.0 - dot(normal, lightDir)), minBias);  
 
     float shadow = 0;
     if(softShadow){
+        //Percentage closer filtering
         vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
         for(int x = -1; x <= 1; ++x)
         {
@@ -71,13 +72,14 @@ float ShadowCalculation(vec4 fragPosLightSpace,vec3 normal,vec3 lightDir)
         }
         shadow /= 9.0;
     }
-    else
+    else//Hard shadows (no filtering)
         shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;  
     if(projCoords.z > 1.0)
         shadow = 0.0;
 
     return shadow;
 }  
+
 
 void main()
 {
@@ -120,7 +122,6 @@ void main()
     float shadow = 0;
     if(shadowMapping)
     shadow = ShadowCalculation(fs_in.fragPosLightSpace,normal,lightDirection);
-
     fragColor = vec4(vec3(ambiant+(1-shadow)*diffuse+ specular),1);
     
     //Calculate bloom color

@@ -25,17 +25,24 @@ void Scene::RemoveEntity(std::shared_ptr<Entity> entity)
 	rootEntities.erase(std::remove(rootEntities.begin(), rootEntities.end(), entity), rootEntities.end());
 }
 
-void Scene::StartEffectors()
+void Scene::Setup()
 {
+	//Start the effectors
 	for (auto effector : m_effectors) {
 		effector->Start();
 	}
 }
-void Scene::UpdateEffectors(float deltaTime)
+void Scene::Update(GLFWwindow* window, Editor* editor, Time* time)
 {
+	ForEachEntity([this](std::shared_ptr<Entity> entity) {
+		entity->CalculateModel();
+		});
+	//Update effectors
 	for (auto effector : m_effectors) {
-		effector->Update(deltaTime);
+		effector->Update(time->deltaTime);
 	}
+
+	camera.Update(window, editor, time);
 }
 
 void Scene::ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& func)
@@ -94,6 +101,10 @@ void Scene::RenderSceneTab(Renderer* renderer)
 					ImGui::Text("diffuse map");
 					ImGui::Image((void*)renderer->GetUITexture(meshRenderer->diffuse), ImVec2(100, 100));
 				}
+
+				ImGui::DragFloat("metallic", &meshRenderer->metallic, 0.05, 0, 1);
+				ImGui::DragFloat("roughness", &meshRenderer->roughness, 0.05, 0, 1);
+				ImGui::DragFloat("ao", &meshRenderer->ao, 0.05, 0, 1);
 			}
 		}
 	}
@@ -103,6 +114,10 @@ void Scene::RenderLightingTab()
 	ImVec2 buttonsize = ImVec2(20,20);
 	if (ImGui::CollapsingHeader("Directional Lights")) {
 		for (int i = 0;i < DirectionalLights.size();i++) {
+
+			if (i == 0) {
+				ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Warning: Shadow map target");
+			}
 			ImVec2 firstPos = ImGui::GetCursorPos();
 			ImVec2 buttonPos = firstPos;
 			buttonPos.x += ImGui::GetWindowWidth() - buttonsize.x - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing;
@@ -145,6 +160,8 @@ void Scene::RenderLightingTab()
 				PointLights.erase(PointLights.begin() + i);
 			}
 			ImGui::SetCursorPos(firstPos);
+			ImGui::Text("position");
+			ImGui::DragFloat3("##pposition" + i, &PointLights[i].position[0]);
 			//Get light view Direction
 			ImGui::Text("color");
 			ImGui::ColorEdit3("##pcolor" + i, &PointLights[i].color[0]);

@@ -17,8 +17,10 @@ public:
 	};
 	enum DepthStencilType {
 		None,
-		RBO,
-		Texture
+		RBODepth,
+		RBODepthStencil,
+		TextureDepth,
+		TextureDepthStencil
 	};
 	struct GLFrameBuffer {
 		GLuint id;
@@ -35,11 +37,9 @@ public:
 	static const int MAX_POINTLIGHTS = 10;
 	struct GLPointLight {
 		glm::vec4 position;
-		glm::vec4 direction;
 		glm::vec4 color;
 		GLPointLight(PointLight pointLight) {
 			position = glm::vec4(pointLight.position,0);
-			direction = glm::vec4(pointLight.direction, 0);
 			color = pointLight.color * pointLight.intensity;
 		}
 		GLPointLight() = default;
@@ -68,7 +68,7 @@ private:
 	//maps so it does not pass the same data to the GPU if it detects that the data exist
 	std::unordered_map<Mesh*,std::shared_ptr<GLMesh>> m_meshs;
 	std::shared_ptr<GLMesh> m_screenQuad;
-	std::shared_ptr<GLMesh> m_skyboxMesh;
+	std::shared_ptr<GLMesh> m_cubeMesh;
 
 	//Textures
 	std::unordered_map<Image*,GLuint> m_textures;
@@ -85,6 +85,7 @@ private:
 	GLuint m_ssaoShader;
 	GLuint m_ssaoBlurShader;
 	GLuint m_shadowMapShader;
+	GLuint m_EquiRecToCubeMapShader;
 
 	//Uniform buffer objects
 	GLuint m_matricesUBO;
@@ -92,14 +93,16 @@ private:
 
 	GLuint ssaoKernelSSBO;
 
+	std::vector<glm::vec3> m_ssaokernel;
+	std::vector<glm::vec3> m_ssaoNoise;
 	glm::mat4 m_lightSpaceMatrix;
 public:
 	GLFWwindow* Init() override;
-	void SetupScene(Scene* scene) override;
+	void Setup(Scene* scene) override;
 	void SetupEntity(std::shared_ptr<Entity> entity) override;
-	void SetupFrame() override;
-	void RenderFrame()override;
-	void EndFrame() override;
+	void RenderScene(Scene* scene)override;
+	void PostProcess() override;
+	void RenderEditor(Editor* editor) override;
 	void Clear() override;
 	void FrameBufferResizeCallBack(int width,int height);
 	void EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 model);
@@ -121,6 +124,8 @@ public:
 	GLuint CreateTexture(GLenum type, GLenum minFilter = NULL,GLenum magFilter = NULL,GLenum wrapS = NULL,GLenum wrapT = NULL);
 	void SetTextureData(GLenum target, Image* image);
 	GLuint GetTexture(Image* image);
+	
+	GLuint CreateHDRCubeMap(Image* image,int width,int height);
 	GLuint CreateCubeMap(std::vector<std::string> faces);
 
 	//UI

@@ -1,7 +1,7 @@
 #include "Editor.h"
 #include <Imgui/imgui.h>
 #include <glm/gtc/quaternion.hpp>
-void Editor::SetEditorTargets(Scene* scene, Renderer* renderer, Time* time)
+void Editor::Setup(Scene* scene, Renderer* renderer, Time* time)
 {
 	m_scene = scene;
 	m_renderer = renderer;
@@ -75,7 +75,7 @@ void Editor::EditorStyle()
 	style->Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.25f, 1.00f, 0.00f, 0.43f);
 	style->Colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 0.98f, 0.95f, 0.73f);
 }
-void Editor::UpdateEditorWindow()
+void Editor::Update()
 {
 	EditorStyle();
 	ImGui::Begin("Editor", nullptr );

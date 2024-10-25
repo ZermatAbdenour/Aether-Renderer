@@ -9,6 +9,7 @@ layout (std140,binding = 0) uniform Camera{
 };
 
 out vec3 texCoord;
+out vec3 localPos;
 
 void main(){
     mat4 view = mat4(mat3(view));

@@ -22,6 +22,7 @@ public:
 	class Shaders {
 	public:
 		static Shader* Default;
+		static Shader* PBR;
 		static Shader* EarlyDepthTesting;
 		static Shader* ScreenShader;
 		static Shader* Skybox;
@@ -30,6 +31,7 @@ public:
 		static Shader* SSAO;
 		static Shader* SSAOBlur;
 		static Shader* ShadowMap;
+		static Shader* EquiRecToCubeMap;
 	};
 	/// <summary>
 	/// Load Immage from a file in the Resources/Images folder

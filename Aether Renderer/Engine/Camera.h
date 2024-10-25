@@ -2,6 +2,8 @@
 #include <Imgui/imGuIZMO.quat/vgMath.h>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
+#include "Time.h"
+class Editor;
 class Camera {
 public:
 	enum CursorMode {
@@ -29,7 +31,7 @@ public:
 	vec3 directionToViewSpace(glm::vec3 direction);
 	glm::vec3 viewSpaceToDirection(vec3 viewSpaceDirection);
 	void SetCursorMode(GLFWwindow* window, Camera::CursorMode cursormode);
-	void Update(GLFWwindow* window,float deltaTime,bool allowMovement);
+	void Update(GLFWwindow* window,Editor* editor, Time* time);
 private:
 	glm::mat4 View();
 	glm::mat4 Projection(int width, int height);
