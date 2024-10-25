@@ -64,7 +64,7 @@ void OpenglRenderer::Setup(Scene* scene)
     m_EquiRecToCubeMapShader = CreateShader(Ressources::Shaders::EquiRecToCubeMap);
 
     m_autoExposureFBO = CreateFrameBuffer();
-    SetFrameBufferAttachements(m_autoExposureFBO, windowWidth, windowHeight, 1, 3, None, 0);
+    SetFrameBufferAttachements(m_autoExposureFBO, windowWidth, windowHeight, 1, settings.HDR, None, 0);
     //Setup FBO and the Full screen quad
     {
         m_screenShader = CreateShader(Ressources::Shaders::ScreenShader);
@@ -73,7 +73,7 @@ void OpenglRenderer::Setup(Scene* scene)
         m_screenFBO = CreateFrameBuffer();
         //add depth stencil attachement with 4 samples
         DepthStencilType defaultDepthStencilType = static_cast<DepthStencilType>(settings.screenFBODepthStencilType);
-        SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, 3, defaultDepthStencilType, settings.multiSampling ? settings.samples : 0);
+        SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, settings.HDR, defaultDepthStencilType, settings.multiSampling ? settings.samples : 0);
 
         //SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 1, 3, true, settings.multiSampling ?settings.samples:0);
         m_screenQuad = CreateMesh(Ressources::Primitives::Quad);
@@ -94,7 +94,7 @@ void OpenglRenderer::Setup(Scene* scene)
         m_skyBoxShader = CreateShader(Ressources::Shaders::Skybox);
         m_cubeMesh = CreateMesh(Ressources::Primitives::Cube);
 
-        m_skyBoxMap = CreateHDRCubeMap(scene->environmentMap, 2000, 2000);
+        m_skyBoxMap = CreateHDRCubeMap(scene->environmentMap, scene->environmentMap->Width, scene->environmentMap->Width);
     }
 
     //Setup bloom and ping pong framebuffers
@@ -102,9 +102,9 @@ void OpenglRenderer::Setup(Scene* scene)
         m_gaussianBlurShader = CreateShader(Ressources::Shaders::Gaussianblur);
         m_kernelBlurShader = CreateShader(Ressources::Shaders::Kernel);
         m_boomPingpongFBOs[0] = CreateFrameBuffer();
-        SetFrameBufferAttachements(m_boomPingpongFBOs[0], windowWidth, windowHeight, 1, 3, None, 0);
+        SetFrameBufferAttachements(m_boomPingpongFBOs[0], windowWidth, windowHeight, 1, settings.HDR, None, 0);
         m_boomPingpongFBOs[1] = CreateFrameBuffer();
-        SetFrameBufferAttachements(m_boomPingpongFBOs[1], windowWidth, windowHeight, 1, 3, None, 0);
+        SetFrameBufferAttachements(m_boomPingpongFBOs[1], windowWidth, windowHeight, 1, settings.HDR, None, 0);
     }
 
     //Setup depth testing
@@ -114,7 +114,7 @@ void OpenglRenderer::Setup(Scene* scene)
     //Setup shadowmaping
     {
         m_shadowDepthFBO = CreateFrameBuffer();
-        SetFrameBufferAttachements(m_shadowDepthFBO, settings.shadowResolution.x, settings.shadowResolution.y, 1, 3, TextureDepthStencil, 0);
+        SetFrameBufferAttachements(m_shadowDepthFBO, settings.shadowResolution.x, settings.shadowResolution.y, 1, settings.HDR, TextureDepthStencil, 0);
         //Since the default is GL_Repeat
         glBindTexture(GL_TEXTURE_2D, m_shadowDepthFBO->depthStencilBuffer);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -126,11 +126,11 @@ void OpenglRenderer::Setup(Scene* scene)
     //setup SSAO
     {
         m_ssaoFBO = CreateFrameBuffer();
-        SetFrameBufferAttachements(m_ssaoFBO, windowWidth, windowHeight, 1, 3, None, 0);
+        SetFrameBufferAttachements(m_ssaoFBO, windowWidth, windowHeight, 1, settings.HDR, None, 0);
         m_resolveDepthFBO = CreateFrameBuffer();
-        SetFrameBufferAttachements(m_resolveDepthFBO, windowWidth, windowHeight, 1, 3, TextureDepthStencil, 0);
+        SetFrameBufferAttachements(m_resolveDepthFBO, windowWidth, windowHeight, 1, settings.HDR, TextureDepthStencil, 0);
         m_ssaoBlurFBO = CreateFrameBuffer();
-        SetFrameBufferAttachements(m_ssaoBlurFBO, windowWidth, windowHeight, 1, 3, None, 0);
+        SetFrameBufferAttachements(m_ssaoBlurFBO, windowWidth, windowHeight, 1, settings.HDR, None, 0);
 
         m_ssaoShader = CreateShader(Ressources::Shaders::SSAO);
         m_ssaoBlurShader = CreateShader(Ressources::Shaders::SSAOBlur);
@@ -673,15 +673,15 @@ void OpenglRenderer::FrameBufferResizeCallBack(int width, int height)
 {
     windowWidth = width;
     windowHeight = height;
-    SetFrameBufferAttachements(m_screenFBO, width, height, 2, 3, m_screenFBO->depthStencilType, settings.multiSampling ? settings.samples : 0);
-    SetFrameBufferAttachements(m_autoExposureFBO, width, height, 1, 3, m_autoExposureFBO->depthStencilType, 0);
+    SetFrameBufferAttachements(m_screenFBO, width, height, 2, settings.HDR, m_screenFBO->depthStencilType, settings.multiSampling ? settings.samples : 0);
+    SetFrameBufferAttachements(m_autoExposureFBO, width, height, 1, settings.HDR, m_autoExposureFBO->depthStencilType, 0);
 
-    SetFrameBufferAttachements(m_boomPingpongFBOs[0], width, height, 1, 3, m_boomPingpongFBOs[0]->depthStencilType, 0);
-    SetFrameBufferAttachements(m_boomPingpongFBOs[1], width, height, 1, 3, m_boomPingpongFBOs[1]->depthStencilType, 0);
+    SetFrameBufferAttachements(m_boomPingpongFBOs[0], width, height, 1, settings.HDR, m_boomPingpongFBOs[0]->depthStencilType, 0);
+    SetFrameBufferAttachements(m_boomPingpongFBOs[1], width, height, 1, settings.HDR, m_boomPingpongFBOs[1]->depthStencilType, 0);
 
-    SetFrameBufferAttachements(m_ssaoFBO, width, height, 1, 3, None, 0);
-    SetFrameBufferAttachements(m_resolveDepthFBO, width, height, 1, 3, TextureDepthStencil, 0);
-    SetFrameBufferAttachements(m_ssaoBlurFBO, windowWidth, windowHeight, 1, 3, None, 0);
+    SetFrameBufferAttachements(m_ssaoFBO, width, height, 1, settings.HDR, None, 0);
+    SetFrameBufferAttachements(m_resolveDepthFBO, width, height, 1, settings.HDR, TextureDepthStencil, 0);
+    SetFrameBufferAttachements(m_ssaoBlurFBO, windowWidth, windowHeight, 1, settings.HDR, None, 0);
 
 }
 
@@ -797,7 +797,7 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
     int width,
     int height,
     int colorAttachementsCount,
-    int NRChannels,
+    bool hdr,
     DepthStencilType depthStencilType,
     int samples)
 {
@@ -825,7 +825,7 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
     framebuffer->image->data = NULL;
     framebuffer->image->Width = width;
     framebuffer->image->Height = height;
-    framebuffer->image->NRChannels = NRChannels;
+    framebuffer->image->NRChannels = 3;
 
     // Create color attachments
     if (colorAttachementsCount == 0)
@@ -848,16 +848,16 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
         }
 
         // Bind and attach the texture
+        GLenum internalFormat = settings.HDR ? GL_RGB16F : GL_RGB;
         if (samples > 0) {
             glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer->colorAttachments[i]);
 
-            //GLenum internalFormat = settings.HDR ? GL_RGB16F : GL_RGB;
-            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGB16F, framebuffer->image->Width, framebuffer->image->Height, GL_TRUE);
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, internalFormat, framebuffer->image->Width, framebuffer->image->Height, GL_TRUE);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D_MULTISAMPLE, framebuffer->colorAttachments[i], 0);
         }
         else {
             glBindTexture(GL_TEXTURE_2D, framebuffer->colorAttachments[i]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+            glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, GL_RGB, GL_FLOAT, NULL);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, framebuffer->colorAttachments[i], 0);
         }
     }
@@ -1030,7 +1030,7 @@ GLuint OpenglRenderer::GetTexture(Image* image)
 GLuint OpenglRenderer::CreateHDRCubeMap(Image* image, int width, int height)
 {
     auto captureFBO = CreateFrameBuffer();
-    SetFrameBufferAttachements(captureFBO, width, height, 1, 3, RBODepth, 0);
+    SetFrameBufferAttachements(captureFBO, width, height, 1, settings.HDR, RBODepth, 0);
 
     glGenTextures(1, &hdrTexture);
     glBindTexture(GL_TEXTURE_2D, hdrTexture);
@@ -1139,17 +1139,17 @@ void OpenglRenderer::RendererSettingsTab()
         const char* enumNames[] = { "None", "DepthRBO","DepthStencilRBO" ,"DepthTexture","DepthStencilTexture" };
         if (ImGui::Combo("DepthStencil type", &settings.screenFBODepthStencilType, enumNames, IM_ARRAYSIZE(enumNames))) {
             DepthStencilType type = static_cast<DepthStencilType>(settings.screenFBODepthStencilType);
-            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels, type, settings.multiSampling ? settings.samples : 0);
+            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, settings.HDR, type, settings.multiSampling ? settings.samples : 0);
 
         }
     }
 
     if (ImGui::CollapsingHeader("Anti-Aliasing", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Checkbox("enable multisampling", &settings.multiSampling)) {
-            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels, m_screenFBO->depthStencilType, settings.multiSampling ? settings.samples : 0);
+            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, settings.HDR, m_screenFBO->depthStencilType, settings.multiSampling ? settings.samples : 0);
         }
         if (settings.multiSampling && ImGui::DragInt("samples", &settings.samples, 1, 1, 8)) {
-            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels, m_screenFBO->depthStencilType, settings.multiSampling ? settings.samples : 0);
+            SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, settings.HDR, m_screenFBO->depthStencilType, settings.multiSampling ? settings.samples : 0);
         }
     }
 
@@ -1217,7 +1217,7 @@ void OpenglRenderer::RendererSettingsTab()
         ImGui::Checkbox("enable shadow", &settings.shadowMapping);
         if (settings.shadowMapping) {
             if (ImGui::DragInt2("shadowmap resolution", &settings.shadowResolution[0])) {
-                SetFrameBufferAttachements(m_shadowDepthFBO, settings.shadowResolution.x, settings.shadowResolution.y, 1, 3, TextureDepth, 0);
+                SetFrameBufferAttachements(m_shadowDepthFBO, settings.shadowResolution.x, settings.shadowResolution.y, 1, settings.HDR, TextureDepth, 0);
             }
             ImGui::InputFloat("shadow bias", &settings.shadowbias, 0.01, 0.1, "%8f");
             ImGui::InputFloat("min bias", &settings.minBias, 0.01, 0.1, "%8f");

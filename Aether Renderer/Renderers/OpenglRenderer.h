@@ -28,8 +28,8 @@ public:
 		GLuint depthStencilBuffer;
 		DepthStencilType depthStencilType;
 		Image* image;
+		bool HDR;
 		int samples;
-
 	};
 public:
 	//Lights
@@ -116,7 +116,7 @@ public:
 
 	std::shared_ptr<GLFrameBuffer> CreateFrameBuffer();
 	void DeleteFrameBuffer(std::shared_ptr<GLFrameBuffer> framebuffer);
-	void SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,int width,int height,int colorAttachmentsCount, int NRChannels,DepthStencilType depthStencilType, int sample);
+	void SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,int width,int height,int colorAttachmentsCount, bool hdr,DepthStencilType depthStencilType, int sample);
 	//Meshs
 	std::shared_ptr<GLMesh> CreateMesh(Mesh* mesh);
 	std::shared_ptr<GLMesh> GetGLMesh(Mesh* mesh);
