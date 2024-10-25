@@ -10,35 +10,35 @@
 
 GLFWwindow* OpenglRenderer::Init()
 {
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "AeEngine", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "AeEngine", NULL, NULL);
     glfwSetWindowUserPointer(window, this);
 
-	if (window == NULL)
-	{
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return nullptr;
-	}
-	glfwMakeContextCurrent(window);
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return nullptr;
+    }
+    glfwMakeContextCurrent(window);
     glfwSwapInterval(0);//Disable VSync
 
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
         OpenglRenderer* renderer = static_cast<OpenglRenderer*>(glfwGetWindowUserPointer(window));
         if (!renderer)
             return;
-        renderer->FrameBufferResizeCallBack(width,height);
+        renderer->FrameBufferResizeCallBack(width, height);
         });
 
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		return nullptr;
-	}
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return nullptr;
+    }
 
     //init ImGui
     IMGUI_CHECKVERSION();
@@ -48,7 +48,7 @@ GLFWwindow* OpenglRenderer::Init()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460");
 
-	return window;
+    return window;
 }
 
 GLuint hdrTexture;
@@ -58,7 +58,7 @@ void OpenglRenderer::Setup(Scene* scene)
     //Setup each entity
     scene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
         SetupEntity(entity);
-    });
+        });
 
     m_PBRShader = CreateShader(Ressources::Shaders::PBR);
     m_EquiRecToCubeMapShader = CreateShader(Ressources::Shaders::EquiRecToCubeMap);
@@ -116,7 +116,7 @@ void OpenglRenderer::Setup(Scene* scene)
         m_shadowDepthFBO = CreateFrameBuffer();
         SetFrameBufferAttachements(m_shadowDepthFBO, settings.shadowResolution.x, settings.shadowResolution.y, 1, 3, TextureDepthStencil, 0);
         //Since the default is GL_Repeat
-        glBindTexture(GL_TEXTURE_2D,m_shadowDepthFBO->depthStencilBuffer);
+        glBindTexture(GL_TEXTURE_2D, m_shadowDepthFBO->depthStencilBuffer);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -134,7 +134,7 @@ void OpenglRenderer::Setup(Scene* scene)
 
         m_ssaoShader = CreateShader(Ressources::Shaders::SSAO);
         m_ssaoBlurShader = CreateShader(Ressources::Shaders::SSAOBlur);
-        m_ssaoNoiseTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR,GL_REPEAT,GL_REPEAT);
+        m_ssaoNoiseTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR, GL_REPEAT, GL_REPEAT);
         glGenBuffers(1, &ssaoKernelSSBO);
 
         //Generating Kernel
@@ -166,7 +166,7 @@ void OpenglRenderer::Setup(Scene* scene)
 }
 void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 {
-	MeshRenderer* meshRenderer = entity->meshRenderer;
+    MeshRenderer* meshRenderer = entity->meshRenderer;
     if (!meshRenderer)
         return;
 
@@ -178,7 +178,7 @@ void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
 
     //Create and add textures
     if (meshRenderer->diffuse && !m_textures.contains(meshRenderer->diffuse)) {
-        GLuint diffuseTexture = CreateTexture(GL_TEXTURE_2D,GL_LINEAR,GL_LINEAR);
+        GLuint diffuseTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR);
         SetTextureData(GL_TEXTURE_2D, meshRenderer->diffuse);
         m_textures.insert({ meshRenderer->diffuse,diffuseTexture });
     }
@@ -335,7 +335,7 @@ void OpenglRenderer::RenderScene(Scene* scene)
     //Shadow map
     {
         //LightSpace matrix
-        glm::mat4 lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f,1.0f, 0.5f, 5.0f);
+        glm::mat4 lightProjection = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.5f, 5.0f);
         float lightDistance = 2;
         glm::mat4 lightView = glm::lookAt(glm::vec3(scene->DirectionalLights[0].direction * -lightDistance),
             glm::vec3(0.0f, 0.0f, 0.0f),
@@ -359,7 +359,7 @@ void OpenglRenderer::RenderScene(Scene* scene)
     //SSAO Pass
     if (settings.SSAO) {
 
-        glBindTexture(GL_TEXTURE_2D,m_ssaoNoiseTexture);
+        glBindTexture(GL_TEXTURE_2D, m_ssaoNoiseTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 4, 4, 0, GL_RGB, GL_FLOAT, &m_ssaoNoise[0]);
 
         //resolve depth in an intermediat fbo
@@ -368,7 +368,7 @@ void OpenglRenderer::RenderScene(Scene* scene)
         glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, m_ssaoFBO->id);
-        
+
 
         glDepthFunc(GL_LESS);
         glColorMask(1, 1, 1, 1);
@@ -382,7 +382,7 @@ void OpenglRenderer::RenderScene(Scene* scene)
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, m_ssaoNoiseTexture);
         glUniform1i(glGetUniformLocation(m_ssaoShader, "noiseTexture"), 1);
-        
+
         glUniform1f(glGetUniformLocation(m_ssaoShader, "sampleRad"), settings.sampleRad);
         //set kernel buffer
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssaoKernelSSBO);
@@ -407,7 +407,7 @@ void OpenglRenderer::RenderScene(Scene* scene)
         glUseProgram(m_ssaoBlurShader);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, m_ssaoFBO->colorAttachments[0]);
-        
+
         glUniform1i(glGetUniformLocation(m_ssaoBlurShader, "ssaoTexture"), 0);
 
         glBindVertexArray(m_screenQuad->vao);
@@ -423,11 +423,11 @@ void OpenglRenderer::RenderScene(Scene* scene)
     //Shadowmap pass
     glDepthFunc(GL_LESS);
     glColorMask(1, 1, 1, 1);
-    if(settings.shadowMapping){
+    if (settings.shadowMapping) {
         glBindFramebuffer(GL_FRAMEBUFFER, m_shadowDepthFBO->id);
         glViewport(0, 0, settings.shadowResolution.x, settings.shadowResolution.y);
         glClearColor(1, 1, 1, 1);
-        glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
         glUseProgram(m_shadowMapShader);
         glUniformMatrix4fv(glGetUniformLocation(m_shadowMapShader, "lightSpaceMatrix"), 1, false, glm::value_ptr(m_lightSpaceMatrix));
@@ -438,7 +438,7 @@ void OpenglRenderer::RenderScene(Scene* scene)
             });
     }
     glViewport(0, 0, windowWidth, windowHeight);
-    glBindFramebuffer(GL_FRAMEBUFFER,m_screenFBO->id);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_screenFBO->id);
     //Lighting Pass
     if (settings.zPrePass) {
         glDepthFunc(GL_EQUAL);
@@ -461,7 +461,7 @@ void OpenglRenderer::RenderScene(Scene* scene)
         if (!entity->meshRenderer)
             return;
         RenderEntity(entity->meshRenderer, entity->model);
-    });
+        });
 }
 
 void OpenglRenderer::EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 model) {
@@ -494,7 +494,7 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     glUniformMatrix4fv(glGetUniformLocation(m_PBRShader, "model"), 1, false, glm::value_ptr(model));
 
     glUniform1i(glGetUniformLocation(m_PBRShader, "baseColorOnly"), meshRenderer->diffuse == nullptr);
-    glUniform4fv(glGetUniformLocation(m_PBRShader, "baseColor"),1,glm::value_ptr(meshRenderer->baseColor));
+    glUniform4fv(glGetUniformLocation(m_PBRShader, "baseColor"), 1, glm::value_ptr(meshRenderer->baseColor));
     glUniform1f(glGetUniformLocation(m_PBRShader, "metallic"), meshRenderer->metallic);
     glUniform1f(glGetUniformLocation(m_PBRShader, "roughness"), meshRenderer->roughness);
     glUniform1f(glGetUniformLocation(m_PBRShader, "ao"), meshRenderer->ao);
@@ -506,7 +506,7 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     glUniform1i(glGetUniformLocation(m_PBRShader, "diffuseMap"), 0);
 
     glActiveTexture(GL_TEXTURE1);
-    if (meshRenderer->normalMap) 
+    if (meshRenderer->normalMap)
         glBindTexture(GL_TEXTURE_2D, normalTexture);
     else
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -525,7 +525,7 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     else
         glBindTexture(GL_TEXTURE_2D, 0);
     glUniform1i(glGetUniformLocation(m_PBRShader, "occlusionTexture"), 3);
-    
+
     glActiveTexture(GL_TEXTURE4);
     if (settings.shadowMapping)
         glBindTexture(GL_TEXTURE_2D, m_shadowDepthFBO->depthStencilBuffer);
@@ -545,7 +545,7 @@ void OpenglRenderer::PostProcess()
 {
     glDepthFunc(GL_LESS);
     //auto Exposure
-    if (settings.HDR&&settings.toneMapping && settings.autoExposure) {
+    if (settings.HDR && settings.toneMapping && settings.autoExposure) {
         glBindFramebuffer(GL_READ_BUFFER, m_screenFBO->id);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_autoExposureFBO->id);
         glReadBuffer(GL_COLOR_ATTACHMENT0);
@@ -566,7 +566,7 @@ void OpenglRenderer::PostProcess()
         settings.exposure = glm::mix(settings.exposure, 0.5f / lum * settings.exposureMultiplier, settings.adjustmentSpeed);
         settings.exposure = glm::clamp(settings.exposure, sceneExposureRangeMin, sceneExposureRangeMax);
     }
-    
+
     bool horizontal = true, first_iteration = true;
 
     if (settings.bloom) {
@@ -576,7 +576,7 @@ void OpenglRenderer::PostProcess()
         glReadBuffer(GL_COLOR_ATTACHMENT1);
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
         glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        
+
         if (settings.bloomType == RendererSettings::gaussianBlur) {
             glUseProgram(m_gaussianBlurShader);
             for (unsigned int i = 0; i < settings.amount; i++)
@@ -604,18 +604,18 @@ void OpenglRenderer::PostProcess()
             glUseProgram(m_kernelBlurShader);
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDisable(GL_DEPTH_TEST);
 
     //Render Frame buffer
     glUseProgram(m_screenShader);
-    
+
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_screenFBO->colorAttachments[0]);
     glUniform1i(glGetUniformLocation(m_screenShader, "MSScreenTexture"), 0);
-   
+
 
     glActiveTexture(GL_TEXTURE1);
     //glBindTexture(GL_TEXTURE_2D, m_screenFBO->colorAttachments[0]);
@@ -632,7 +632,7 @@ void OpenglRenderer::PostProcess()
     //Settings
     glUniform1i(glGetUniformLocation(m_screenShader, "ssao"), settings.SSAO);
     glUniform1i(glGetUniformLocation(m_screenShader, "multiSampling"), settings.multiSampling);
-    glUniform1i(glGetUniformLocation(m_screenShader, "samples"),m_screenFBO->samples);
+    glUniform1i(glGetUniformLocation(m_screenShader, "samples"), m_screenFBO->samples);
     glUniform1i(glGetUniformLocation(m_screenShader, "gammaCorrection"), settings.gammaCorrection);
     glUniform1f(glGetUniformLocation(m_screenShader, "gamma"), settings.gamma);
     glUniform1i(glGetUniformLocation(m_screenShader, "bloom"), settings.bloom);
@@ -689,8 +689,8 @@ GLuint OpenglRenderer::CreateShader(Shader* shader)
 {
     // Create and compile the vertex shader
     unsigned int vertexID = glCreateShader(GL_VERTEX_SHADER);
-    const char* vertexShaderCode = shader->vertexShaderSource.c_str(); 
-   
+    const char* vertexShaderCode = shader->vertexShaderSource.c_str();
+
     glShaderSource(vertexID, 1, &vertexShaderCode, NULL);
     glCompileShader(vertexID);
 
@@ -706,8 +706,8 @@ GLuint OpenglRenderer::CreateShader(Shader* shader)
 
     // Create and compile the fragment shader
     unsigned int fragmentID = glCreateShader(GL_FRAGMENT_SHADER);
-    const char* fragmentShaderCode = shader->fragmentShaderSource.c_str(); 
-    glShaderSource(fragmentID, 1, &fragmentShaderCode, NULL); 
+    const char* fragmentShaderCode = shader->fragmentShaderSource.c_str();
+    glShaderSource(fragmentID, 1, &fragmentShaderCode, NULL);
     glCompileShader(fragmentID);
 
     // Check for fragment shader compilation errors
@@ -722,8 +722,8 @@ GLuint OpenglRenderer::CreateShader(Shader* shader)
     GLuint glShader = glCreateProgram();
 
     // Attach shaders to the program
-    glAttachShader(glShader, vertexID); 
-    glAttachShader(glShader, fragmentID); 
+    glAttachShader(glShader, vertexID);
+    glAttachShader(glShader, fragmentID);
     glLinkProgram(glShader);
     glGetProgramiv(glShader, GL_LINK_STATUS, &success);
 
@@ -769,7 +769,7 @@ GLuint OpenglRenderer::CreateComputeShader(ComputeShader* shader)
     }
 
     glDeleteShader(compute); // We no longer need the shader object after linking
-    return program; 
+    return program;
 }
 
 
@@ -786,11 +786,11 @@ void OpenglRenderer::DeleteFrameBuffer(std::shared_ptr<GLFrameBuffer> framebuffe
 {
     glDeleteFramebuffers(1, &framebuffer->id);
     for (int i = 0;i < framebuffer->colorAttachments.size();i++)
-            glDeleteTextures(1, &framebuffer->colorAttachments[i]);
-        //Delete render buffers
-        glDeleteTextures(1, &framebuffer->depthStencilBuffer);
+        glDeleteTextures(1, &framebuffer->colorAttachments[i]);
+    //Delete render buffers
+    glDeleteTextures(1, &framebuffer->depthStencilBuffer);
 
-        framebuffer.reset();
+    framebuffer.reset();
 }
 
 void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::GLFrameBuffer> framebuffer,
@@ -810,8 +810,8 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
         glDeleteTextures(framebuffer->colorAttachments.size(), textures);
         framebuffer->colorAttachments.clear();
     }
-    if (framebuffer->depthStencilType != None && framebuffer->depthStencilType != depthStencilType|| changeSampling) {
-        if (framebuffer->depthStencilType == TextureDepthStencil|| framebuffer->depthStencilType == TextureDepth)
+    if (framebuffer->depthStencilType != None && framebuffer->depthStencilType != depthStencilType || changeSampling) {
+        if (framebuffer->depthStencilType == TextureDepthStencil || framebuffer->depthStencilType == TextureDepth)
             glDeleteTextures(1, &framebuffer->depthStencilBuffer);
         if (framebuffer->depthStencilType == RBODepth || framebuffer->depthStencilType == RBODepthStencil)
             glDeleteRenderbuffers(1, &framebuffer->depthStencilBuffer);
@@ -830,7 +830,7 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
     // Create color attachments
     if (colorAttachementsCount == 0)
     {
-        glDrawBuffer(GL_NONE);  
+        glDrawBuffer(GL_NONE);
         glReadBuffer(GL_NONE);
     }
     for (int i = 0; i < colorAttachementsCount; i++) {
@@ -841,7 +841,7 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
                 textureColorbuffer = CreateTexture(GL_TEXTURE_2D_MULTISAMPLE);
             }
             else {
-                textureColorbuffer = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR,GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
+                textureColorbuffer = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
             }
 
             framebuffer->colorAttachments.push_back(textureColorbuffer);
@@ -892,12 +892,12 @@ void OpenglRenderer::SetFrameBufferAttachements(std::shared_ptr<OpenglRenderer::
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, depthStencilAttachement, GL_RENDERBUFFER, framebuffer->depthStencilBuffer);
     }
 
-    if (depthStencilType == TextureDepth|| depthStencilType == TextureDepthStencil) {
+    if (depthStencilType == TextureDepth || depthStencilType == TextureDepthStencil) {
         if (framebuffer->depthStencilBuffer == 0) {
-            if(samples>0)
+            if (samples > 0)
                 framebuffer->depthStencilBuffer = CreateTexture(GL_TEXTURE_2D_MULTISAMPLE);
             else
-                framebuffer->depthStencilBuffer = CreateTexture(GL_TEXTURE_2D,GL_NEAREST,GL_NEAREST);
+                framebuffer->depthStencilBuffer = CreateTexture(GL_TEXTURE_2D, GL_NEAREST, GL_NEAREST);
 
         }
 
@@ -933,34 +933,34 @@ std::shared_ptr<OpenglRenderer::GLMesh> OpenglRenderer::CreateMesh(Mesh* mesh)
     //Mesh Already created 
     if (!mesh)
         return nullptr;
-	auto glMesh = std::make_shared<GLMesh>();
-	//Generate the Vertex Buffer Object and The Index Buffer Object
-	glGenBuffers(1, &glMesh->vbo);
-	glGenBuffers(1, &glMesh->ebo);
+    auto glMesh = std::make_shared<GLMesh>();
+    //Generate the Vertex Buffer Object and The Index Buffer Object
+    glGenBuffers(1, &glMesh->vbo);
+    glGenBuffers(1, &glMesh->ebo);
 
-	//Generate the Vertex array object
-	glGenVertexArrays(1, &glMesh->vao);
+    //Generate the Vertex array object
+    glGenVertexArrays(1, &glMesh->vao);
 
-	glBindVertexArray(glMesh->vao);
+    glBindVertexArray(glMesh->vao);
 
-	glBindBuffer(GL_ARRAY_BUFFER, glMesh->vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, glMesh->vbo);
 
-	glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(Mesh::Vertex), mesh->vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, mesh->vertices.size() * sizeof(Mesh::Vertex), mesh->vertices.data(), GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh->ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), mesh->indices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh->ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->indices.size() * sizeof(unsigned int), mesh->indices.data(), GL_STATIC_DRAW);
 
-    
+
     //position
-	glVertexAttribPointer(0, 3, GL_FLOAT,GL_FALSE, sizeof(Mesh::Vertex), (void*)0);
-	glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Mesh::Vertex), (void*)0);
+    glEnableVertexAttribArray(0);
 
     //normal
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Mesh::Vertex), (void*)offsetof(Mesh::Vertex, normal));
     glEnableVertexAttribArray(1);
 
     //uv
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Mesh::Vertex), (void*)offsetof(Mesh::Vertex,uv));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Mesh::Vertex), (void*)offsetof(Mesh::Vertex, uv));
     glEnableVertexAttribArray(2);
 
     //tangent
@@ -972,8 +972,8 @@ std::shared_ptr<OpenglRenderer::GLMesh> OpenglRenderer::CreateMesh(Mesh* mesh)
     glEnableVertexAttribArray(4);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-	//unbind the vertex array
-	glBindVertexArray(0);
+    //unbind the vertex array
+    glBindVertexArray(0);
 
     return glMesh;
 }
@@ -992,11 +992,11 @@ GLuint OpenglRenderer::CreateTexture(GLenum type, GLenum minFilter, GLenum magFi
     glBindTexture(type, texture);
 
     // set the texture wrapping and filtering options
-    if(minFilter != NULL)
+    if (minFilter != NULL)
         glTexParameteri(type, GL_TEXTURE_MIN_FILTER, minFilter);
-    if(magFilter != NULL)
+    if (magFilter != NULL)
         glTexParameteri(type, GL_TEXTURE_MAG_FILTER, magFilter);
-    if(wrapS != NULL)
+    if (wrapS != NULL)
         glTexParameteri(type, GL_TEXTURE_WRAP_S, wrapS);
     if (wrapT != NULL)
         glTexParameteri(type, GL_TEXTURE_WRAP_T, wrapT);
@@ -1004,7 +1004,7 @@ GLuint OpenglRenderer::CreateTexture(GLenum type, GLenum minFilter, GLenum magFi
     return texture;
 }
 
-void OpenglRenderer::SetTextureData(GLenum target,Image* image)
+void OpenglRenderer::SetTextureData(GLenum target, Image* image)
 {
     //!this function does not bind the texture
     GLenum format;
@@ -1013,13 +1013,13 @@ void OpenglRenderer::SetTextureData(GLenum target,Image* image)
     switch (image->NRChannels)
     {
     case 1: format = GL_RED;internalFormat = GL_RED;break;
-    case 2: format = GL_RG,internalFormat = GL_RG;break;
+    case 2: format = GL_RG, internalFormat = GL_RG;break;
     case 3: format = image->gammaCorrect && image->imageType != Image::ImageType::map ? GL_SRGB : GL_RGB;internalFormat = GL_RGB;break;
     case 4: format = image->gammaCorrect && image->imageType != Image::ImageType::map ? GL_SRGB_ALPHA : GL_RGBA;internalFormat = GL_RGBA;break;
     default: format = GL_RGB;internalFormat = GL_RGB;break;
     }
     //lTexImage2D(GL_TEXTURE_2D, 0, format, image->Width, image->Height, 0, format, GL_UNSIGNED_BYTE, image->data);
-    glTexImage2D(target,0, format, image->Width, image->Height, 0, internalFormat, GL_UNSIGNED_BYTE, image->data);
+    glTexImage2D(target, 0, format, image->Width, image->Height, 0, internalFormat, GL_UNSIGNED_BYTE, image->data);
     glGenerateMipmap(target);
 }
 
@@ -1027,7 +1027,7 @@ GLuint OpenglRenderer::GetTexture(Image* image)
 {
     return m_textures[image];
 }
-GLuint OpenglRenderer::CreateHDRCubeMap(Image* image,int width,int height)
+GLuint OpenglRenderer::CreateHDRCubeMap(Image* image, int width, int height)
 {
     auto captureFBO = CreateFrameBuffer();
     SetFrameBufferAttachements(captureFBO, width, height, 1, 3, RBODepth, 0);
@@ -1073,14 +1073,14 @@ GLuint OpenglRenderer::CreateHDRCubeMap(Image* image,int width,int height)
     glUniform1i(glGetUniformLocation(m_EquiRecToCubeMapShader, "equirectangularMap"), 0);
     glUniformMatrix4fv(glGetUniformLocation(m_EquiRecToCubeMapShader, "projection"), 1, GL_FALSE, glm::value_ptr(captureProjection));
 
-    glViewport(0, 0, width, height); 
+    glViewport(0, 0, width, height);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO->id);
     //glDepthFunc(GL_LESS);
     //glDisable(GL_DEPTH_TEST);
     for (unsigned int i = 0; i < 6; ++i)
     {
         glUniformMatrix4fv(glGetUniformLocation(m_EquiRecToCubeMapShader, "view"), 1, GL_FALSE, glm::value_ptr(captureViews[i]));
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 , GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap ,0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         renderCube();
@@ -1096,7 +1096,7 @@ GLuint OpenglRenderer::CreateCubeMap(std::vector<std::string> faces)
     glGenTextures(1, &cubeMap);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMap);
     for (int i = 0;i < 6;i++) {
-        Image* faceImage = Ressources::LoadImageFromFile(faces[i],false);
+        Image* faceImage = Ressources::LoadImageFromFile(faces[i], false);
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
             0, GL_SRGB, faceImage->Width, faceImage->Height, 0, GL_RGB, GL_UNSIGNED_BYTE, faceImage->data
         );
@@ -1134,9 +1134,9 @@ intptr_t OpenglRenderer::GetShadowMapTexture()
 
 void OpenglRenderer::RendererSettingsTab()
 {
-    if (ImGui::CollapsingHeader("Pipline",ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader("Pipline", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Checkbox("Z pre-pass", &settings.zPrePass);
-        const char* enumNames[] = { "None", "DepthRBO","DepthStencilRBO" ,"DepthTexture","DepthStencilTexture"};
+        const char* enumNames[] = { "None", "DepthRBO","DepthStencilRBO" ,"DepthTexture","DepthStencilTexture" };
         if (ImGui::Combo("DepthStencil type", &settings.screenFBODepthStencilType, enumNames, IM_ARRAYSIZE(enumNames))) {
             DepthStencilType type = static_cast<DepthStencilType>(settings.screenFBODepthStencilType);
             SetFrameBufferAttachements(m_screenFBO, windowWidth, windowHeight, 2, m_screenFBO->image->NRChannels, type, settings.multiSampling ? settings.samples : 0);
@@ -1168,7 +1168,7 @@ void OpenglRenderer::RendererSettingsTab()
         if (settings.HDR)
         {
             ImGui::Checkbox("tonemapping", &settings.toneMapping);
-            
+
             if (settings.toneMapping) {
                 ImGui::BeginDisabled(settings.autoExposure);
                 ImGui::DragFloat("exposure", &settings.exposure, 0.1f, 0.0f, 5.0f);
@@ -1185,9 +1185,9 @@ void OpenglRenderer::RendererSettingsTab()
     if (ImGui::CollapsingHeader("Bloom", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Checkbox("enable bloom", &settings.bloom);
 
-        const char* enumNames[] = { "Kernel Blur", "Gaussian Blur"};
+        const char* enumNames[] = { "Kernel Blur", "Gaussian Blur" };
         int currentIndex = static_cast<int>(settings.bloomType);
-        if (ImGui::Combo("blur type", &currentIndex, enumNames, IM_ARRAYSIZE(enumNames))) 
+        if (ImGui::Combo("blur type", &currentIndex, enumNames, IM_ARRAYSIZE(enumNames)))
             settings.bloomType = static_cast<RendererSettings::BloomTypes>(currentIndex);
 
         if (settings.bloom && settings.bloomType == RendererSettings::gaussianBlur) {
@@ -1207,7 +1207,7 @@ void OpenglRenderer::RendererSettingsTab()
         {
             ImGui::Checkbox("SSAO only", &settings.SSAOOnly);
             ImGui::InputInt("kernel size", &settings.kernelSize);
-            ImGui::DragFloat("sample radius", &settings.sampleRad,0.1f,0,2);
+            ImGui::DragFloat("sample radius", &settings.sampleRad, 0.1f, 0, 2);
             ImGui::InputFloat("power", &settings.power);
             ImGui::InputFloat("bias", &settings.bias);
         }
