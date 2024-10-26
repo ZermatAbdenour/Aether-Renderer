@@ -34,7 +34,7 @@ public:
 	void Update(GLFWwindow* window, Editor* editor, Time* time);
 
 	void ForEachEntity(const std::function<void(std::shared_ptr<Entity>)>& func);
-	void RenderLightingTab();
+	void RenderLightingTab(Renderer* renderer);
 	void RenderSceneTab(Renderer* renderer);
 	void RenderSceneHierarchyUI(std::shared_ptr<Entity> entity);
 	/// <summary>

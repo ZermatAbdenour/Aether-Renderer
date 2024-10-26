@@ -19,8 +19,10 @@ public:
 	virtual void Clear() = 0;
 
 	//UI
+	virtual void LoadSkyBox(Image* image) = 0;
 	virtual intptr_t GetUITexture(Image* image) = 0;
 	virtual intptr_t GetShadowMapTexture() = 0;
+	virtual intptr_t GetSkyBox() = 0;
 	virtual void RendererSettingsTab() = 0;
 	
 

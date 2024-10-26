@@ -31,6 +31,11 @@ public:
 		bool HDR;
 		int samples;
 	};
+	struct GLHDRCubeMap {
+		GLuint hdrTexture;
+		GLuint envirenmentMap;
+		GLuint diffuseIrradiance;
+	};
 public:
 	//Lights
 	static const int MAX_DIRECTIONALLIGHTS = 5;
@@ -73,19 +78,21 @@ private:
 	//Textures
 	std::unordered_map<Image*,GLuint> m_textures;
 	GLuint m_ssaoNoiseTexture;
-	GLuint m_skyBoxMap;
+
+	GLHDRCubeMap* m_skyBox;
 
 	//Shaders
 	GLuint m_screenShader;
 	GLuint m_PBRShader;
 	GLuint m_earlyDepthTestingShader;
-	GLuint m_skyBoxShader;
 	GLuint m_gaussianBlurShader;
 	GLuint m_kernelBlurShader;
 	GLuint m_ssaoShader;
 	GLuint m_ssaoBlurShader;
 	GLuint m_shadowMapShader;
 	GLuint m_EquiRecToCubeMapShader;
+	GLuint m_skyBoxShader;
+	GLuint m_diffuseIrradianceShader;
 
 	//Uniform buffer objects
 	GLuint m_matricesUBO;
@@ -108,7 +115,7 @@ public:
 	void EarlyDepthTestEntity(MeshRenderer* meshRenderer, glm::mat4 model);
 	void ShadowMapEntity(MeshRenderer* meshRenderer, glm::mat4 model);
 	void RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model);
-	
+
 	//Shaders
 	GLuint CreateShader(Shader* shader);
 
@@ -125,12 +132,14 @@ public:
 	void SetTextureData(GLenum target, Image* image);
 	GLuint GetTexture(Image* image);
 	
-	GLuint CreateHDRCubeMap(Image* image,int width,int height);
+	GLHDRCubeMap* CreateHDRCubeMap(Image* image,int width,int height);
 	GLuint CreateCubeMap(std::vector<std::string> faces);
 
 	//UI
+	void LoadSkyBox(Image* envirementMap) override;
 	intptr_t GetUITexture(Image* image) override;
 	intptr_t GetShadowMapTexture() override;
+	intptr_t GetSkyBox() override;
 	void RendererSettingsTab() override;
 	void ReloadTextures(bool gammaCorrection);
 };

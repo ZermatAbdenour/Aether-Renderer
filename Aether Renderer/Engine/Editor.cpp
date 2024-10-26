@@ -15,6 +15,8 @@ void Editor::UpdateAverageFPS(float deltaTime)
 	}
 	else
 	averageFPS = glm::mix(averageFPS, currentFPS, deltaTime );
+	if (averageFPS < 0)
+		averageFPS = currentFPS;
 }
 void Editor::EditorStyle()
 {
@@ -107,7 +109,7 @@ void Editor::RenderLightingTab()
 {
 	if (!ImGui::BeginTabItem("Lighting"))
 		return;
-	m_scene->RenderLightingTab();
+	m_scene->RenderLightingTab(m_renderer);
 	ImGui::EndTabItem();
 }
 

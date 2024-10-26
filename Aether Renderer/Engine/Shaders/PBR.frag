@@ -1,9 +1,9 @@
 #version 460 core
 
 const float PI = 3.14159265359;
+const vec3 F0 = vec3(0.04); 
 const int MAX_POINTLIGHTS =10;
 const int MAX_DIRECTIONALLIGHTS =5;
-
 struct PointLight{
     vec4 position;
     vec4 color;
@@ -31,7 +31,9 @@ in VS_OUT{
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
 uniform sampler2D metalicMap;
+uniform sampler2D ssaoTexture;
 uniform sampler2D shadowMap;
+uniform samplerCube irradianceMap;
 
 uniform bool baseColorOnly;
 uniform vec4  baseColor;
@@ -47,7 +49,9 @@ uniform bool softShadow;
 uniform float bias ;
 uniform float minBias;
 
-out vec4 fragColor;
+layout (location = 0) out vec4 fragColor;
+layout (location = 1) out vec4 bloomColor;
+
 
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0); 
@@ -56,9 +60,9 @@ float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 
+vec3 CalculateDirectionalLight(DirectionalLight directionalLight,vec3 V,vec3 albedo,vec3 normal,float metallic,float roughness,bool shadowMapTarget);
 vec3 CalculatePointLight(PointLight pointLight,vec3 V,vec3 albedo,vec3 normal,float metallic,float roughness);
 float CalculateShadow(vec4 fragPosLightSpace,vec3 normal,vec3 lightDir);
-vec3 CalculateDirectionalLight(DirectionalLight directionalLight,vec3 V,vec3 albedo,vec3 normal,float metallic,float roughness,bool shadowMapTarget);
 
 void main()
 {   
@@ -66,6 +70,18 @@ void main()
     float metallic = texture(metalicMap,fs_in.uv).b;
     float roughness = texture(metalicMap,fs_in.uv).g;
     float ao = texture(metalicMap,fs_in.uv).a;
+    
+    vec2 NDCSpaceFragPos = fs_in.fragPosClipSpace.xy / fs_in.fragPosClipSpace.w;
+    vec2 ssaoTextureLookup = NDCSpaceFragPos * 0.5 + 0.5;
+    float ssao = texture(ssaoTexture,ssaoTextureLookup).r;
+
+    if(SSAOOnly)
+    {
+        fragColor = vec4(vec3(ssao),1);
+        return;
+    }
+
+
     if(baseColorOnly)
         albedo = baseColor.xyz;
     else
@@ -86,10 +102,25 @@ void main()
         Lo += CalculatePointLight(pointLights[i],V,albedo,normal,metallic,roughness);
     }
 
-    vec3 ambient = vec3(0.03) * albedo *ao;
+    vec3 KS = fresnelSchlick(max(dot(normal,V),0.0f),F0);
+    vec3 KD = 1-KS;
+    vec3 irradiance = texture(irradianceMap,normal).rgb;
+    vec3 diffuse    = irradiance * albedo;
+    vec3 ambient;
+    if(SSAO)
+        ambient = (KD * diffuse) * ao * ssao;
+    else
+        ambient = (KD * diffuse) * ao;
     vec3 color = ambient + Lo;
 	
     fragColor = vec4(color,1.0);
+
+    //Calculate bloom color
+    float brightness = dot(fragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+    if(brightness > 1.5)
+        bloomColor = vec4(fragColor.rgb, 1.0);
+    else
+        bloomColor = vec4(0.0, 0.0, 0.0, 1.0);
     return;
 }
 
@@ -135,8 +166,7 @@ vec3 CalculateDirectionalLight(DirectionalLight directionalLight,vec3 V,vec3 alb
         vec3 L = normalize(-dirLightDir);
         vec3 H = normalize(V + L);
         //Calculate the Aprocqimation to the fresnel equation
-        vec3 F0 = vec3(0.04); 
-        F0 = mix(F0, albedo, metallic);
+        vec3 F0 = mix(F0, albedo, metallic);
         vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);  
         //calculate the cook-torrance brdf  
         float NDF = DistributionGGX(normal, H, roughness);       
@@ -168,8 +198,7 @@ vec3 CalculatePointLight(PointLight pointLight,vec3 V,vec3 albedo,vec3 normal,fl
         float attenuation = 1.0 / (distance);
         vec3 radiance = pointLightColor * attenuation;
         //Calculate the Aprocqimation to the fresnel equation
-        vec3 F0 = vec3(0.04); 
-        F0 = mix(F0, albedo, metallic);
+        vec3 F0 = mix(F0, albedo, metallic);
         vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);  
         //calculate the cook-torrance brdf  
         float NDF = DistributionGGX(normal, H, roughness);       

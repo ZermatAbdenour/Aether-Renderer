@@ -45,7 +45,7 @@ uniform bool SSAO;
 uniform bool SSAOOnly;
 uniform bool shadowMapping;
 uniform bool softShadow;
-uniform float bias ;
+uniform float bias;
 uniform float minBias;
 
 float ShadowCalculation(vec4 fragPosLightSpace,vec3 normal,vec3 lightDir)

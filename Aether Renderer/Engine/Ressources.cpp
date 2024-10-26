@@ -120,14 +120,15 @@ Mesh* Ressources::Primitives::Plane = createPlaneMesh(10, 10, 10, 10);
 Shader* Ressources::Shaders::Default = new Shader("Vertex.vert", "Fragment.frag");
 Shader* Ressources::Shaders::PBR = new Shader("vertex.vert", "PBR.frag");
 Shader* Ressources::Shaders::ScreenShader = new Shader("Screen.vert", "Screen.frag");
-Shader* Ressources::Shaders::Skybox = new Shader("Skybox.vert", "Skybox.frag");
 Shader* Ressources::Shaders::Gaussianblur = new Shader("Screen.vert", "GaussianBlur.frag");
 Shader* Ressources::Shaders::Kernel = new Shader("Screen.vert", "Kernel.frag");
 Shader* Ressources::Shaders::EarlyDepthTesting = new Shader("EarlyDepthTesting.vert", "EarlyDepthTesting.frag");
 Shader* Ressources::Shaders::SSAO = new Shader("Screen.vert", "ssao.frag");
 Shader* Ressources::Shaders::SSAOBlur = new Shader("Screen.vert", "ssaoBlur.frag");
 Shader* Ressources::Shaders::ShadowMap = new Shader("ShadowMap.vert", "ShadowMap.frag");
+Shader* Ressources::Shaders::Skybox = new Shader("Skybox.vert", "Skybox.frag");
 Shader* Ressources::Shaders::EquiRecToCubeMap = new Shader("EquiRecToCubeMap.vert", "EquiRecToCubeMap.frag");
+Shader* Ressources::Shaders::DiffuseIrradiance = new Shader("EquiRecToCubeMap.vert", "DiffuseIrradiance.frag");
 
 //Image Loading
 Image* Ressources::LoadImageFromFile(std::string file, bool flip)
@@ -310,11 +311,11 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 				meshRenderer->normalMap = loadingData->loadedImages[str.C_Str()];
 			}
 		}
-		for (int i = 0;i < 18;i++) {
-			int count = material->GetTextureCount(static_cast<aiTextureType>(i));
-			if( count >0)
-				std::cout<<i<<std::endl;
-		}
+		//for (int i = 0;i < 18;i++) {
+		//	int count = material->GetTextureCount(static_cast<aiTextureType>(i));
+		//	if( count >0)
+		//		std::cout<<i<<std::endl;
+		//}
 		//specular map
 		if (material->GetTextureCount(aiTextureType_METALNESS)) {
 			material->GetTexture(aiTextureType_METALNESS, 0, &str);

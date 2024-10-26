@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include <Imgui/imGuIZMO.quat/imGuIZMOquat.h>
 #include "Renderer.h"
+
 Scene::Scene()
 {
 	camera = Camera();
@@ -99,7 +100,7 @@ void Scene::RenderSceneTab(Renderer* renderer)
 				ImGui::ColorEdit3("##basecolor", &meshRenderer->baseColor[0]);
 				if (meshRenderer->diffuse != nullptr) {
 					ImGui::Text("diffuse map");
-					ImGui::Image((void*)renderer->GetUITexture(meshRenderer->diffuse), ImVec2(100, 100));
+					ImGui::Image((void*)renderer->GetUITexture(meshRenderer->diffuse), ImVec2(100, 100), ImVec2(1, 1),ImVec2(0,0));
 				}
 
 				ImGui::DragFloat("metallic", &meshRenderer->metallic, 0.05, 0, 1);
@@ -109,10 +110,10 @@ void Scene::RenderSceneTab(Renderer* renderer)
 		}
 	}
 }
-void Scene::RenderLightingTab()
+void Scene::RenderLightingTab(Renderer* renderer)
 {
 	ImVec2 buttonsize = ImVec2(20,20);
-	if (ImGui::CollapsingHeader("Directional Lights")) {
+	if (ImGui::CollapsingHeader("Directional Lights"), ImGuiTreeNodeFlags_DefaultOpen) {
 		for (int i = 0;i < DirectionalLights.size();i++) {
 
 			if (i == 0) {
@@ -122,20 +123,20 @@ void Scene::RenderLightingTab()
 			ImVec2 buttonPos = firstPos;
 			buttonPos.x += ImGui::GetWindowWidth() - buttonsize.x - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing;
 			ImGui::SetCursorPos(buttonPos + ImVec2(-30, 15));
-			std::string special = "-##d" + std::to_string(i);
-			if (ImGui::Button(special.c_str(), buttonsize)) {
+			std::string special = "##d" + std::to_string(i);
+			if (ImGui::Button(("-" + special).c_str(), buttonsize)) {
 				DirectionalLights.erase(DirectionalLights.begin() + i);
 			}
 			ImGui::SetCursorPos(firstPos);
 			//Get light view Direction
 			ImGui::Text("direction");
 			vec3 direction = camera.directionToViewSpace(DirectionalLights[i].direction);
-			ImGui::gizmo3D("##ddir" + i, direction);
+			ImGui::gizmo3D((special + "dir").c_str(), direction);
 			DirectionalLights[i].direction = camera.viewSpaceToDirection(direction);
 			ImGui::Text("color");
-			ImGui::ColorEdit3("##dcolor" + i, &DirectionalLights[i].color[0]);
+			ImGui::ColorEdit3((special + "color").c_str(), &DirectionalLights[i].color[0]);
 			ImGui::Text("intensity");
-			ImGui::InputFloat("##dintensity" + i, &DirectionalLights[i].intensity);
+			ImGui::InputFloat((special + "intesity").c_str(), &DirectionalLights[i].intensity);
 			DirectionalLights[i].intensity = glm::clamp(DirectionalLights[i].intensity, 0.0f, DirectionalLights[0].intensity + 1);
 			ImGui::Separator();
 		}
@@ -149,30 +150,46 @@ void Scene::RenderLightingTab()
 	ImGui::Separator();
 	ImGui::Spacing();
 
-	if (ImGui::CollapsingHeader("Point Lights")) {
+	if (ImGui::CollapsingHeader("Point Lights", ImGuiTreeNodeFlags_DefaultOpen)) {
 		for (int i = 0;i < PointLights.size();i++) {
 			ImVec2 firstPos = ImGui::GetCursorPos();
 			ImVec2 buttonPos = firstPos;
 			buttonPos.x += ImGui::GetWindowWidth() - buttonsize.x - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing;
 			ImGui::SetCursorPos(buttonPos + ImVec2(-30, 15));
-			std::string special = "-##p" + std::to_string(i);
-			if (ImGui::Button(special.c_str(), buttonsize)) {
+			std::string special = "##p" + std::to_string(i);
+			if (ImGui::Button(("-"+special).c_str(), buttonsize)) {
 				PointLights.erase(PointLights.begin() + i);
 			}
 			ImGui::SetCursorPos(firstPos);
 			ImGui::Text("position");
-			ImGui::DragFloat3("##pposition" + i, &PointLights[i].position[0]);
+			ImGui::DragFloat3((special+"position").c_str() , &PointLights[i].position[0]);
 			//Get light view Direction
 			ImGui::Text("color");
-			ImGui::ColorEdit3("##pcolor" + i, &PointLights[i].color[0]);
+			ImGui::ColorEdit3((special + "color").c_str(), &PointLights[i].color[0]);
 			ImGui::Text("intensity");
-			ImGui::InputFloat("##pintensity" + i, &PointLights[i].intensity);
+			ImGui::InputFloat((special + "intensity").c_str(), &PointLights[i].intensity);
 			PointLights[i].intensity = glm::clamp(PointLights[i].intensity, 0.0f, PointLights[0].intensity + 1);
 			ImGui::Separator();
 		}
 		ImVec2 addButtonSize = ImVec2(ImGui::GetWindowWidth() - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().IndentSpacing, 20);
 		if (ImGui::Button("add point light", addButtonSize)) {
 			PointLights.push_back(PointLight());
+		}
+	}
+
+	ImGui::Spacing();
+	ImGui::Separator();
+	ImGui::Spacing();
+
+	if (ImGui::CollapsingHeader("SkyBox"), ImGuiTreeNodeFlags_DefaultOpen) {
+		ImGui::Text("HDR texture");
+		float ImageWidth = ImGui::GetWindowWidth() -ImGui::GetStyle().WindowPadding.x -30;
+		if (ImGui::ImageButton((void*)renderer->GetSkyBox(), ImVec2(ImageWidth, ImageWidth *environmentMap->Height/environmentMap->Width),ImVec2(1,1),ImVec2(0,0))) {
+			std::string selectedFilePath = OpenFilePicker();
+			if (!selectedFilePath.empty()) {
+				 environmentMap = Ressources::LoadImageFromPath(selectedFilePath,true);
+				 renderer->LoadSkyBox(environmentMap);
+			}
 		}
 	}
 }

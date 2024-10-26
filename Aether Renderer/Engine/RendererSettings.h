@@ -30,7 +30,7 @@ struct RendererSettings {
 	//SSAO
 	bool SSAO = true;
 	bool SSAOOnly = false;
-	int kernelSize = 64;
+	int kernelSize = 50;
 	float sampleRad = 0.5f;
 	float power = 2;
 	float bias = 0.03f;
@@ -38,8 +38,11 @@ struct RendererSettings {
 	//Shadow map
 	bool shadowMapping = true;
 	bool softShadow = true;
-	glm::ivec2 shadowResolution = glm::ivec2(1920, 1080);
+	glm::ivec2 shadowResolution = glm::ivec2(4000, 4000);
 	float shadowbias = 0.0005f;
 	float minBias = 0.0003f;
+
+	//PBR
+	bool diffuseIrradiance = true;
 };
 const RendererSettings DefaultRendererSettings;
