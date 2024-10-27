@@ -55,7 +55,7 @@ layout (location = 1) out vec4 bloomColor;
 
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0); 
-
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);  
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
@@ -102,7 +102,7 @@ void main()
         Lo += CalculatePointLight(pointLights[i],V,albedo,normal,metallic,roughness);
     }
 
-    vec3 KS = fresnelSchlick(max(dot(normal,V),0.0f),F0);
+    vec3 KS = fresnelSchlickRoughness(max(dot(normal,V),0.0f),F0,roughness);
     vec3 KD = 1-KS;
     vec3 irradiance = texture(irradianceMap,normal).rgb;
     vec3 diffuse    = irradiance * albedo;
@@ -224,6 +224,11 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }  
+
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {

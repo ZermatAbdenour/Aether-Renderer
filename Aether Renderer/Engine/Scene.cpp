@@ -191,6 +191,7 @@ void Scene::RenderLightingTab(Renderer* renderer)
 				 renderer->LoadSkyBox(environmentMap);
 			}
 		}
+		ImGui::Checkbox("display diffuse irradiance",&renderer->settings.displayDiffuseIrradiance);
 	}
 }
 

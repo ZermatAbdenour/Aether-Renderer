@@ -44,5 +44,6 @@ struct RendererSettings {
 
 	//PBR
 	bool diffuseIrradiance = true;
+	bool displayDiffuseIrradiance = false;
 };
 const RendererSettings DefaultRendererSettings;

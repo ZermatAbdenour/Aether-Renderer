@@ -280,7 +280,14 @@ void OpenglRenderer::RenderScene(Scene* scene)
         glDepthMask(GL_FALSE);
         glUseProgram(m_skyBoxShader);
         glBindVertexArray(m_cubeMesh->vao);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->envirenmentMap);
+        glActiveTexture(GL_TEXTURE0);
+        if(!settings.displayDiffuseIrradiance)
+            glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->envirenmentMap);
+        else {
+
+            glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->diffuseIrradiance);
+        }
+        glUniform1i(glGetUniformLocation(m_skyBoxShader, "cubeMap"), 0);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         glDepthMask(GL_TRUE);
         glEnable(GL_CULL_FACE);
