@@ -12,9 +12,9 @@ int main()
    AeEngine aetherEngine = AeEngine(renderer);
 
     Scene* scene = new Scene();
-    //auto ent = scene->AddEntity(Ressources::LoadModelFromFile("glTF-Sample-Models/2.0/FlightHelmet/glTF/FlightHelmet.gltf"));
+    auto ent = scene->AddEntity(Ressources::LoadModelFromFile("glTF-Sample-Models/2.0/FlightHelmet/glTF/FlightHelmet.gltf"));
     //auto ent = scene->AddEntity(Ressources::LoadModelFromFile("sphere/sphere.glb"));
-    auto ent = scene->AddEntity(Ressources::LoadModelFromFile("glTF-Sample-Models/2.0/ABeautifulGame/glTF/ABeautifulGame.gltf"));
+    //auto ent = scene->AddEntity(Ressources::LoadModelFromFile("glTF-Sample-Models/2.0/ABeautifulGame/glTF/ABeautifulGame.gltf"));
     //auto ent = scene->AddEntity(Ressources::LoadModelFromFile("glTF-Sample-Models/2.0/Sponza/glTF/Sponza.gltf"));
     //auto ent = scene->AddEntity(Ressources::LoadModelFromFile("sponza/sponza.obj"));
     ent->scale = glm::vec3(1, 1, 1);

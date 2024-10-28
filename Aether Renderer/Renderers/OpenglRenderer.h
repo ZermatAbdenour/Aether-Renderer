@@ -36,6 +36,7 @@ public:
 		GLuint envirenmentMap;
 		GLuint diffuseIrradianceMap;
 		GLuint prefilteredMap;
+		GLuint brdfLutTexture;
 	};
 public:
 	//Lights
@@ -95,6 +96,8 @@ private:
 	GLuint m_skyBoxShader;
 	GLuint m_diffuseIrradianceShader;
 	GLuint m_hdrPreFilteringShader;
+	GLuint m_convoluteBRDFShader;
+
 	//Uniform buffer objects
 	GLuint m_matricesUBO;
 	GLuint m_lightsUBO;

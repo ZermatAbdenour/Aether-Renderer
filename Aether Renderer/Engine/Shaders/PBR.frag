@@ -34,6 +34,8 @@ uniform sampler2D metalicMap;
 uniform sampler2D ssaoTexture;
 uniform sampler2D shadowMap;
 uniform samplerCube irradianceMap;
+uniform samplerCube prefilterMap;
+uniform sampler2D   brdfLUT;  
 
 uniform bool baseColorOnly;
 uniform vec4  baseColor;
@@ -101,16 +103,25 @@ void main()
     for(int i = 0;i<numPointLight;i++){
         Lo += CalculatePointLight(pointLights[i],V,albedo,normal,metallic,roughness);
     }
-
-    vec3 KS = fresnelSchlickRoughness(max(dot(normal,V),0.0f),F0,roughness);
+    vec3 F = fresnelSchlickRoughness(max(dot(normal,V),0.0f),F0,roughness);
+    vec3 KS = F;
     vec3 KD = 1-KS;
     vec3 irradiance = texture(irradianceMap,normal).rgb;
     vec3 diffuse    = irradiance * albedo;
+
+    vec3 R = reflect(-V, normal);   
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;   
+    //fragColor = vec4(prefilteredColor,1);
+    //return;
+    vec2 envBRDF  = texture(brdfLUT, vec2(max(dot(normal, V), 0.0), roughness)).rg;
+    vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+  
     vec3 ambient;
     if(SSAO)
-        ambient = (KD * diffuse) * ao * ssao;
+        ambient = (KD * diffuse + specular) * ao * ssao;
     else
-        ambient = (KD * diffuse) * ao;
+        ambient = (KD * diffuse + specular) * ao;
     vec3 color = ambient + Lo;
 	
     fragColor = vec4(color,1.0);

@@ -44,6 +44,7 @@ struct RendererSettings {
 
 	//PBR
 	bool enableDiffuseIrradiance = true;
+	bool enableSpecularIBL = true;
 	enum SkyBoxMap {
 		envirenmentMap = 0,
 		diffuseIrradiance = 1,

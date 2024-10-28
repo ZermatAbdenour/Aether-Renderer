@@ -93,6 +93,8 @@ void OpenglRenderer::Setup(Scene* scene)
         m_EquiRecToCubeMapShader = CreateShader(Ressources::Shaders::EquiRecToCubeMap);
         m_diffuseIrradianceShader = CreateShader(Ressources::Shaders::DiffuseIrradiance);
         m_hdrPreFilteringShader = CreateShader(Ressources::Shaders::HDRPrefiltering);
+        m_convoluteBRDFShader = CreateShader(Ressources::Shaders::ConvoluteBRDF);
+
         m_cubeMesh = CreateMesh(Ressources::Primitives::Cube);
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
         LoadSkyBox(scene->environmentMap);
@@ -252,6 +254,34 @@ void renderCube()
     // render Cube
     glBindVertexArray(cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+}
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
+{
+    if (quadVAO == 0)
+    {
+        float quadVertices[] = {
+            // positions        // texture Coords
+            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+        // setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
 }
 
@@ -480,6 +510,8 @@ void OpenglRenderer::RenderScene(Scene* scene)
     glUniform1i(glGetUniformLocation(m_PBRShader, "softShadow"), settings.softShadow);
     glUniform1f(glGetUniformLocation(m_PBRShader, "bias"), settings.shadowbias);
     glUniform1f(glGetUniformLocation(m_PBRShader, "minBias"), settings.minBias);
+
+
     scene->ForEachEntity([this](std::shared_ptr<Entity> entity) {
         if (!entity->meshRenderer)
             return;
@@ -563,6 +595,17 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     else
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     glUniform1i(glGetUniformLocation(m_PBRShader, "irradianceMap"), 5);
+
+    glActiveTexture(GL_TEXTURE6);
+    if(settings.enableSpecularIBL)
+        glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->prefilteredMap);
+    else
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "prefilterMap"), 6);
+
+    glActiveTexture(GL_TEXTURE7);
+    glBindTexture(GL_TEXTURE_2D, m_skyBox->brdfLutTexture);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "brdfLUT"), 7);
 
     //Draw the mesh
     glBindVertexArray(mesh->vao);
@@ -1224,8 +1267,28 @@ OpenglRenderer::GLHDRCubeMap* OpenglRenderer::CreateHDRCubeMap(Image* image, int
         }
     }
 
-
     hdrCubeMap->prefilteredMap = prefilterMap;
+
+    unsigned int brdfLUTTexture;
+    glGenTextures(1, &brdfLUTTexture);
+
+    glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO->id);
+    glBindRenderbuffer(GL_RENDERBUFFER, captureFBO->depthStencilBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
+
+    glViewport(0, 0, 512, 512);
+    glUseProgram(m_convoluteBRDFShader);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    renderQuad();
+    hdrCubeMap->brdfLutTexture = brdfLUTTexture;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
     glDeleteFramebuffers(1, &captureFBO->id);
@@ -1382,5 +1445,6 @@ void OpenglRenderer::RendererSettingsTab()
 
     if (ImGui::CollapsingHeader("PBR", ImGuiTreeNodeFlags_DefaultOpen)) {
         ImGui::Checkbox("diffuse irradiance",&settings.enableDiffuseIrradiance);
+        ImGui::Checkbox("specular IBL", &settings.enableSpecularIBL);
     }
 }

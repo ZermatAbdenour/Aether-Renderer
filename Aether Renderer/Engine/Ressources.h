@@ -34,6 +34,7 @@ public:
 		static Shader* EquiRecToCubeMap;
 		static Shader* DiffuseIrradiance;
 		static Shader* HDRPrefiltering;
+		static Shader* ConvoluteBRDF;
 	};
 	/// <summary>
 	/// Load Immage from a file in the Resources/Images folder

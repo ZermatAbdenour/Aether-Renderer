@@ -130,6 +130,7 @@ Shader* Ressources::Shaders::Skybox = new Shader("Skybox.vert", "Skybox.frag");
 Shader* Ressources::Shaders::EquiRecToCubeMap = new Shader("EquiRecToCubeMap.vert", "EquiRecToCubeMap.frag");
 Shader* Ressources::Shaders::DiffuseIrradiance = new Shader("EquiRecToCubeMap.vert", "DiffuseIrradiance.frag");
 Shader* Ressources::Shaders::HDRPrefiltering = new Shader("EquiRecToCubeMap.vert", "HDRPrefiltering.frag");
+Shader* Ressources::Shaders::ConvoluteBRDF = new Shader("ConvoluteBRDF.vert", "ConvoluteBRDF.frag");
 
 //Image Loading
 Image* Ressources::LoadImageFromFile(std::string file, bool flip)
