@@ -43,7 +43,12 @@ struct RendererSettings {
 	float minBias = 0.0003f;
 
 	//PBR
-	bool diffuseIrradiance = true;
-	bool displayDiffuseIrradiance = false;
+	bool enableDiffuseIrradiance = true;
+	enum SkyBoxMap {
+		envirenmentMap = 0,
+		diffuseIrradiance = 1,
+		prefilteredMap = 2
+	};
+	SkyBoxMap targetSkyBoxMap = envirenmentMap;
 };
 const RendererSettings DefaultRendererSettings;

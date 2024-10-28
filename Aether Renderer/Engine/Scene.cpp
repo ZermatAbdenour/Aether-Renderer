@@ -191,7 +191,12 @@ void Scene::RenderLightingTab(Renderer* renderer)
 				 renderer->LoadSkyBox(environmentMap);
 			}
 		}
-		ImGui::Checkbox("display diffuse irradiance",&renderer->settings.displayDiffuseIrradiance);
+
+		const char* enumNames[] = { "EnvirenmentMap", "DiffuseIrradiance","PrefilteringMap"};
+		int targetSkyBoxMap = static_cast<int>(renderer->settings.targetSkyBoxMap);
+		if (ImGui::Combo("SkyBox map", &targetSkyBoxMap, enumNames, IM_ARRAYSIZE(enumNames))) {
+			renderer->settings.targetSkyBoxMap = static_cast<RendererSettings::SkyBoxMap>(targetSkyBoxMap);
+		}
 	}
 }
 

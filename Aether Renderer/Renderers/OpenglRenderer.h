@@ -34,7 +34,8 @@ public:
 	struct GLHDRCubeMap {
 		GLuint hdrTexture;
 		GLuint envirenmentMap;
-		GLuint diffuseIrradiance;
+		GLuint diffuseIrradianceMap;
+		GLuint prefilteredMap;
 	};
 public:
 	//Lights
@@ -93,7 +94,7 @@ private:
 	GLuint m_EquiRecToCubeMapShader;
 	GLuint m_skyBoxShader;
 	GLuint m_diffuseIrradianceShader;
-
+	GLuint m_hdrPreFilteringShader;
 	//Uniform buffer objects
 	GLuint m_matricesUBO;
 	GLuint m_lightsUBO;

@@ -92,9 +92,9 @@ void OpenglRenderer::Setup(Scene* scene)
         m_skyBoxShader = CreateShader(Ressources::Shaders::Skybox);
         m_EquiRecToCubeMapShader = CreateShader(Ressources::Shaders::EquiRecToCubeMap);
         m_diffuseIrradianceShader = CreateShader(Ressources::Shaders::DiffuseIrradiance);
-
+        m_hdrPreFilteringShader = CreateShader(Ressources::Shaders::HDRPrefiltering);
         m_cubeMesh = CreateMesh(Ressources::Primitives::Cube);
-
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
         LoadSkyBox(scene->environmentMap);
     }
 
@@ -167,6 +167,7 @@ void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
     if (meshRenderer->diffuse != nullptr && !m_textures.contains(meshRenderer->diffuse)) {
         GLuint diffuseTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR);
         SetTextureData(GL_TEXTURE_2D, meshRenderer->diffuse);
+        glGenerateMipmap(GL_TEXTURE_2D);
         m_textures.insert({ meshRenderer->diffuse,diffuseTexture });
     }
 
@@ -281,11 +282,21 @@ void OpenglRenderer::RenderScene(Scene* scene)
         glUseProgram(m_skyBoxShader);
         glBindVertexArray(m_cubeMesh->vao);
         glActiveTexture(GL_TEXTURE0);
-        if(!settings.displayDiffuseIrradiance)
-            glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->envirenmentMap);
-        else {
 
-            glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->diffuseIrradiance);
+        switch (settings.targetSkyBoxMap)
+        {
+        case RendererSettings::envirenmentMap:
+            glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->envirenmentMap);
+            break;
+        case RendererSettings::diffuseIrradiance:
+            glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->diffuseIrradianceMap);
+            break;
+        case RendererSettings::prefilteredMap:
+            glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->prefilteredMap);
+            break;
+        default:
+            glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->envirenmentMap);
+            break;
         }
         glUniform1i(glGetUniformLocation(m_skyBoxShader, "cubeMap"), 0);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
@@ -548,7 +559,7 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
 
     glActiveTexture(GL_TEXTURE5);
     if(settings.diffuseIrradiance)
-        glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->diffuseIrradiance);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->diffuseIrradianceMap);
     else
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
     glUniform1i(glGetUniformLocation(m_PBRShader, "irradianceMap"), 5);
@@ -564,10 +575,10 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
 void OpenglRenderer::LoadSkyBox(Image* envirementMap)
 {
     if (m_skyBox != nullptr) {
-        std::cout << m_skyBox->diffuseIrradiance << std::endl;
+        std::cout << m_skyBox->diffuseIrradianceMap << std::endl;
         glDeleteTextures(1, &m_skyBox->hdrTexture);
         glDeleteTextures(1, &m_skyBox->envirenmentMap);
-        glDeleteTextures(1, &m_skyBox->diffuseIrradiance);
+        glDeleteTextures(1, &m_skyBox->diffuseIrradianceMap);
         delete m_skyBox;
     }
     glDisable(GL_CULL_FACE);
@@ -1055,7 +1066,6 @@ void OpenglRenderer::SetTextureData(GLenum target, Image* image)
     }
     //lTexImage2D(GL_TEXTURE_2D, 0, format, image->Width, image->Height, 0, format, GL_UNSIGNED_BYTE, image->data);
     glTexImage2D(target, 0, format, image->Width, image->Height, 0, internalFormat, GL_UNSIGNED_BYTE, image->data);
-    glGenerateMipmap(target);
 }
 
 GLuint OpenglRenderer::GetTexture(Image* image)
@@ -1163,8 +1173,59 @@ OpenglRenderer::GLHDRCubeMap* OpenglRenderer::CreateHDRCubeMap(Image* image, int
         renderCube();
     }
 
-    hdrCubeMap->diffuseIrradiance = irradianceMap;
+    hdrCubeMap->diffuseIrradianceMap = irradianceMap;
 
+    unsigned int prefilterMap;
+    glGenTextures(1, &prefilterMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0, GL_RGB, GL_FLOAT, nullptr);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+    glUseProgram(m_hdrPreFilteringShader);
+    glUniformMatrix4fv(glGetUniformLocation(m_hdrPreFilteringShader, "projection"), 1, GL_FALSE, glm::value_ptr(captureProjection));
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+    glUniform1i(glGetUniformLocation(m_hdrPreFilteringShader, "environmentMap"), 0);
+
+
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO->id);
+    unsigned int maxMipLevels = 5;
+    for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
+    {
+        // reisze framebuffer according to mip-level size.
+        unsigned int mipWidth = 128 * std::pow(0.5, mip);
+        unsigned int mipHeight = 128 * std::pow(0.5, mip);
+        glBindRenderbuffer(GL_RENDERBUFFER, captureFBO->depthStencilBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
+        glViewport(0, 0, mipWidth, mipHeight);
+
+        float roughness = (float)mip / (float)(maxMipLevels - 1);
+        glUniform1f(glGetUniformLocation(m_hdrPreFilteringShader, "roughness"), roughness);
+
+        for (unsigned int i = 0; i < 6; ++i)
+        {
+            glUniformMatrix4fv(glGetUniformLocation(m_hdrPreFilteringShader, "view"), 1, GL_FALSE, glm::value_ptr(captureViews[i]));
+
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterMap, mip);
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            renderCube();
+        }
+    }
+
+
+    hdrCubeMap->prefilteredMap = prefilterMap;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
     glDeleteFramebuffers(1, &captureFBO->id);
@@ -1320,6 +1381,6 @@ void OpenglRenderer::RendererSettingsTab()
     }
 
     if (ImGui::CollapsingHeader("PBR", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Checkbox("diffuse irradiance",&settings.diffuseIrradiance);
+        ImGui::Checkbox("diffuse irradiance",&settings.enableDiffuseIrradiance);
     }
 }

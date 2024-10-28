@@ -33,6 +33,7 @@ public:
 		static Shader* Skybox;
 		static Shader* EquiRecToCubeMap;
 		static Shader* DiffuseIrradiance;
+		static Shader* HDRPrefiltering;
 	};
 	/// <summary>
 	/// Load Immage from a file in the Resources/Images folder

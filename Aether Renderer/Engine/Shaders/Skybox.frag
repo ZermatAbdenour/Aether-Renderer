@@ -8,7 +8,8 @@ in vec3 localPos;
 out vec4 fragColor;
 out vec4 bloomColor;
 void main(){
-    vec3 envColor = texture(cubeMap, texCoord).rgb;
+    //vec3 envColor = texture(cubeMap, texCoord).rgb;
+    vec3 envColor = textureLod(cubeMap, texCoord,1.2).rgb;
     
     fragColor = vec4(envColor, 1.0);
 
