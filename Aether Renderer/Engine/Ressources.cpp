@@ -280,11 +280,9 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 			std::string fullPath = loadingData->directory + "/" + str.C_Str();
 
 			if (!loadingData->loadedImages.contains(str.C_Str())) {
-				bool flip = true;
-				if (loadingData->fileExtension == "gltf")
-					flip = false;
 
-				Image* diffuseMap = LoadImageFromPath(fullPath, flip);
+
+				Image* diffuseMap = LoadImageFromPath(fullPath);
 				meshRenderer->diffuse = diffuseMap;
 				loadingData->loadedImages.insert({ str.C_Str() ,diffuseMap });
 			}
@@ -299,11 +297,7 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 			std::string fullPath = loadingData->directory + "/" + str.C_Str();
 
 			if (!loadingData->loadedImages.contains(str.C_Str())) {
-				bool flip = true;
-				if (loadingData->fileExtension == "gltf")
-					flip = false;
-
-				Image* normalMap = LoadImageFromPath(fullPath, flip);
+				Image* normalMap = LoadImageFromPath(fullPath);
 				normalMap->gammaCorrect = false;
 				normalMap->imageType = Image::ImageType::map;
 				meshRenderer->normalMap = normalMap;
@@ -313,21 +307,21 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 				meshRenderer->normalMap = loadingData->loadedImages[str.C_Str()];
 			}
 		}
-		//for (int i = 0;i < 18;i++) {
-		//	int count = material->GetTextureCount(static_cast<aiTextureType>(i));
-		//	if( count >0)
-		//		std::cout<<i<<std::endl;
-		//}
+		for (int i = 0;i < 18;i++) {
+			int count = material->GetTextureCount(static_cast<aiTextureType>(i));
+			if( count >0)
+				std::cout<<i<<std::endl;
+		}
 		//specular map
+
+		//GLTF files pack the AO and Roughness and metalic in a single texture
+		meshRenderer->packedAoRM = loadingData->fileExtension == "gltf";
+
 		if (material->GetTextureCount(aiTextureType_METALNESS)) {
 			material->GetTexture(aiTextureType_METALNESS, 0, &str);
 			std::string fullPath = loadingData->directory + "/" + str.C_Str();
 			if (!loadingData->loadedImages.contains(str.C_Str())) {
-				bool flip = true;
-				if (loadingData->fileExtension == "gltf")
-					flip = false;
-
-				Image* metalicMap = LoadImageFromPath(fullPath, flip);
+				Image* metalicMap = LoadImageFromPath(fullPath);
 				metalicMap->gammaCorrect = false;
 				metalicMap->imageType = Image::ImageType::map;
 				meshRenderer->metalicMap = metalicMap;
@@ -337,6 +331,22 @@ MeshRenderer* Ressources::ProcessMeshRenderer(aiMesh* mesh, ModelLoadingData* lo
 				meshRenderer->metalicMap = loadingData->loadedImages[str.C_Str()];
 			}
 		}
+		
+		if (material->GetTextureCount(aiTextureType_EMISSIVE)) {
+			material->GetTexture(aiTextureType_EMISSIVE, 0, &str);
+			std::string fullPath = loadingData->directory + "/" + str.C_Str();
+			if (!loadingData->loadedImages.contains(str.C_Str())) {
+				Image* emissiveMap = LoadImageFromPath(fullPath);
+				emissiveMap->gammaCorrect = false;
+				emissiveMap->imageType = Image::ImageType::map;
+				meshRenderer->emissiveMap = emissiveMap;
+				loadingData->loadedImages.insert({ str.C_Str() ,emissiveMap});
+			}
+			else {
+				meshRenderer->emissiveMap = loadingData->loadedImages[str.C_Str()];
+			}
+		}
+		
 	}
 	
 	return meshRenderer;

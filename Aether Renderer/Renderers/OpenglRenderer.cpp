@@ -25,7 +25,10 @@ GLFWwindow* OpenglRenderer::Init()
         return nullptr;
     }
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(0);//Disable VSync
+    if (settings.VSync)
+        glfwSwapInterval(1);
+    else
+        glfwSwapInterval(0);
 
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
         OpenglRenderer* renderer = static_cast<OpenglRenderer*>(glfwGetWindowUserPointer(window));
@@ -176,13 +179,39 @@ void OpenglRenderer::SetupEntity(std::shared_ptr<Entity> entity)
     if (meshRenderer->normalMap != nullptr && !m_textures.contains(meshRenderer->normalMap)) {
         GLuint normalTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR);
         SetTextureData(GL_TEXTURE_2D, meshRenderer->normalMap);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
         m_textures.insert({ meshRenderer->normalMap,normalTexture });
     }
 
     if (meshRenderer->metalicMap != nullptr && !m_textures.contains(meshRenderer->metalicMap)) {
         GLuint metalicTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR);
         SetTextureData(GL_TEXTURE_2D, meshRenderer->metalicMap);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
         m_textures.insert({ meshRenderer->metalicMap,metalicTexture });
+    }
+    if (!meshRenderer->packedAoRM && meshRenderer->roughnessMap != nullptr && !m_textures.contains(meshRenderer->roughnessMap)) {
+        GLuint roughnessTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR);
+        SetTextureData(GL_TEXTURE_2D, meshRenderer->roughnessMap);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        m_textures.insert({ meshRenderer->roughnessMap,roughnessTexture });
+    }
+    if (!meshRenderer->packedAoRM && meshRenderer->aoMap != nullptr && !m_textures.contains(meshRenderer->aoMap)) {
+        GLuint aoTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR);
+        SetTextureData(GL_TEXTURE_2D, meshRenderer->aoMap);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        m_textures.insert({ meshRenderer->aoMap,aoTexture });
+    }
+
+    if (meshRenderer->emissiveMap != nullptr && !m_textures.contains(meshRenderer->emissiveMap)) {
+        GLuint emissiveTexture = CreateTexture(GL_TEXTURE_2D, GL_LINEAR, GL_LINEAR);
+        SetTextureData(GL_TEXTURE_2D, meshRenderer->emissiveMap);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        m_textures.insert({ meshRenderer->emissiveMap,emissiveTexture });
     }
 }
 GLuint cubeVAO, cubeVBO;
@@ -546,6 +575,9 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     GLuint diffuseTexture = GetTexture(meshRenderer->diffuse);
     GLuint normalTexture = GetTexture(meshRenderer->normalMap);
     GLuint metalicTexture = GetTexture(meshRenderer->metalicMap);
+    GLuint roughnessTexture = GetTexture(meshRenderer->roughnessMap);
+    GLuint aoTexture = GetTexture(meshRenderer->aoMap);
+    GLuint emissiveTexture = GetTexture(meshRenderer->emissiveMap);
 
     glUniformMatrix4fv(glGetUniformLocation(m_PBRShader, "model"), 1, false, glm::value_ptr(model));
 
@@ -554,6 +586,8 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     glUniform1f(glGetUniformLocation(m_PBRShader, "metallic"), meshRenderer->metallic);
     glUniform1f(glGetUniformLocation(m_PBRShader, "roughness"), meshRenderer->roughness);
     glUniform1f(glGetUniformLocation(m_PBRShader, "ao"), meshRenderer->ao);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "packedAoRM"), meshRenderer->packedAoRM);
+
     glActiveTexture(GL_TEXTURE0);
     if (meshRenderer->diffuse)
         glBindTexture(GL_TEXTURE_2D, diffuseTexture);
@@ -576,36 +610,58 @@ void OpenglRenderer::RenderEntity(MeshRenderer* meshRenderer, glm::mat4 model)
     glUniform1i(glGetUniformLocation(m_PBRShader, "metalicMap"), 2);
 
     glActiveTexture(GL_TEXTURE3);
+    if (!meshRenderer->packedAoRM && meshRenderer->roughnessMap)
+        glBindTexture(GL_TEXTURE_2D, roughnessTexture);
+    else
+        glBindTexture(GL_TEXTURE_2D, 0);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "roughnessMap"), 3);
+
+
+    glActiveTexture(GL_TEXTURE4);
+    if (!meshRenderer->packedAoRM&&meshRenderer->aoMap)
+        glBindTexture(GL_TEXTURE_2D, aoTexture);
+    else
+        glBindTexture(GL_TEXTURE_2D, 0);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "aoMap"), 4);
+
+    glActiveTexture(GL_TEXTURE5);
+    if (meshRenderer->emissiveMap)
+        glBindTexture(GL_TEXTURE_2D, emissiveTexture);
+    else
+        glBindTexture(GL_TEXTURE_2D, 0);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "emissiveMap"), 5);
+
+    glActiveTexture(GL_TEXTURE6);
     if (settings.SSAO)
         glBindTexture(GL_TEXTURE_2D, m_ssaoBlurFBO->colorAttachments[0]);
     else
         glBindTexture(GL_TEXTURE_2D, 0);
-    glUniform1i(glGetUniformLocation(m_PBRShader, "ssaoTexture"), 3);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "ssaoTexture"), 6);
 
-    glActiveTexture(GL_TEXTURE4);
+    glActiveTexture(GL_TEXTURE7);
     if (settings.shadowMapping)
         glBindTexture(GL_TEXTURE_2D, m_shadowDepthFBO->depthStencilBuffer);
     else
         glBindTexture(GL_TEXTURE_2D, 0);
-    glUniform1i(glGetUniformLocation(m_PBRShader, "shadowMap"), 4);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "shadowMap"), 7);
 
-    glActiveTexture(GL_TEXTURE5);
-    if(settings.diffuseIrradiance)
+    glActiveTexture(GL_TEXTURE8);
+    if(settings.enableDiffuseIrradiance)
         glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->diffuseIrradianceMap);
     else
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-    glUniform1i(glGetUniformLocation(m_PBRShader, "irradianceMap"), 5);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "irradianceMap"), 8);
 
-    glActiveTexture(GL_TEXTURE6);
+    glActiveTexture(GL_TEXTURE9);
     if(settings.enableSpecularIBL)
         glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyBox->prefilteredMap);
     else
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-    glUniform1i(glGetUniformLocation(m_PBRShader, "prefilterMap"), 6);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "prefilterMap"), 9);
 
-    glActiveTexture(GL_TEXTURE7);
+    glActiveTexture(GL_TEXTURE10);
     glBindTexture(GL_TEXTURE_2D, m_skyBox->brdfLutTexture);
-    glUniform1i(glGetUniformLocation(m_PBRShader, "brdfLUT"), 7);
+    glUniform1i(glGetUniformLocation(m_PBRShader, "brdfLUT"), 10);
 
     //Draw the mesh
     glBindVertexArray(mesh->vao);
@@ -648,12 +704,13 @@ void OpenglRenderer::PostProcess()
         int mipmapLevels = static_cast<int>(glm::floor(glm::log2(static_cast<float>(maxDim))));
         glGetTexImage(GL_TEXTURE_2D, mipmapLevels, GL_RGB, GL_FLOAT, &luminescence);
         const float lum = 0.2126f * luminescence.r + 0.7152f * luminescence.g + 0.0722f * luminescence.b;
-
-        float sceneExposureMultiplier = 0.6;
-        float sceneExposureRangeMin = 0.1;
-        float sceneExposureRangeMax = 5;
-        settings.exposure = glm::mix(settings.exposure, 0.5f / lum * settings.exposureMultiplier, settings.adjustmentSpeed);
-        settings.exposure = glm::clamp(settings.exposure, sceneExposureRangeMin, sceneExposureRangeMax);
+        if (lum > 0.0001) {
+            float sceneExposureMultiplier = 0.6;
+            float sceneExposureRangeMin = 0.1;
+            float sceneExposureRangeMax = 5;
+            settings.exposure = glm::mix(settings.exposure, 0.5f / lum * settings.exposureMultiplier, settings.adjustmentSpeed);
+            settings.exposure = glm::clamp(settings.exposure, sceneExposureRangeMin, sceneExposureRangeMax);
+        }
     }
 
     bool horizontal = true, first_iteration = true;
@@ -1345,7 +1402,15 @@ intptr_t OpenglRenderer::GetSkyBox()
 
 void OpenglRenderer::RendererSettingsTab()
 {
+
     if (ImGui::CollapsingHeader("Pipline", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (ImGui::Checkbox("V-Sync", &settings.VSync)) {
+            if (settings.VSync)
+                glfwSwapInterval(1);
+            else
+                glfwSwapInterval(0);
+        }
+
         ImGui::Checkbox("Z pre-pass", &settings.zPrePass);
         const char* enumNames[] = { "None", "DepthRBO","DepthStencilRBO" ,"DepthTexture","DepthStencilTexture" };
         if (ImGui::Combo("DepthStencil type", &settings.screenFBODepthStencilType, enumNames, IM_ARRAYSIZE(enumNames))) {

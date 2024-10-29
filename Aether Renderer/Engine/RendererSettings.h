@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 struct RendererSettings {
+	bool VSync = false;
 	bool zPrePass = true;
 	int screenFBODepthStencilType = 2;
 	//MultiSampling

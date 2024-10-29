@@ -102,7 +102,25 @@ void Scene::RenderSceneTab(Renderer* renderer)
 					ImGui::Text("diffuse map");
 					ImGui::Image((void*)renderer->GetUITexture(meshRenderer->diffuse), ImVec2(100, 100), ImVec2(1, 1),ImVec2(0,0));
 				}
+				if (meshRenderer->normalMap != nullptr) {
+					ImGui::Text("normal map");
+					ImGui::Image((void*)renderer->GetUITexture(meshRenderer->normalMap), ImVec2(100, 100), ImVec2(1, 1), ImVec2(0, 0));
+				}
 
+				if (meshRenderer->metalicMap != nullptr) {
+					ImGui::Text(meshRenderer->packedAoRM?"Packed texture" : "Metalic map");
+					if (meshRenderer->packedAoRM) 
+						ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Info: Packed AO | Roughness | Metalic");
+					ImGui::Image((void*)renderer->GetUITexture(meshRenderer->metalicMap), ImVec2(100, 100), ImVec2(1, 1), ImVec2(0, 0));
+				}
+				if (!meshRenderer->packedAoRM && meshRenderer->roughnessMap != nullptr) {
+					ImGui::Text("roughness map");
+					ImGui::Image((void*)renderer->GetUITexture(meshRenderer->roughnessMap), ImVec2(100, 100), ImVec2(1, 1), ImVec2(0, 0));
+				}
+				if (!meshRenderer->packedAoRM && meshRenderer->aoMap != nullptr) {
+					ImGui::Text("AO map");
+					ImGui::Image((void*)renderer->GetUITexture(meshRenderer->aoMap), ImVec2(100, 100), ImVec2(1, 1), ImVec2(0, 0));
+				}
 				ImGui::DragFloat("metallic", &meshRenderer->metallic, 0.05, 0, 1);
 				ImGui::DragFloat("roughness", &meshRenderer->roughness, 0.05, 0, 1);
 				ImGui::DragFloat("ao", &meshRenderer->ao, 0.05, 0, 1);
@@ -117,7 +135,7 @@ void Scene::RenderLightingTab(Renderer* renderer)
 		for (int i = 0;i < DirectionalLights.size();i++) {
 
 			if (i == 0) {
-				ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Warning: Shadow map target");
+				ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Info: Shadow map target");
 			}
 			ImVec2 firstPos = ImGui::GetCursorPos();
 			ImVec2 buttonPos = firstPos;
